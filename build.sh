@@ -37,8 +37,8 @@ cp out/base.apk out/unsigned.apk; (cd out/dex && zip -q ../unsigned.apk classes.
 # (Releases are signed with their own key: set KEYSTORE and KEYSTORE_PASS.)
 APP_NAME="HomeScreen"
 VARIANT="Release"
-VERSION_NAME="4.0.0"
-VERSION_CODE="40"
+VERSION_NAME="4.1.0"
+VERSION_CODE="41"
 PLAY_APK="out/${APP_NAME}_${VARIANT}_v${VERSION_NAME}_${VERSION_CODE}.apk"
 UNIVERSAL_APK="out/${APP_NAME}-Universal-TV-Foldable-Tablet-${VARIANT}-v${VERSION_NAME}-b${VERSION_CODE}.apk"
 LEGACY_PLAY_APK="out/HomeOS_${VARIANT}_v${VERSION_NAME}_${VERSION_CODE}.apk"

@@ -196,6 +196,10 @@ public class MainActivity extends Activity {
     private TextView fancySyncView;
     private long lastWeatherFetch = 0L;
     private int tileW, tileH, rowStepPx, gapPx, gridTop, cols = PER_ROW; // app grid geometry, set by buildTiles
+    private static final int MAX_PAGE_APPS = 16; // max 16 apps (4x4) per horizontal page on phones/foldables
+    private android.widget.HorizontalScrollView appPager;
+    private int currentAppPage = 0;
+    private final List<View> pageDots = new ArrayList<>();
     private final List<View> tiles = new ArrayList<>();
     private final List<View> chrome = new ArrayList<>();
     private final Map<View, ValueAnimator> lifts = new WeakHashMap<>(); // a running focus fade per tile
@@ -347,6 +351,7 @@ public class MainActivity extends Activity {
 
     private float gestureDownX, gestureDownY;
     private boolean gestureHandled;
+    private boolean gestureLockedHorizontal;
 
     @Override
     public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
@@ -356,11 +361,20 @@ public class MainActivity extends Activity {
                 gestureDownX = ev.getRawX();
                 gestureDownY = ev.getRawY();
                 gestureHandled = false;
+                gestureLockedHorizontal = false;
             } else if (action == android.view.MotionEvent.ACTION_MOVE && !gestureHandled) {
                 float dx = ev.getRawX() - gestureDownX;
                 float dy = ev.getRawY() - gestureDownY;
-                float slop = Math.max(upx(42), ViewConfiguration.get(this).getScaledTouchSlop() * 2.2f);
-                if (Math.abs(dy) > slop && Math.abs(dy) > Math.abs(dx) * 1.25f) {
+                float touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+                float vertSlop = Math.max(dp(56), touchSlop * 2.6f);
+                float horizSlop = Math.max(dp(38), touchSlop * 2.0f);
+                int screenH = getResources().getDisplayMetrics().heightPixels;
+                // Lock to horizontal scrolling if the user starts dragging sideways on the app grid
+                if (!gestureLockedHorizontal && gestureDownY < screenH * 0.64f
+                        && Math.abs(dx) > touchSlop * 1.15f && Math.abs(dx) >= Math.abs(dy) * 0.9f) {
+                    gestureLockedHorizontal = true;
+                }
+                if (!gestureLockedHorizontal && Math.abs(dy) > vertSlop && Math.abs(dy) > Math.abs(dx) * 1.75f) {
                     gestureHandled = true;
                     android.view.MotionEvent cancel = android.view.MotionEvent.obtain(ev);
                     cancel.setAction(android.view.MotionEvent.ACTION_CANCEL);
@@ -372,8 +386,8 @@ public class MainActivity extends Activity {
                         expandNotifications();
                     }
                     return true;
-                } else if (gestureDownY >= getResources().getDisplayMetrics().heightPixels * 0.62f
-                        && Math.abs(dx) > slop && Math.abs(dx) > Math.abs(dy) * 1.25f && skyView != null) {
+                } else if (gestureDownY >= screenH * 0.64f
+                        && Math.abs(dx) > horizSlop && Math.abs(dx) > Math.abs(dy) * 1.25f && skyView != null) {
                     gestureHandled = true;
                     android.view.MotionEvent cancel = android.view.MotionEvent.obtain(ev);
                     cancel.setAction(android.view.MotionEvent.ACTION_CANCEL);
@@ -383,8 +397,10 @@ public class MainActivity extends Activity {
                     else skyView.prevStoryScene();
                     return true;
                 }
-            } else if (action == android.view.MotionEvent.ACTION_UP && gestureHandled) {
+            } else if ((action == android.view.MotionEvent.ACTION_UP || action == android.view.MotionEvent.ACTION_CANCEL)
+                    && gestureHandled) {
                 gestureHandled = false;
+                gestureLockedHorizontal = false;
                 return true;
             }
         }
@@ -902,13 +918,17 @@ public class MainActivity extends Activity {
         root.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         for (View t : tiles) {
             View wrap = (View) t.getParent();
-            ((ViewGroup) wrap.getParent()).removeView(wrap);
+            if (wrap != null && wrap.getParent() != null) {
+                ((ViewGroup) wrap.getParent()).removeView(wrap);
+            }
         }
         for (View c : chrome) {
             if (c.getParent() != null) ((ViewGroup) c.getParent()).removeView(c);
         }
         tiles.clear();
         chrome.clear();
+        pageDots.clear();
+        appPager = null;
         rowApps.clear();
         movingKey = null;
         moveHint.setVisibility(View.GONE);
@@ -918,10 +938,10 @@ public class MainActivity extends Activity {
         int screenH = getResources().getDisplayMetrics().heightPixels;
         boolean tvMode = isTvDevice();
         boolean isNarrowVertical = !tvMode && (screenW < screenH * 0.75f);
-        int m = isNarrowVertical ? dp(20) : (!tvMode ? dp(24) : px(MARGIN));
-        int g = isNarrowVertical ? dp(12) : (!tvMode ? dp(14) : px(GAP));
+        int m = isNarrowVertical ? dp(18) : (!tvMode ? dp(22) : px(MARGIN));
+        int g = isNarrowVertical ? dp(10) : (!tvMode ? dp(12) : px(GAP));
         int topInset = !tvMode ? getStatusBarTopInset() : 0;
-        int clockTop = isNarrowVertical ? (topInset + dp(12)) : (!tvMode ? (topInset + dp(8)) : px(38));
+        int clockTop = isNarrowVertical ? (topInset + dp(2)) : (!tvMode ? (topInset + dp(4)) : px(38));
         gapPx = g;
 
         if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
@@ -949,51 +969,131 @@ public class MainActivity extends Activity {
         boolean store = !apps.contains(PLAY_STORE) && launchIntent(pm, PLAY_STORE) != null;
 
         if (!tvMode) {
-            // Dual-Posture Continuity for Phones, Foldables & Tablets:
+            // Dual-Posture Continuity for Phones, Foldables & Tablets with 16-App Horizontal Paging:
+            // - Up to 16 apps per page (4 columns x 4 rows). Additional apps (>16) scroll horizontally across pages.
             // - Folded Cover Screen / Vertical Phone (isNarrowVertical):
-            //   Centered Hero Clock + 4-column Native One UI / Pixel Squircle App Icons + crisp 13sp labels.
+            //   Centered Hero Clock + 4-column Native One UI / Pixel Squircle App Icons + crisp single-line labels.
             // - Unfolded Foldable Inner Screen / Tablet (!isNarrowVertical):
             //   Signature 16:9 Widescreen Banner Cards (Left Icon Medallion + Right Title/Lore Subtitle).
             for (String pkg : apps) {
                 if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
             }
-            gridTop = isNarrowVertical ? (clockTop + dp(108)) : (clockTop + dp(100));
+            gridTop = isNarrowVertical ? (clockTop + dp(70)) : (clockTop + dp(72));
             ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).leftMargin = m;
-            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - dp(28);
+            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - dp(22);
 
+            final int totalPages = Math.max(1, (launchable + MAX_PAGE_APPS - 1) / MAX_PAGE_APPS);
+            final int firstPageApps = Math.min(launchable, MAX_PAGE_APPS);
+            if (want != null && rowApps.contains(want)) {
+                currentAppPage = rowApps.indexOf(want) / MAX_PAGE_APPS;
+            }
+            if (currentAppPage >= totalPages) currentAppPage = Math.max(0, totalPages - 1);
+
+            // Reserve the bottom ~38% of the screen completely clear for the animated Story Stage
+            int btnH = dp(24);
+            int chevW = dp(80), chevH = dp(18);
+            int dotsReserve = totalPages > 1 ? dp(14) : 0;
+            int controlsReserve = dotsReserve + btnH + chevH + dp(14);
+            int stageSafeBottom = Math.round(screenH * (isNarrowVertical ? 0.62f : 0.64f));
+            int maxAvailGridH = Math.max(dp(160), stageSafeBottom - gridTop - controlsReserve);
+
+            int visibleRows;
+            int iconSize = dp(44);
+            int labelH = dp(15);
             if (isNarrowVertical) {
                 cols = 4;
+                visibleRows = Math.min(4, Math.max(1, (firstPageApps + cols - 1) / cols));
                 int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-                int iconSize = Math.min(dp(60), Math.round(w * 0.72f));
-                int labelH = dp(26);
+                int maxRowStep = maxAvailGridH / visibleRows;
+                int rowGap = visibleRows >= 4 ? dp(5) : (visibleRows == 3 ? dp(7) : dp(9));
+                int targetIcon = visibleRows >= 4 ? dp(42) : (visibleRows == 3 ? dp(46) : dp(50));
+                iconSize = Math.max(dp(34), Math.min(targetIcon, Math.min(Math.round(w * 0.58f), maxRowStep - labelH - rowGap)));
                 int h = iconSize + labelH;
                 tileW = w;
                 tileH = h;
-                rowStepPx = h + dp(16);
+                rowStepPx = h + rowGap;
+            } else {
+                cols = firstPageApps <= 6 ? Math.min(3, Math.max(1, firstPageApps)) : 4;
+                visibleRows = Math.min(4, Math.max(1, (firstPageApps + cols - 1) / cols));
+                int w = (screenW - 2 * m - g * (cols - 1)) / cols;
+                int h = w * 9 / 16;
+                int maxRowH = (maxAvailGridH - (visibleRows - 1) * g) / visibleRows;
+                if (h > maxRowH) {
+                    h = Math.max(dp(54), maxRowH);
+                }
+                tileW = w;
+                tileH = h;
+                rowStepPx = h + g;
+            }
 
+            final int pagerH = visibleRows * rowStepPx + dp(4);
+            appPager = new android.widget.HorizontalScrollView(this) {
+                private float startX;
+                private int startPage;
+                @Override
+                public boolean onTouchEvent(android.view.MotionEvent ev) {
+                    int act = ev.getActionMasked();
+                    if (act == android.view.MotionEvent.ACTION_DOWN) {
+                        startX = ev.getRawX();
+                        startPage = currentAppPage;
+                    } else if ((act == android.view.MotionEvent.ACTION_UP || act == android.view.MotionEvent.ACTION_CANCEL)
+                            && totalPages > 1) {
+                        float dx = ev.getRawX() - startX;
+                        int target = startPage;
+                        int flipThreshold = dp(34);
+                        if (dx < -flipThreshold && startPage < totalPages - 1) {
+                            target = startPage + 1;
+                        } else if (dx > flipThreshold && startPage > 0) {
+                            target = startPage - 1;
+                        } else {
+                            target = Math.max(0, Math.min(totalPages - 1, Math.round((float) getScrollX() / screenW)));
+                        }
+                        currentAppPage = target;
+                        updatePageDots(target);
+                        final int scrollTarget = target * screenW;
+                        post(() -> smoothScrollTo(scrollTarget, 0));
+                        return true;
+                    }
+                    return super.onTouchEvent(ev);
+                }
+                @Override
+                protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+                    super.onScrollChanged(l, t, oldl, oldt);
+                    if (totalPages > 1 && screenW > 0) {
+                        int p = Math.max(0, Math.min(totalPages - 1, Math.round((float) l / screenW)));
+                        if (p != currentAppPage) {
+                            currentAppPage = p;
+                            updatePageDots(p);
+                        }
+                    }
+                }
+            };
+            appPager.setHorizontalScrollBarEnabled(false);
+            appPager.setOverScrollMode(View.OVER_SCROLL_NEVER);
+            appPager.setClipChildren(false);
+            appPager.setClipToPadding(false);
+
+            FrameLayout pagerContent = new FrameLayout(this);
+            pagerContent.setClipChildren(false);
+            int totalW = totalPages * screenW;
+            appPager.addView(pagerContent, new FrameLayout.LayoutParams(totalW, pagerH));
+            // Touch-through on empty space inside the app grid so tapping empty sky still works
+            pagerContent.setMinimumWidth(totalW);
+            pagerContent.setMinimumHeight(pagerH);
+            root.addView(appPager, at(0, gridTop, screenW, pagerH));
+            chrome.add(appPager);
+
+            if (isNarrowVertical) {
                 for (int i = 0; i < rowApps.size(); i++) {
                     String pkg = rowApps.get(i);
                     String label = pkg;
                     Drawable defaultIcon = null;
                     try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
-                    addMobileAppTile(root, pkg, label, null, defaultIcon, gridX(i), gridY(i), w, h, iconSize);
+                    addMobileAppTile(pagerContent, pkg, label, null, defaultIcon, gridX(i), gridY(i), tileW, tileH, iconSize);
                 }
             } else {
-                // Unfolded Foldable Inner Screen & Tablet: Signature 16:9 Widescreen TV-Style Banner Cards
-                cols = launchable <= 6 ? Math.min(3, Math.max(1, launchable)) : (launchable <= 12 ? 4 : 5);
-                int rowsCount = Math.max(1, (launchable + cols - 1) / cols);
-                int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-                int h = w * 9 / 16;
-                int maxRowH = (Math.round(screenH * 0.38f) - (rowsCount - 1) * g) / rowsCount;
-                if (h > maxRowH) {
-                    h = Math.max(dp(76), maxRowH);
-                }
-                tileW = w;
-                tileH = h;
-                rowStepPx = h + g;
-                float bannerScale = Math.min(uiScale * 0.95f, h / 185f);
-
+                float bannerScale = Math.min(uiScale * 0.95f, tileH / 185f);
                 for (int i = 0; i < rowApps.size(); i++) {
                     String pkg = rowApps.get(i);
                     String label = pkg;
@@ -1001,20 +1101,48 @@ public class MainActivity extends Activity {
                     try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
                     Drawable banner = SkyView.createThemeBanner(
-                            getResources(), pkg, label, w, h, bannerScale,
+                            getResources(), pkg, label, tileW, tileH, bannerScale,
                             themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i, true);
-                    addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
+                    addTile(pagerContent, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), tileW, tileH);
                 }
             }
 
-            int rows = Math.max(1, (launchable + cols - 1) / cols);
-            int bottomTop = gridTop + rows * rowStepPx + (isNarrowVertical ? dp(10) : dp(12));
+            if (currentAppPage > 0) {
+                final int initialScroll = currentAppPage * screenW;
+                appPager.post(() -> {
+                    if (appPager != null) appPager.scrollTo(initialScroll, 0);
+                });
+            }
 
-            // Native 3-Button Frosted Control Row: [ Theme ]  [ + Add App ]  [ Settings ] + All Apps Handle below
-            int pillGap = dp(10);
-            int maxDockW = Math.min(screenW - 2 * m, dp(520));
+            int afterGridY = gridTop + pagerH;
+            if (totalPages > 1) {
+                LinearLayout dotsBar = new LinearLayout(this);
+                dotsBar.setOrientation(LinearLayout.HORIZONTAL);
+                dotsBar.setGravity(Gravity.CENTER);
+                for (int p = 0; p < totalPages; p++) {
+                    final int pageIndex = p;
+                    View dot = new View(this);
+                    dot.setOnClickListener(v -> {
+                        currentAppPage = pageIndex;
+                        updatePageDots(pageIndex);
+                        if (appPager != null) appPager.smoothScrollTo(pageIndex * screenW, 0);
+                    });
+                    pageDots.add(dot);
+                    dotsBar.addView(dot);
+                }
+                updatePageDots(currentAppPage);
+                int dotsH = dp(14);
+                root.addView(dotsBar, at(0, afterGridY + dp(2), screenW, dotsH));
+                chrome.add(dotsBar);
+                afterGridY += dotsH + dp(4);
+            }
+
+            int bottomTop = afterGridY + dp(4);
+
+            // Compact 3-Button Control Row: [ Theme ]  [ + Add app ]  [ Settings ] + compact All Apps Handle below
+            int pillGap = dp(6);
+            int maxDockW = Math.min(screenW - 2 * m, dp(264));
             int btnW = (maxDockW - 2 * pillGap) / 3;
-            int btnH = dp(44);
             int dockStartX = (screenW - (3 * btnW + 2 * pillGap)) / 2;
 
             addTile(root, THEME_PICK, "Theme", null, LineIcon.THEMES, null, dockStartX, bottomTop, btnW, btnH);
@@ -1022,10 +1150,10 @@ public class MainActivity extends Activity {
             addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null,
                     dockStartX + 2 * (btnW + pillGap), bottomTop, btnW, btnH);
 
-            int chevW = dp(138), chevH = dp(34);
-            addWhisperChevron(root, (screenW - chevW) / 2, bottomTop + btnH + dp(10), chevW, chevH);
+            addWhisperChevron(root, (screenW - chevW) / 2, bottomTop + btnH + dp(4), chevW, chevH);
 
-            root.setMinimumHeight(bottomTop + btnH + chevH + dp(24) + m);
+            // Never exceed screenH so the home screen never scrolls vertically on phones/foldables
+            root.setMinimumHeight(0);
             netIcon = null;
             glowIconView = null;
         } else {
@@ -1121,31 +1249,48 @@ public class MainActivity extends Activity {
         if (restore != null) restore.requestFocus();
     }
 
-    // Tactile Swipe-Up Handle ("︿ ALL APPS") for phones, foldables, and tablets.
+    private void updatePageDots(int activePage) {
+        for (int i = 0; i < pageDots.size(); i++) {
+            View dot = pageDots.get(i);
+            boolean active = (i == activePage);
+            int dw = active ? dp(16) : dp(5);
+            int dh = dp(5);
+            GradientDrawable g = new GradientDrawable();
+            g.setCornerRadius(dh / 2f);
+            g.setColor(active ? 0xF0FFE082 : 0x55FFE082);
+            dot.setBackground(g);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dw, dh);
+            lp.leftMargin = dp(3);
+            lp.rightMargin = dp(3);
+            dot.setLayoutParams(lp);
+        }
+    }
+
+    // Compact Swipe-Up Handle ("︿ ALL APPS") for phones, foldables, and tablets.
     private void addWhisperChevron(ViewGroup parent, int x, int y, int w, int h) {
         LinearLayout pill = new LinearLayout(this);
         pill.setOrientation(LinearLayout.HORIZONTAL);
         pill.setGravity(Gravity.CENTER);
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(h / 2f);
-        bg.setColor(0x3812101C);
-        bg.setStroke(Math.max(1, dp(1)), 0x48F5D078);
+        bg.setColor(0x3212101C);
+        bg.setStroke(Math.max(1, dp(1)), 0x42F5D078);
         pill.setBackground(bg);
-        pill.setPadding(dp(14), 0, dp(14), 0);
+        pill.setPadding(dp(8), 0, dp(8), 0);
 
         ImageView iv = new ImageView(this);
         LineIcon li = new LineIcon(LineIcon.CHEVRON_UP);
         li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
         iv.setImageDrawable(li);
-        int sz = dp(15);
+        int sz = dp(9);
         pill.addView(iv, new LinearLayout.LayoutParams(sz, sz));
 
-        TextView tv = text(sp(11.5f), 0xE6FFE8B0, cinzelFont != null ? cinzelFont : semibold);
+        TextView tv = text(sp(8f), 0xDCFFE8B0, cinzelFont != null ? cinzelFont : semibold);
         tv.setText("ALL APPS");
-        tv.setLetterSpacing(0.10f);
+        tv.setLetterSpacing(0.08f);
         tv.setSingleLine(true);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-2, -2);
-        tlp.leftMargin = dp(6);
+        tlp.leftMargin = dp(3);
         pill.addView(tv, tlp);
 
         // Gentle breathing pulse on the chevron icon
@@ -1156,7 +1301,7 @@ public class MainActivity extends Activity {
         pulse.addUpdateListener(a -> {
             float v = (float) a.getAnimatedValue();
             iv.setAlpha(v);
-            iv.setTranslationY(-dp(1.5f) * (v - 0.55f));
+            iv.setTranslationY(-dp(1f) * (v - 0.55f));
         });
         pulse.start();
 
@@ -1165,8 +1310,8 @@ public class MainActivity extends Activity {
         pill.setContentDescription("All Apps");
         pill.setOnClickListener(v -> showAllAppsDrawer(false));
         pill.setOnFocusChangeListener((v, has) -> {
-            bg.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? 0xEEFFE082 : 0x48F5D078);
-            lift(v, bg, has, 0x3812101C, 0x55382A18, h / 2, h / 2);
+            bg.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? 0xEEFFE082 : 0x42F5D078);
+            lift(v, bg, has, 0x3212101C, 0x55382A18, h / 2, h / 2);
         });
 
         FrameLayout wrap = new FrameLayout(this);
@@ -1217,7 +1362,7 @@ public class MainActivity extends Activity {
         iconBox.setForeground(border);
         cell.addView(iconBox, new LinearLayout.LayoutParams(iconSize, iconSize));
 
-        final TextView titleView = text(sp(13f), 0xF8FFF8EC, semibold);
+        final TextView titleView = text(sp(11f), 0xF8FFF8EC, semibold);
         titleView.setText(label);
         titleView.setIncludeFontPadding(false);
         titleView.setSingleLine(true);
@@ -1225,7 +1370,7 @@ public class MainActivity extends Activity {
         titleView.setGravity(Gravity.CENTER_HORIZONTAL);
         titleView.setShadowLayer(dp(4), 0, dp(1.5f), 0xEE000000);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(w, -2);
-        tlp.topMargin = dp(6);
+        tlp.topMargin = dp(3);
         cell.addView(titleView, tlp);
 
         final int houseCol = SkyView.themeAccentFor(key);
@@ -1320,15 +1465,15 @@ public class MainActivity extends Activity {
         } else {
             // Compact dark-gold capsule pill for bottom utility tiles, scaled with native dp/sp on phones/foldables.
             boolean mobilePill = !isTvDevice();
-            bg.setColor(mobilePill ? 0x4212101C : 0x28181210);
+            bg.setColor(mobilePill ? 0x3812101C : 0x28181210);
             LinearLayout inner = new LinearLayout(this);
             boolean pill = lineIcon != null;
             inner.setOrientation(pill ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
             inner.setGravity(Gravity.CENTER);
-            int padX = pill ? (mobilePill ? dp(10) : Math.max(px(8), Math.round(h * 0.20f))) : px(14);
+            int padX = pill ? (mobilePill ? dp(6) : Math.max(px(8), Math.round(h * 0.20f))) : px(14);
             inner.setPadding(padX, 0, padX, 0);
             ImageView iv = new ImageView(this);
-            int size = pill ? (mobilePill ? dp(17) : Math.max(px(16), Math.round(h * 0.42f))) : px(64);
+            int size = pill ? (mobilePill ? dp(12) : Math.max(px(16), Math.round(h * 0.42f))) : px(64);
             if (lineIcon != null) {
                 LineIcon li = new LineIcon(lineIcon);
                 li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
@@ -1338,15 +1483,15 @@ public class MainActivity extends Activity {
                 iv.setImageDrawable(appIcon);
             }
             inner.addView(iv, new LinearLayout.LayoutParams(size, size));
-            int gapX = pill ? (mobilePill ? dp(6) : Math.max(px(5), Math.round(h * 0.14f))) : 0;
-            int textPx = pill ? (mobilePill ? sp(13f) : Math.max(px(12), Math.round(h * 0.30f))) : px(15);
+            int gapX = pill ? (mobilePill ? dp(4) : Math.max(px(5), Math.round(h * 0.14f))) : 0;
+            int textPx = pill ? (mobilePill ? sp(10f) : Math.max(px(12), Math.round(h * 0.30f))) : px(15);
             TextView t = text(textPx, 0xF5FFF4D2, mobilePill ? semibold : (cinzelFont != null ? cinzelFont : semibold));
             t.setText(label);
             if (pill && label != null) {
-                float availW = w - 2 * padX - size - gapX - (mobilePill ? dp(4) : px(4));
+                float availW = w - 2 * padX - size - gapX - (mobilePill ? dp(2) : px(4));
                 float measured = t.getPaint().measureText(label);
                 if (availW > 0 && measured > availW) {
-                    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(mobilePill ? sp(10.5f) : px(10), textPx * (availW / measured)));
+                    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(mobilePill ? sp(8.5f) : px(10), textPx * (availW / measured)));
                 }
             }
             t.setSingleLine(true);
@@ -1565,8 +1710,8 @@ public class MainActivity extends Activity {
         boolean isPortrait = dm.heightPixels > dm.widthPixels;
         int datePx, timePx;
         if (!isTvDevice()) {
-            datePx = isPortrait ? (theme == 0 ? sp(18.5f) : sp(14.5f)) : (theme == 0 ? sp(17.5f) : sp(14f));
-            timePx = isPortrait ? (theme == 0 ? sp(74f) : sp(60f)) : (theme == 0 ? sp(66f) : sp(52f));
+            datePx = isPortrait ? (theme == 0 ? sp(15f) : sp(12.5f)) : (theme == 0 ? sp(16f) : sp(13f));
+            timePx = isPortrait ? (theme == 0 ? sp(50f) : sp(42f)) : (theme == 0 ? sp(54f) : sp(44f));
         } else {
             datePx = isPortrait ? (theme == 0 ? upx(32) : upx(24)) : (theme == 0 ? px(36) : px(26));
             timePx = isPortrait ? (theme == 0 ? upx(118) : upx(92)) : (theme == 0 ? px(144) : px(108));
@@ -2752,21 +2897,39 @@ public class MainActivity extends Activity {
         getSharedPreferences(PREFS, 0).edit().putString("apps", android.text.TextUtils.join(",", rowApps)).apply();
     }
 
-    // Where app number i sits in the grid (each row is horizontally centered).
+    // Where app number i sits in the grid (each row is horizontally centered; on phones/foldables, paged by 16 apps).
     private int gridX(int i) {
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int g = gapPx > 0 ? gapPx : px(GAP);
+        if (!isTvDevice()) {
+            int page = i / MAX_PAGE_APPS;
+            int idxInPage = i % MAX_PAGE_APPS;
+            int row = idxInPage / cols;
+            int col = idxInPage % cols;
+            int pageStart = page * MAX_PAGE_APPS;
+            int pageCount = Math.min(MAX_PAGE_APPS, Math.max(1, rowApps.size() - pageStart));
+            int rowStart = row * cols;
+            int countInRow = Math.min(cols, Math.max(1, pageCount - rowStart));
+            int rowW = countInRow * tileW + (countInRow - 1) * g;
+            int startX = page * screenW + (screenW - rowW) / 2;
+            return startX + col * (tileW + g);
+        }
         int row = i / cols;
         int col = i % cols;
         int rowStart = row * cols;
         int countInRow = Math.min(cols, Math.max(1, rowApps.size() - rowStart));
-        int screenW = getResources().getDisplayMetrics().widthPixels;
-        int g = gapPx > 0 ? gapPx : px(GAP);
         int rowW = countInRow * tileW + (countInRow - 1) * g;
         int startX = (screenW - rowW) / 2;
         return startX + col * (tileW + g);
     }
 
     private int gridY(int i) {
-        return gridTop + (i / cols) * (rowStepPx > 0 ? rowStepPx : px(ROW_STEP));
+        int step = rowStepPx > 0 ? rowStepPx : px(ROW_STEP);
+        if (!isTvDevice()) {
+            int idxInPage = i % MAX_PAGE_APPS;
+            return (idxInPage / cols) * step;
+        }
+        return gridTop + (i / cols) * step;
     }
 
     private View tile(String key) {
@@ -2782,7 +2945,7 @@ public class MainActivity extends Activity {
         GradientDrawable outline = new GradientDrawable();
         outline.setCornerRadius(px(RADIUS + RADIUS_UP));
         outline.setStroke(px(4), Color.WHITE);
-        ((FrameLayout) card).setForeground(outline);
+        if (android.os.Build.VERSION.SDK_INT >= 23) card.setForeground(outline);
         moveHint.setVisibility(View.VISIBLE);
         card.requestFocus();
     }
@@ -2802,6 +2965,15 @@ public class MainActivity extends Activity {
                     lp.topMargin = gridY(i);
                     wrap.setLayoutParams(lp);
                 }
+                if (!isTvDevice() && appPager != null) {
+                    int newPage = to / MAX_PAGE_APPS;
+                    if (newPage != currentAppPage) {
+                        currentAppPage = newPage;
+                        updatePageDots(newPage);
+                        int sw = getResources().getDisplayMetrics().widthPixels;
+                        appPager.smoothScrollTo(newPage * sw, 0);
+                    }
+                }
                 // Scroll along with it once it has moved.
                 final View card = tile(key);
                 card.post(() -> card.requestRectangleOnScreen(
@@ -2813,11 +2985,15 @@ public class MainActivity extends Activity {
             if (!down) {
                 movingKey = null;
                 longPressed = false;
-                GradientDrawable border = new GradientDrawable();
-                border.setCornerRadius(px(RADIUS + RADIUS_UP));
-                border.setColor(Color.TRANSPARENT);
-                border.setStroke(Math.max(1, px(3)), 0x90FFFFFF);
-                ((FrameLayout) tile(key)).setForeground(border);
+                if (isTvDevice()) {
+                    GradientDrawable border = new GradientDrawable();
+                    border.setCornerRadius(px(RADIUS + RADIUS_UP));
+                    border.setColor(Color.TRANSPARENT);
+                    border.setStroke(Math.max(1, px(3)), 0x90FFFFFF);
+                    if (android.os.Build.VERSION.SDK_INT >= 23) tile(key).setForeground(border);
+                } else {
+                    if (android.os.Build.VERSION.SDK_INT >= 23) tile(key).setForeground(null);
+                }
                 moveHint.setVisibility(View.GONE);
                 saveRow();
                 refreshApps();
