@@ -162,7 +162,7 @@ final class SkyView extends View {
 
     // Manual scene-skip offset (triggered from Settings -> Next Story Scene)
     private int sceneOffset = 0;
-    // Active Universe Theme: 0 = Harry Potter, 1 = Naruto, 2 = Demon Slayer, 3 = Star Wars, 4 = MCU, 5 = DCU
+    // Active Theme Universe: 0 = Harry Potter, 1 = Naruto, 2 = Demon Slayer, 3 = Star Wars, 4 = MCU, 5 = DCU, 6 = Formula 1
     private int universeTheme = 0;
 
     private static final String[] NARUTO_TITLES = {
@@ -400,6 +400,53 @@ final class SkyView extends View {
         "XLIV  |  KINGDOM COME  |  ELDER SUPERMAN & ARMORED BATMAN"
     };
 
+    private static final String[] F1_TITLES = {
+        "I  |  LIGHTS OUT  |  FIVE RED LIGHTS AT BAHRAIN NIGHT GP",
+        "II  |  MONACO GRAND PRIX  |  FAIRMONT HAIRPIN & TUNNEL BLAST",
+        "III  |  MONZA TEMPLE OF SPEED  |  SCUDERIA FERRARI TIFOSI TROPHY LIFT",
+        "IV  |  SPA-FRANCORCHAMPS  |  EAU ROUGE & RAIDILLON FULL-THROTTLE CLIMB",
+        "V  |  SILVERSTONE CIRCUIT  |  MAGGOTTS & BECKETTS HIGH-G APEX",
+        "VI  |  SUZUKA CIRCUIT  |  130R & FIGURE-EIGHT CROSSOVER DUEL",
+        "VII  |  INTERLAGOS BRAZIL  |  AYRTON SENNA BRAZILIAN FLAG & TROPHY LIFT",
+        "VIII  |  MARINA BAY SINGAPORE  |  FLOODLIT STREET CIRCUIT TITANIUM SPARKS",
+        "IX  |  LAS VEGAS STRIP  |  NEON SPHERE STRAIGHTAWAY DRS OVERTAKE",
+        "X  |  RED BULL RING  |  1.8-SECOND WORLD RECORD PIT STOP CREW",
+        "XI  |  YAS MARINA ABU DHABI  |  WORLD CHAMPIONSHIP DONUTS & FIREWORKS",
+        "XII  |  PODIUM CEREMONY  |  CHAMPAGNE SPRAY & GOLD TROPHY LIFT",
+        "XIII  |  MONACO SWIMMING POOL  |  SENNA McLAREN MP4/4 QUALIFYING LAP",
+        "XIV  |  SILVERSTONE FINALE  |  HAMILTON UNION JACK & BRITISH GP TROPHY LIFT",
+        "XV  |  ZANDVOORT BANKING  |  VERSTAPPEN ORANGE ARMY & TROPHY LIFT",
+        "XVI  |  MIAMI AUTODROME  |  LANDO NORRIS PAPAYA MAIDEN WIN TROPHY LIFT",
+        "XVII  |  MONZA PARABOLICA  |  CHARLES LECLERC MONZA WINNER TROPHY LIFT",
+        "XVIII  |  AUSTIN COTA TURN 1  |  STEEP UPHILL FOUR-WIDE START CHARGE",
+        "XIX  |  IMOLA TAMBURELLO  |  SCHUMACHER FERRARI F2004 V10 & TROPHY LIFT",
+        "XX  |  MONTREAL QUEBEC  |  WALL OF CHAMPIONS CHICANE BRUSH",
+        "XXI  |  BAKU CITY CIRCUIT  |  CASTLE SECTION THREADING THE NEEDLE",
+        "XXII  |  JEDDAH CORNICHE  |  RED SEA 330 KM/H NIGHT STREET DUEL",
+        "XXIII  |  MELBOURNE ALBERT PARK  |  PIAGGIO LAKESIDE HIGH-SPEED CHICANE",
+        "XXIV  |  SUZUKA CHICANE  |  SENNA McLAREN VS. PROST FERRARI SHOWDOWN",
+        "XXV  |  DIJON PRENOIS 1979  |  VILLENEUVE FERRARI VS. ARNOUX WHEEL-TO-WHEEL",
+        "XXVI  |  SPA KEMMEL STRAIGHT  |  HAKKINEN McLAREN DOUBLE PASS ON SCHUMACHER",
+        "XXVII  |  INTERLAGOS 2008  |  LAST-CORNER WORLD TITLE DECIDER IN THE RAIN",
+        "XXVIII  |  YAS MARINA 2010  |  SEBASTIAN VETTEL YOUNGEST CHAMPION TROPHY LIFT",
+        "XXIX  |  BARCELONA CATALUNYA  |  FERNANDO ALONSO RENAULT R25 HOME TROPHY LIFT",
+        "XXX  |  MELBOURNE 2009  |  JENSON BUTTON BRAWN GP FLUORESCENT TROPHY LIFT",
+        "XXXI  |  ESTORIL MASTERCLASS  |  SENNA LOTUS 97T BLACK & GOLD WET RACE WIN",
+        "XXXII  |  NÜRBURGRING LEGENDS  |  NIKI LAUDA FERRARI & FANGIO SILVER ARROW",
+        "XXXIII  |  SILVERSTONE 1992  |  NIGEL MANSELL RED FIVE WILLIAMS FW14B",
+        "XXXIV  |  AUSTIN COTA 2018  |  KIMI RÄIKKÖNEN ICEMAN FERRARI TROPHY LIFT",
+        "XXXV  |  MONZA 2021 PODIUM  |  McLAREN ONE-TWO FINISH & TROPHY LIFT",
+        "XXXVI  |  SAKHIR OUTER LOOP  |  LAST-TO-FIRST NIGHT VICTORY TROPHY LIFT",
+        "XXXVII  |  SILVERSTONE CLUB  |  THREE-WIDE WHEEL-TO-WHEEL APEX BATTLE",
+        "XXXVIII  |  MARINA BAY FINALE  |  CARLOS SAINZ SMOOTH OPERATOR FERRARI TROPHY LIFT",
+        "XXXIX  |  SPA-FRANCORCHAMPS RAIN  |  SCHUMACHER FERRARI ROOSTER-TAIL CHARGE",
+        "XL  |  SUZUKA 2005  |  RÄIKKÖNEN LAST-LAP OUTSIDE OVERTAKE AT 130R",
+        "XLI  |  MONACO HARBOR  |  LECLERC PRINCE OF MONACO HOME TROPHY LIFT",
+        "XLII  |  SAFETY CAR RESTART  |  GREEN FLAG PACK CHARGE & TIRE WEAVING",
+        "XLIII  |  PARC FERMÉ VICTORY  |  DRIVER LEAPING ATOP THE HALO WITH TROPHY",
+        "XLIV  |  CHAMPIONS GALA  |  CONSTRUCTORS' & DRIVERS' WORLD TROPHY LIFT"
+    };
+
     // Cached Ambilight Edge LinearGradients (rebuilt ONLY when RGB or screen dimensions change)
     private LinearGradient topEdgeShader, botEdgeShader, leftEdgeShader, rightEdgeShader;
     private int cachedShaderRgb = -1, cachedShaderW = -1, cachedShaderH = -1;
@@ -449,13 +496,13 @@ final class SkyView extends View {
     // v6.0 Universal Landscape & Foldable Cinema Story Screensaver Mode (triggered after 2 minutes of inactivity):
     // - Story animations grow huge and fill up to the bottom 3/4th of the screen.
     // - Story caption & dots at the bottom keep their standard size.
-    // - All 300 story scenes across all 6 Universe Themes are pooled into a single randomized shuffle,
+    // - All 344 story scenes across all 7 Theme Universes are pooled into a single randomized shuffle,
     //   updating both SkyView's universe backdrop and the top-left Clock's franchise typography.
     private boolean screensaverMode = false;
     private float screensaverZoom = 0f;
     private int screensaverOverrideScene = -1;
     private int lastScreensaverSlot = -1;
-    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 5; // 300 total story scenes across 6 themes
+    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 6; // 344 total story scenes across 7 themes
     private final int[] shuffledPool = new int[TOTAL_POOL_SCENES];
     private int poolCursor = TOTAL_POOL_SCENES;
     private final java.util.Random poolRng = new java.util.Random();
@@ -486,7 +533,8 @@ final class SkyView extends View {
             DEMON_SLAYER_TITLES.length,
             STAR_WARS_TITLES.length,
             MCU_TITLES.length,
-            DCU_TITLES.length
+            DCU_TITLES.length,
+            F1_TITLES.length
         };
         for (int th = 0; th < counts.length; th++) {
             for (int sc = 0; sc < counts[th]; sc++) {
@@ -534,7 +582,7 @@ final class SkyView extends View {
                 baseSky = null;
             }
         }
-        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28};
+        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801};
         int col = themeColors[Math.max(0, Math.min(themeColors.length - 1, nextTheme))];
         setReactiveColor(col, false);
         if (screensaverThemeListener != null) {
@@ -992,6 +1040,10 @@ final class SkyView extends View {
                 // Theme 6: DCU — Dark Deco Gotham Storm & Bat-Signal Night Sky
                 topCol = 0xFF040710; midCol = 0xFF0B1426; botCol = 0xFF050811;
                 glow1 = 0x42FFE068; glow2 = 0x382898FF; glow3 = 0x32FFB828;
+            } else if (universeTheme == 6) {
+                // Theme 7: FORMULA 1 — Floodlit Night Grand Prix Circuit (Bahrain / Singapore / Las Vegas Asphalt & Crimson Telemetry)
+                topCol = 0xFF05060C; midCol = 0xFF140810; botCol = 0xFF08090F;
+                glow1 = 0x44FF1801; glow2 = 0x3800D2BE; glow3 = 0x38FF8000;
             } else if (paletteIndex == 1) {
                 topCol = 0xFF16080A; midCol = 0xFF220E12; botCol = 0xFF0E070A;
                 glow1 = 0x44FFB840; glow2 = 0x38B82830;
@@ -1295,6 +1347,61 @@ final class SkyView extends View {
                 c.drawCircle(w * 0.84f, skyY(w, h, 0.72f), px(11f), p);
                 c.drawLine(w * 0.82f, skyY(w, h, 0.72f), w * 0.86f, skyY(w, h, 0.72f), p);
                 c.drawLine(0, groundY, w, groundY, p);
+            } else if (universeTheme == 6) {
+                // FORMULA 1 SKY: FIA 5-Red-Lights Starting Gantry in Upper Right + Pit Lane Control Tower & Grandstand Horizon
+                float mx = w * 0.84f, my = h * 0.16f, mr = px(44);
+                p.setShader(new RadialGradient(mx, my, mr * 3.8f,
+                        new int[] {0x48FF1801, 0x1A900810, 0x00000000}, new float[] {0f, 0.48f, 1f}, Shader.TileMode.CLAMP));
+                c.drawCircle(mx, my, mr * 3.8f, p);
+                p.setShader(null);
+
+                // Carbon Starting Gantry Truss & 5 FIA Red Light Pods in upper-right sky
+                float gw = px(88f), gh = px(28f);
+                p.setStyle(Paint.Style.FILL);
+                p.setColor(0xCC121620);
+                c.drawRoundRect(mx - gw * 0.56f, my - gh * 0.65f, mx + gw * 0.56f, my - gh * 0.35f, px(3f), px(3f), p);
+                for (int lt = 0; lt < 5; lt++) {
+                    float lx = mx + (lt - 2) * px(16.5f);
+                    p.setColor(0xEE181C26);
+                    c.drawRoundRect(lx - px(6f), my - gh * 0.5f, lx + px(6f), my + gh * 0.55f, px(3f), px(3f), p);
+                    p.setColor(0x55FF1801);
+                    c.drawCircle(lx, my - px(3.5f), px(3.2f), p);
+                    p.setColor(0xFFFF1801);
+                    c.drawCircle(lx, my + px(5.0f), px(3.6f), p);
+                    p.setColor(0xFFFFB0A0);
+                    c.drawCircle(lx, my + px(5.0f), px(1.5f), p);
+                }
+
+                float groundY = h * 0.900f;
+                p.setStyle(Paint.Style.FILL);
+                p.setColor(0x90070910);
+                Path stage = new Path();
+                stage.moveTo(0, h);
+                stage.lineTo(0, groundY);
+                stage.lineTo(w * 0.68f, groundY);
+                // F1 Pit Building, Race Control Tower & Illuminated Yas/Vegas Archway on right (0.70..0.96)
+                stage.lineTo(w * 0.70f, skyY(w, h, 0.80f));
+                stage.lineTo(w * 0.78f, skyY(w, h, 0.79f)); // Pit Lane Roof Overhang
+                stage.lineTo(w * 0.76f, groundY);
+                stage.lineTo(w * 0.81f, groundY);
+                stage.lineTo(w * 0.82f, skyY(w, h, 0.67f)); // Slanted Race Control & Timing Tower
+                stage.lineTo(w * 0.86f, skyY(w, h, 0.69f));
+                stage.lineTo(w * 0.85f, groundY);
+                stage.lineTo(w * 0.88f, skyY(w, h, 0.76f)); // Grandstand Canopy
+                stage.lineTo(w * 0.96f, skyY(w, h, 0.74f));
+                stage.lineTo(w * 0.95f, groundY);
+                stage.lineTo(w, groundY);
+                stage.lineTo(w, h);
+                stage.close();
+                c.drawPath(stage, p);
+
+                // Illuminated Neon Telemetry & Pit Garage Windows + FIA Red/White Track Kerbs
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.0f));
+                p.setColor(0x7800D2BE);
+                c.drawArc(rectF(w * 0.71f, skyY(w, h, 0.74f), w * 0.94f, groundY + px(24f)), 195, 150, false, p);
+                p.setColor(0x88FF1801);
+                c.drawLine(0, groundY, w, groundY, p);
             } else {
             // Full Moon in upper right sky
             float mx = w * 0.85f, my = h * 0.16f, mr = px(34);
@@ -1583,6 +1690,16 @@ final class SkyView extends View {
                 canvas.drawCircle(cx, cy + ch * 0.30f, cw * 0.85f, paint);
                 paint.setStyle(Paint.Style.FILL);
                 continue;
+            } else if (universeTheme == 6) {
+                // FORMULA 1 Top Sky: Floating FIA Sector Telemetry Pods (Red Lights, Purple Fastest-Lap, Green Sector,DRS)
+                int f1Col = (i % 4 == 0) ? 0xFFFF1801 : (i % 4 == 1 ? 0xFFD500F9 : (i % 4 == 2 ? 0xFF00E676 : 0xFF00D2BE));
+                paint.setColor((0x34 << 24) | (f1Col & 0xFFFFFF));
+                canvas.drawCircle(cx, cy + ch * 0.30f, cw * 2.5f * flicker, paint);
+                paint.setColor(0xDD141822);
+                canvas.drawRoundRect(cx - cw * 0.75f, cy, cx + cw * 0.75f, cy + ch * 0.56f, px(3f), px(3f), paint);
+                paint.setColor(f1Col);
+                canvas.drawCircle(cx, cy + ch * 0.28f, cw * 0.46f * flicker, paint);
+                continue;
             }
             paint.setColor((0x24 << 24) | rgbOnly);
             canvas.drawCircle(cx, cy - px(5f), cw * 2.1f * flicker, paint);
@@ -1734,6 +1851,20 @@ final class SkyView extends View {
             c.drawArc(rectF(sx - px(14f), sy - px(6f), sx + px(14f), sy + px(8f)), 200, 140, false, paint);
             paint.setStyle(Paint.Style.FILL);
             return;
+        } else if (universeTheme == 6) {
+            // FORMULA 1 Companion: Spinning Pirelli Soft Red-Wall F1 Wheel & Glowing Carbon-Ceramic Brake Rotor
+            paint.setColor(0x48FF1801);
+            c.drawCircle(sx, sy, px(13f), paint);
+            paint.setColor(0xFF141820);
+            c.drawCircle(sx, sy, px(9.8f), paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.2f));
+            paint.setColor(0xFFFF1801);
+            c.drawArc(rectF(sx - px(7.2f), sy - px(7.2f), sx + px(7.2f), sy + px(7.2f)), (t * 360f) % 360f, 250f, false, paint);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0xFFFF6D00);
+            c.drawCircle(sx, sy, px(3.6f), paint);
+            return;
         }
         paint.setColor(0x44FFE066);
         c.drawCircle(sx, sy, px(11f), paint);
@@ -1827,6 +1958,37 @@ final class SkyView extends View {
                 // DCU Top Sky: Gliding Gotham Bats & Golden Batarangs
                 drawBird(c, gx, gy, t * 14f + g, px(20f * sc), 0xDD101828);
                 drawBird(c, gx - dir * px(22f * sc), gy + px(8f * sc), t * 16f + g, px(13f * sc), 0xCCFFE068);
+                continue;
+            } else if (universeTheme == 6) {
+                // FORMULA 1 Top Sky: TV Broadcast Helicopters with Searchlights & Pirelli Circuit Blimps
+                paint.setStyle(Paint.Style.FILL);
+                if (g % 2 == 0) {
+                    // Broadcast Camera Helicopter with spinning rotor & searchlight cone
+                    paint.setColor(0x20FFFFFF);
+                    actorPath.reset();
+                    actorPath.moveTo(gx + dir * px(8f * sc), gy + px(3f * sc));
+                    actorPath.lineTo(gx + dir * px(36f * sc), gy + px(28f * sc));
+                    actorPath.lineTo(gx + dir * px(12f * sc), gy + px(30f * sc));
+                    actorPath.close();
+                    c.drawPath(actorPath, paint);
+                    paint.setColor(0xDD1C222E);
+                    c.drawOval(gx - px(11f * sc), gy - px(5f * sc), gx + px(11f * sc), gy + px(5f * sc), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.8f * sc));
+                    c.drawLine(gx, gy, gx - dir * px(22f * sc), gy - px(2f * sc), paint);
+                    paint.setColor(0xCCFF1801);
+                    float rotorSpan = px(18f * sc) * (0.4f + 0.6f * (float) Math.abs(Math.sin(t * 28f + g)));
+                    c.drawLine(gx - rotorSpan, gy - px(8f * sc), gx + rotorSpan, gy - px(8f * sc), paint);
+                    paint.setStyle(Paint.Style.FILL);
+                } else {
+                    // Pirelli Grand Prix Blimp gliding over the circuit
+                    paint.setColor(0xDD1E2430);
+                    c.drawOval(gx - px(18f * sc), gy - px(7f * sc), gx + px(18f * sc), gy + px(7f * sc), paint);
+                    paint.setColor(0xEEFFD800);
+                    c.drawRect(gx - px(10f * sc), gy - px(2f * sc), gx + px(10f * sc), gy + px(1.5f * sc), paint);
+                    paint.setColor(0xEEFF1801);
+                    c.drawCircle(gx + dir * px(12f * sc), gy, px(2.0f * sc), paint);
+                }
                 continue;
             }
             float shimmer = 0.72f + 0.28f * (float) Math.sin(t * 3.1f + g * 1.3f);
@@ -1922,6 +2084,9 @@ final class SkyView extends View {
             return;
         } else if (universeTheme == 5) {
             drawDcuStoryLoop(c, w, h, t);
+            return;
+        } else if (universeTheme == 6) {
+            drawF1StoryLoop(c, w, h, t);
             return;
         }
         float totalCycle = CHAPTER_SEC * SCENE_COUNT;
@@ -6968,6 +7133,832 @@ final class SkyView extends View {
         c.drawCircle(headX - px(2.5f * s), headY - px(1.0f * s), px(2.0f * s), paint);
     }
 
+    /**
+     * THEME 7: FORMULA 1 — 44-Scene Grand Prix Story Loop (Iconic Tracks, Team-Accurate F1 Cars & Podium Trophy Lifts)
+     */
+    private void drawF1StoryLoop(Canvas c, int w, int h, float t) {
+        int count = F1_TITLES.length;
+        float totalCycle = CHAPTER_SEC * count;
+        float cycleTime = t % totalCycle;
+        int scene = (screensaverMode && screensaverOverrideScene >= 0)
+                ? (screensaverOverrideScene % count)
+                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
+        float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
+        float fade = p < 0.08f ? smoothstep(p / 0.08f) : (p > 0.92f ? smoothstep((1f - p) / 0.08f) : 1f);
+        int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
+        float groundY = h * 0.900f;
+
+        drawStoryCaptionAndDots(c, w, h, F1_TITLES[scene], scene, count, aBase,
+                0x00FFF2E8, 0xEEFF1801, 0x44FF5252, px(7.8f));
+
+        c.save();
+        applyStageTransform(c, w, h, groundY);
+
+        // Team Livery Palettes: (Body RGB, Accent RGB, Pirelli Sidewall RGB)
+        final int FERRARI_RED = 0x00DC0000, FERRARI_ACC = 0x00FFF200;
+        final int REDBULL_NAVY = 0x000B163E, REDBULL_ACC = 0x00FFCC00;
+        final int MCLAREN_PAPAYA = 0x00FF8000, MCLAREN_ACC = 0x0018B8FF;
+        final int MERC_SILVER = 0x00242C36, MERC_PETRONAS = 0x0000D2BE;
+        final int ASTON_GREEN = 0x00006F62, ASTON_LIME = 0x00CEDC00;
+        final int MP4_WHITE = 0x00F4F6FA, MP4_RED = 0x00FF1801;
+        final int LOTUS_BLACK = 0x0016161C, LOTUS_GOLD = 0x00FFD048;
+        final int RENAULT_BLUE = 0x000090FF, RENAULT_YELLOW = 0x00FFE000;
+        final int WILLIAMS_BLUE = 0x001858D8, WILLIAMS_GOLD = 0x00FFD000;
+        final int BRAWN_WHITE = 0x00F4F8FA, BRAWN_NEON = 0x00D8FF00;
+
+        final int TIRE_SOFT = 0x00FF1801;
+        final int TIRE_MED = 0x00FFD800;
+        final int TIRE_HARD = 0x00F4F6FA;
+        final int TIRE_WET = 0x000098FF;
+
+        switch (scene) {
+            case 0: // Scene 1: Lights Out — Five Red Lights at Bahrain Night GP
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                drawF1StartGantry(c, w * 0.45f, groundY - px(88f), p, aBase);
+                float launch = p < 0.45f ? 0f : (p - 0.45f) / 0.55f;
+                float accel = launch * launch * w * 0.30f;
+                drawF1Car(c, w * 0.30f + accel, groundY - px(14f), t * 2.2f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_SOFT, false, launch > 0.05f, false, 1.24f);
+                drawF1Car(c, w * 0.42f + accel * 1.06f, groundY - px(8f), t * 2.2f + 0.4f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, launch > 0.05f, false, 1.28f);
+                break;
+
+            case 1: // Scene 2: Monaco Grand Prix — Fairmont Hairpin & Tunnel Blast
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                // Monaco Tunnel Concrete Archway on Left
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(6f));
+                paint.setColor((aBase * 3 / 4 << 24) | 0x00606C80);
+                c.drawArc(rectF(w * 0.24f, groundY - px(84f), w * 0.38f, groundY + px(12f)), 180, 180, false, paint);
+                paint.setStyle(Paint.Style.FILL);
+                float monX = w * (0.28f + p * 0.32f);
+                drawF1Car(c, monX, groundY - px(10f), t * 2.5f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, true, true, false, 1.32f);
+                drawF1Car(c, monX - px(92f), groundY - px(14f), t * 2.5f + 0.5f, aBase,
+                        MCLAREN_PAPAYA, MCLAREN_ACC, TIRE_MED, false, true, false, 1.24f);
+                break;
+
+            case 2: // Scene 3: Monza Temple of Speed — Scuderia Ferrari Tifosi Podium Trophy Lift
+                drawF1PodiumCeremony(c, w * 0.45f, groundY, t, aBase,
+                        FERRARI_RED, FERRARI_ACC, MCLAREN_PAPAYA, MERC_PETRONAS, true);
+                break;
+
+            case 3: // Scene 4: Spa-Francorchamps — Eau Rouge & Raidillon Full-Throttle Uphill Climb
+                // Steep Raidillon elevation hill with Red & Yellow Belgian kerbs
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(5f));
+                paint.setColor((aBase << 24) | 0x00FF1801);
+                c.drawLine(w * 0.24f, groundY - px(4f), w * 0.66f, groundY - px(52f), paint);
+                paint.setColor((aBase << 24) | 0x00FFD800);
+                c.drawLine(w * 0.24f, groundY - px(9f), w * 0.66f, groundY - px(57f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                float spaX = w * (0.28f + p * 0.30f);
+                float spaY = groundY - px(12f + p * 38f);
+                c.save();
+                c.rotate(-6.5f, spaX, spaY);
+                drawF1Car(c, spaX, spaY, t * 2.6f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_SOFT, true, true, false, 1.30f);
+                drawF1Car(c, spaX - px(88f), spaY + px(2f), t * 2.6f + 0.6f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, true, true, false, 1.24f);
+                c.restore();
+                break;
+
+            case 4: // Scene 5: Silverstone Circuit — Maggotts & Becketts High-G Apex
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x001E2430, 0x00FFFFFF, false);
+                float silvX = w * (0.26f + p * 0.34f);
+                float weave = (float) Math.sin(t * 6.5f) * px(8f);
+                drawF1Car(c, silvX, groundY - px(10f) + weave, t * 2.5f, aBase,
+                        MERC_SILVER, MERC_PETRONAS, TIRE_HARD, true, true, false, 1.30f);
+                drawF1Car(c, silvX - px(86f), groundY - px(12f) - weave, t * 2.5f + 0.5f, aBase,
+                        MCLAREN_PAPAYA, MCLAREN_ACC, TIRE_MED, true, true, false, 1.26f);
+                break;
+
+            case 5: // Scene 6: Suzuka Circuit — 130R & Figure-Eight Crossover Bridge Duel
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                // Suzuka Figure-8 Overpass Bridge
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((aBase * 4 / 5 << 24) | 0x00263042);
+                c.drawRect(w * 0.28f, groundY - px(62f), w * 0.62f, groundY - px(52f), paint);
+                c.drawRect(w * 0.33f, groundY - px(52f), w * 0.36f, groundY, paint);
+                c.drawRect(w * 0.54f, groundY - px(52f), w * 0.57f, groundY, paint);
+                // Upper car crossing the bridge left-to-right, lower car blasting underneath right-to-left
+                drawF1Car(c, w * (0.30f + p * 0.28f), groundY - px(60f), t * 2.4f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_SOFT, true, true, false, 1.12f);
+                drawF1Car(c, w * (0.58f - p * 0.26f), groundY - px(10f), t * 2.4f + 0.7f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, true, true, 1.30f);
+                break;
+
+            case 6: // Scene 7: Interlagos Brazil — Ayrton Senna Home Trophy Lift & Brazilian Flag
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00009B3A, 0x00FEDF00, false);
+                drawF1Car(c, w * 0.34f, groundY - px(10f), t, aBase,
+                        MP4_WHITE, MP4_RED, TIRE_MED, false, false, false, 1.26f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        0x00FF2400, 0x00FEDF00, 0x00FFD700, false, true, 0x00009B3A, 1.42f);
+                break;
+
+            case 7: // Scene 8: Marina Bay Singapore — Floodlit Street Circuit Titanium Sparks
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                // Singapore Flyer illuminated wheel in background
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.2f));
+                paint.setColor((aBase * 2 / 3 << 24) | 0x0000D2BE);
+                c.drawCircle(w * 0.58f, groundY - px(68f), px(34f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                float sinX = w * (0.28f + p * 0.32f);
+                drawF1Car(c, sinX, groundY - px(10f), t * 2.8f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, true, true, false, 1.34f);
+                drawF1Car(c, sinX - px(95f), groundY - px(12f), t * 2.8f + 0.5f, aBase,
+                        MERC_SILVER, MERC_PETRONAS, TIRE_MED, true, true, false, 1.26f);
+                break;
+
+            case 8: // Scene 9: Las Vegas Strip — Neon Sphere Straightaway DRS Overtake
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                // Glowing Las Vegas Sphere Dome on Horizon
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((aBase / 2 << 24) | 0x00FF1801);
+                c.drawArc(rectF(w * 0.40f, groundY - px(88f), w * 0.54f, groundY + px(20f)), 180, 180, true, paint);
+                paint.setColor((aBase * 3 / 4 << 24) | 0x00FFD800);
+                c.drawArc(rectF(w * 0.42f, groundY - px(72f), w * 0.52f, groundY + px(14f)), 180, 180, true, paint);
+                float vegasLead = w * (0.26f + p * 0.36f);
+                drawF1Car(c, vegasLead - px(36f), groundY - px(14f), t * 2.6f, aBase,
+                        FERRARI_RED, 0x00FFFFFF, TIRE_HARD, false, true, false, 1.24f);
+                drawF1Car(c, vegasLead + px(24f), groundY - px(9f), t * 2.8f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_MED, true, true, false, 1.32f);
+                break;
+
+            case 9: // Scene 10: Red Bull Ring — 1.8-Second World Record Pit Stop Crew
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                drawF1PitStopCrew(c, w * 0.45f, groundY, t, p, aBase, REDBULL_NAVY, REDBULL_ACC);
+                break;
+
+            case 10: // Scene 11: Yas Marina Abu Dhabi — World Championship Donuts & Fireworks
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x0000D2BE, 0x00FFFFFF, false);
+                drawF1DonutCelebration(c, w * 0.45f, groundY, t, aBase, REDBULL_NAVY, REDBULL_ACC);
+                break;
+
+            case 11: // Scene 12: Podium Ceremony — Champagne Spray & Gold Trophy Lift
+                drawF1PodiumCeremony(c, w * 0.45f, groundY, t, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, FERRARI_RED, MCLAREN_PAPAYA, true);
+                break;
+
+            case 12: // Scene 13: Monaco Swimming Pool — Senna McLaren MP4/4 Qualifying Lap
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                drawF1Car(c, w * (0.28f + p * 0.34f), groundY - px(10f), t * 2.8f, aBase,
+                        MP4_WHITE, MP4_RED, TIRE_MED, false, true, false, 1.36f);
+                break;
+
+            case 13: // Scene 14: Silverstone Finale — Hamilton Union Jack & British GP Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x001E2430, 0x00FFFFFF, false);
+                drawF1Car(c, w * 0.33f, groundY - px(10f), t, aBase,
+                        MERC_SILVER, MERC_PETRONAS, TIRE_SOFT, false, false, false, 1.26f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        MERC_SILVER, MERC_PETRONAS, 0x00FFD700, true, true, 0x000052B4, 1.42f);
+                break;
+
+            case 14: // Scene 15: Zandvoort Banking — Verstappen Orange Army Flares & Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF6600, 0x00FFFFFF, false);
+                // Billowing Dutch Orange Army Flare Smoke Clouds in background
+                for (int fl = 0; fl < 4; fl++) {
+                    float fx = w * (0.28f + fl * 0.11f) + (float) Math.sin(t * 2f + fl) * px(10f);
+                    float fy = groundY - px(54f + (fl % 2) * 18f);
+                    paint.setColor((aBase / 3 << 24) | 0x00FF6800);
+                    c.drawCircle(fx, fy, px(28f), paint);
+                }
+                drawF1Car(c, w * 0.33f, groundY - px(10f), t, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_SOFT, false, false, false, 1.26f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        REDBULL_NAVY, 0x00FF6800, 0x00FFD700, true, false, 0, 1.42f);
+                break;
+
+            case 15: // Scene 16: Miami Autodrome — Lando Norris Papaya Maiden Win Trophy Lift
+                drawF1PodiumCeremony(c, w * 0.45f, groundY, t, aBase,
+                        MCLAREN_PAPAYA, MCLAREN_ACC, REDBULL_NAVY, FERRARI_RED, true);
+                break;
+
+            case 16: // Scene 17: Monza Parabolica — Charles Leclerc Monza Winner Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00009246, 0x00CE2B37, false);
+                drawF1Car(c, w * 0.33f, groundY - px(10f), t, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, false, false, 1.28f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        FERRARI_RED, FERRARI_ACC, 0x00FFD700, true, true, 0x00DC0000, 1.44f);
+                break;
+
+            case 17: // Scene 18: Austin COTA Turn 1 — Steep Uphill Four-Wide Start Charge
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00BF0A30, 0x00002868, false);
+                float cotaX = w * (0.26f + p * 0.30f);
+                drawF1Car(c, cotaX - px(42f), groundY - px(16f), t * 2.5f, aBase,
+                        MCLAREN_PAPAYA, MCLAREN_ACC, TIRE_MED, false, true, false, 1.18f);
+                drawF1Car(c, cotaX, groundY - px(12f), t * 2.5f + 0.3f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_MED, false, true, false, 1.24f);
+                drawF1Car(c, cotaX + px(38f), groundY - px(8f), t * 2.5f + 0.6f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, true, false, 1.30f);
+                break;
+
+            case 18: // Scene 19: Imola Tamburello — Schumacher Ferrari F2004 V10 & Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00009246, 0x00FFFFFF, false);
+                drawF1Car(c, w * (0.26f + p * 0.22f), groundY - px(10f), t * 3.0f, aBase,
+                        FERRARI_RED, 0x00FFFFFF, TIRE_SOFT, false, true, false, 1.30f);
+                drawF1DriverTrophyLift(c, w * 0.56f, groundY - px(56f), t, aBase,
+                        FERRARI_RED, 0x00FFFFFF, 0x00FFD700, true, false, 0, 1.42f);
+                break;
+
+            case 19: // Scene 20: Montreal Quebec — Wall of Champions Chicane Brush
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                // "BIENVENUE AU QUÉBEC" Wall of Champions Barrier along track
+                paint.setColor((aBase * 4 / 5 << 24) | 0x00E8EDF5);
+                c.drawRect(w * 0.26f, groundY - px(36f), w * 0.64f, groundY - px(22f), paint);
+                paint.setColor((aBase * 4 / 5 << 24) | 0x000055A4);
+                c.drawRect(w * 0.26f, groundY - px(29f), w * 0.64f, groundY - px(25f), paint);
+                drawF1Car(c, w * (0.28f + p * 0.34f), groundY - px(10f), t * 2.7f, aBase,
+                        ASTON_GREEN, ASTON_LIME, TIRE_SOFT, true, true, false, 1.32f);
+                break;
+
+            case 20: // Scene 21: Baku City Circuit — Castle Section Threading the Needle
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                // Baku Old Town Medieval Stone Castle Tower on Left
+                paint.setColor((aBase * 4 / 5 << 24) | 0x008C765C);
+                c.drawRoundRect(w * 0.27f, groundY - px(88f), w * 0.35f, groundY, px(4f), px(4f), paint);
+                drawF1Car(c, w * (0.34f + p * 0.28f), groundY - px(10f), t * 2.5f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, true, false, 1.32f);
+                break;
+
+            case 21: // Scene 22: Jeddah Corniche — Red Sea 330 km/h Night Street Duel
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x0000A86B, 0x00FFFFFF, false);
+                float jedX = w * (0.28f + p * 0.32f);
+                drawF1Car(c, jedX, groundY - px(10f), t * 2.9f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_MED, true, true, false, 1.32f);
+                drawF1Car(c, jedX - px(86f), groundY - px(13f), t * 2.9f + 0.4f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, true, true, false, 1.26f);
+                break;
+
+            case 22: // Scene 23: Melbourne Albert Park — Lakeside High-Speed Chicane
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FFD800, 0x0000843D, false);
+                float melX = w * (0.28f + p * 0.32f);
+                drawF1Car(c, melX, groundY - px(10f), t * 2.6f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, true, true, false, 1.32f);
+                drawF1Car(c, melX - px(90f), groundY - px(13f), t * 2.6f + 0.5f, aBase,
+                        MCLAREN_PAPAYA, MCLAREN_ACC, TIRE_MED, false, true, false, 1.26f);
+                break;
+
+            case 23: // Scene 24: Suzuka Chicane — Senna McLaren vs. Prost Ferrari Championship Showdown
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                float spX = w * (0.28f + p * 0.30f);
+                drawF1Car(c, spX + px(28f), groundY - px(13f), t * 2.6f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_MED, false, true, false, 1.28f);
+                drawF1Car(c, spX - px(24f), groundY - px(9f), t * 2.6f + 0.3f, aBase,
+                        MP4_WHITE, MP4_RED, TIRE_SOFT, false, true, false, 1.32f);
+                break;
+
+            case 24: // Scene 25: Dijon-Prenois 1979 — Gilles Villeneuve Ferrari vs. Arnoux Wheel-to-Wheel
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x000055A4, 0x00EF4135, false);
+                float dijX = w * (0.28f + p * 0.30f);
+                float rub = (float) Math.sin(t * 9f) * px(6f);
+                drawF1Car(c, dijX, groundY - px(13f), t * 2.7f, aBase,
+                        RENAULT_YELLOW, 0x00181818, TIRE_MED, false, true, false, 1.26f);
+                drawF1Car(c, dijX + rub, groundY - px(8f), t * 2.7f + 0.2f, aBase,
+                        FERRARI_RED, 0x00FFFFFF, TIRE_SOFT, false, true, false, 1.32f);
+                break;
+
+            case 25: // Scene 26: Spa Kemmel Straight — Häkkinen McLaren Double Pass on Schumacher
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFD800, false);
+                float kemX = w * (0.28f + p * 0.30f);
+                drawF1Car(c, kemX - px(10f), groundY - px(14f), t * 2.6f, aBase,
+                        FERRARI_RED, 0x00FFFFFF, TIRE_SOFT, false, true, false, 1.24f);
+                drawF1Car(c, kemX + px(32f), groundY - px(8f), t * 2.9f, aBase,
+                        MERC_SILVER, 0x00FF1801, TIRE_MED, true, true, false, 1.32f);
+                break;
+
+            case 26: // Scene 27: Interlagos 2008 — "Is That Glock?!" Last-Corner Title Decider in the Rain
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00009B3A, 0x00FEDF00, true);
+                float glkX = w * (0.28f + p * 0.32f);
+                drawF1Car(c, glkX, groundY - px(10f), t * 2.7f, aBase,
+                        MERC_SILVER, 0x00FF1801, TIRE_WET, false, true, false, 1.32f);
+                drawF1DriverTrophyLift(c, w * 0.56f, groundY - px(56f), t, aBase,
+                        0x00ECEFF4, 0x00FF1801, 0x00FFD700, true, false, 0, 1.38f);
+                break;
+
+            case 27: // Scene 28: Yas Marina 2010 — Sebastian Vettel Youngest World Champion Trophy Lift
+                drawF1PodiumCeremony(c, w * 0.45f, groundY, t, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, MERC_SILVER, FERRARI_RED, true);
+                break;
+
+            case 28: // Scene 29: Barcelona Catalunya — Fernando Alonso Renault R25 Home Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00AA151B, 0x00F1BF00, false);
+                drawF1Car(c, w * 0.33f, groundY - px(10f), t, aBase,
+                        RENAULT_BLUE, RENAULT_YELLOW, TIRE_SOFT, false, false, false, 1.28f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        RENAULT_BLUE, RENAULT_YELLOW, 0x00FFD700, true, true, 0x00F1BF00, 1.42f);
+                break;
+
+            case 29: // Scene 30: Melbourne 2009 — Jenson Button Brawn GP Fluorescent Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00D8FF00, 0x00FFFFFF, false);
+                drawF1Car(c, w * 0.33f, groundY - px(10f), t, aBase,
+                        BRAWN_WHITE, BRAWN_NEON, TIRE_SOFT, false, false, false, 1.28f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        BRAWN_WHITE, BRAWN_NEON, 0x00FFD700, true, false, 0, 1.42f);
+                break;
+
+            case 30: // Scene 31: Estoril Rain Masterclass — Senna Lotus 97T Black & Gold Wet Race Win
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FFD048, 0x00181818, true);
+                drawF1Car(c, w * (0.28f + p * 0.30f), groundY - px(10f), t * 2.6f, aBase,
+                        LOTUS_BLACK, LOTUS_GOLD, TIRE_WET, false, true, false, 1.32f);
+                drawF1DriverTrophyLift(c, w * 0.57f, groundY - px(56f), t, aBase,
+                        LOTUS_BLACK, LOTUS_GOLD, 0x00FFD700, false, true, 0x00FFD048, 1.38f);
+                break;
+
+            case 31: // Scene 32: Nürburgring Legends — Niki Lauda Ferrari & Fangio Silver Arrow
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                float nurX = w * (0.28f + p * 0.32f);
+                drawF1Car(c, nurX, groundY - px(10f), t * 2.5f, aBase,
+                        FERRARI_RED, 0x00FFFFFF, TIRE_HARD, false, true, false, 1.30f);
+                drawF1Car(c, nurX - px(88f), groundY - px(13f), t * 2.5f + 0.5f, aBase,
+                        0x00C8D2DC, MERC_PETRONAS, TIRE_HARD, false, true, false, 1.26f);
+                break;
+
+            case 32: // Scene 33: Silverstone 1992 — Nigel Mansell Red Five Williams FW14B
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x001858D8, 0x00FFD000, false);
+                drawF1Car(c, w * (0.28f + p * 0.28f), groundY - px(10f), t * 2.8f, aBase,
+                        WILLIAMS_BLUE, WILLIAMS_GOLD, TIRE_MED, false, true, false, 1.32f);
+                drawF1DriverTrophyLift(c, w * 0.56f, groundY - px(56f), t, aBase,
+                        WILLIAMS_BLUE, WILLIAMS_GOLD, 0x00FFD700, true, true, 0x00FF1801, 1.40f);
+                break;
+
+            case 33: // Scene 34: Austin COTA 2018 — Kimi Räikkönen Iceman Ferrari Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                drawF1Car(c, w * 0.33f, groundY - px(10f), t, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, false, false, 1.28f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        FERRARI_RED, 0x00FFFFFF, 0x00FFD700, true, false, 0, 1.42f);
+                break;
+
+            case 34: // Scene 35: Monza 2021 Podium — McLaren One-Two Finish & Trophy Lift
+                drawF1PodiumCeremony(c, w * 0.45f, groundY, t, aBase,
+                        MCLAREN_PAPAYA, MCLAREN_ACC, MCLAREN_PAPAYA, MERC_SILVER, true);
+                break;
+
+            case 35: // Scene 36: Sakhir Outer Loop — Last-to-First Night Victory Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF80C0, 0x00FFFFFF, false);
+                drawF1Car(c, w * 0.33f, groundY - px(10f), t, aBase,
+                        0x00FF66B2, 0x001858D8, TIRE_SOFT, false, false, false, 1.28f);
+                drawF1DriverTrophyLift(c, w * 0.54f, groundY - px(56f), t, aBase,
+                        0x00FF66B2, 0x00FFFFFF, 0x00FFD700, true, true, 0x00009B3A, 1.42f);
+                break;
+
+            case 36: // Scene 37: Silverstone Club — "Through Goes Hamilton!" Three-Wide Apex Battle
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                float clbX = w * (0.28f + p * 0.30f);
+                drawF1Car(c, clbX - px(28f), groundY - px(15f), t * 2.6f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_SOFT, false, true, false, 1.20f);
+                drawF1Car(c, clbX, groundY - px(12f), t * 2.6f + 0.3f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_HARD, false, true, false, 1.24f);
+                drawF1Car(c, clbX + px(34f), groundY - px(8f), t * 2.9f + 0.6f, aBase,
+                        MERC_SILVER, MERC_PETRONAS, TIRE_HARD, true, true, false, 1.32f);
+                break;
+
+            case 37: // Scene 38: Marina Bay Finale — Carlos Sainz Smooth Operator Ferrari Trophy Lift
+                drawF1PodiumCeremony(c, w * 0.45f, groundY, t, aBase,
+                        FERRARI_RED, FERRARI_ACC, MCLAREN_PAPAYA, MERC_SILVER, true);
+                break;
+
+            case 38: // Scene 39: Spa-Francorchamps Rain — Schumacher Ferrari Rooster-Tail Charge
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFD800, true);
+                drawF1Car(c, w * (0.28f + p * 0.34f), groundY - px(10f), t * 2.8f, aBase,
+                        FERRARI_RED, 0x00FFFFFF, TIRE_WET, false, true, false, 1.34f);
+                break;
+
+            case 39: // Scene 40: Suzuka 2005 — Räikkönen Last-Lap Outside Overtake at 130R
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                float suzX = w * (0.28f + p * 0.32f);
+                drawF1Car(c, suzX - px(24f), groundY - px(13f), t * 2.6f, aBase,
+                        RENAULT_BLUE, RENAULT_YELLOW, TIRE_MED, false, true, false, 1.24f);
+                drawF1Car(c, suzX + px(28f), groundY - px(9f), t * 2.9f, aBase,
+                        MERC_SILVER, 0x00FF1801, TIRE_SOFT, true, true, false, 1.32f);
+                break;
+
+            case 40: // Scene 41: Monaco Harbor — Charles Leclerc Prince of Monaco Home Trophy Lift
+                drawF1PodiumCeremony(c, w * 0.45f, groundY, t, aBase,
+                        FERRARI_RED, 0x00FFFFFF, MCLAREN_PAPAYA, FERRARI_RED, true);
+                break;
+
+            case 41: // Scene 42: Safety Car Restart — Green Flag Pack Charge & Tire Weaving
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x0000E676, 0x00FFFFFF, false);
+                float scX = w * (0.26f + p * 0.30f);
+                float wv = (float) Math.sin(t * 8f) * px(5f);
+                drawF1Car(c, scX - px(74f), groundY - px(13f) - wv, t * 2.5f, aBase,
+                        MCLAREN_PAPAYA, MCLAREN_ACC, TIRE_SOFT, false, true, false, 1.20f);
+                drawF1Car(c, scX, groundY - px(11f) + wv, t * 2.5f + 0.3f, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, true, false, 1.25f);
+                drawF1Car(c, scX + px(78f), groundY - px(9f) - wv, t * 2.5f + 0.6f, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_SOFT, false, true, false, 1.30f);
+                break;
+
+            case 42: // Scene 43: Parc Fermé Victory — Driver Leaping Atop the Halo with Trophy
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FF1801, 0x00FFFFFF, false);
+                drawF1Car(c, w * 0.45f, groundY - px(10f), t, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, false, false, 1.38f);
+                // Driver standing proudly on top of the F1 car cockpit Halo lifting the golden trophy!
+                drawF1DriverTrophyLift(c, w * 0.45f - px(6f), groundY - px(74f), t, aBase,
+                        FERRARI_RED, FERRARI_ACC, 0x00FFD700, false, false, 0, 1.26f);
+                break;
+
+            default: // Scene 44: Champions Gala — Constructors' & Drivers' World Championship Trophy Lift
+                drawF1TrackBase(c, w, groundY, t, aBase, 0x00FFD700, 0x00FF1801, false);
+                drawF1Car(c, w * 0.30f, groundY - px(10f), t, aBase,
+                        FERRARI_RED, FERRARI_ACC, TIRE_SOFT, false, false, false, 1.18f);
+                drawF1Car(c, w * 0.60f, groundY - px(10f), t, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, TIRE_SOFT, false, false, true, 1.18f);
+                drawF1DriverTrophyLift(c, w * 0.45f, groundY - px(58f), t, aBase,
+                        REDBULL_NAVY, REDBULL_ACC, 0x00FFD700, true, false, 0, 1.46f);
+                break;
+        }
+        c.restore();
+    }
+
+    /**
+     * Renders the scrolling FIA Grand Prix Track Kerbs (Red/White or circuit-themed) and optional wet-weather spray.
+     */
+    private void drawF1TrackBase(Canvas c, int w, float groundY, float t, int alpha, int kerbCol1, int kerbCol2, boolean wetTrack) {
+        paint.setStyle(Paint.Style.FILL);
+        float kStart = w * 0.22f, kEnd = w * 0.68f;
+        float kW = px(18f);
+        float scroll = (t * px(180f)) % (kW * 2f);
+        int idx = 0;
+        for (float kx = kStart - scroll; kx < kEnd; kx += kW, idx++) {
+            float l = Math.max(kStart, kx);
+            float r = Math.min(kEnd, kx + kW);
+            if (r > l) {
+                int kc = (idx % 2 == 0) ? kerbCol1 : kerbCol2;
+                paint.setColor((alpha * 4 / 5 << 24) | (kc & 0xFFFFFF));
+                c.drawRect(l, groundY - px(4.5f), r, groundY, paint);
+            }
+        }
+        if (wetTrack) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(1.5f));
+            paint.setColor((alpha / 2 << 24) | 0x0090D8FF);
+            for (int r = 0; r < 10; r++) {
+                float rx = w * (0.26f + ((r * 0.043f + t * 0.25f) % 0.40f));
+                float ry = groundY - px(70f) + ((r * 19f + t * 140f) % px(65f));
+                c.drawLine(rx, ry, rx - px(8f), ry + px(14f), paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+        }
+    }
+
+    /**
+     * Renders the 5-Red-Lights FIA Starting Gantry above the starting grid.
+     */
+    private void drawF1StartGantry(Canvas c, float cx, float gy, float sceneProg, int alpha) {
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x001A202C);
+        c.drawRoundRect(cx - px(74f), gy - px(16f), cx + px(74f), gy + px(14f), px(4f), px(4f), paint);
+        boolean lightsOut = sceneProg >= 0.45f;
+        int litCount = lightsOut ? 0 : Math.min(5, 1 + (int) (sceneProg / 0.08f));
+        for (int i = 0; i < 5; i++) {
+            float lx = cx + (i - 2) * px(26f);
+            paint.setColor((alpha << 24) | 0x000E121A);
+            c.drawRoundRect(lx - px(9f), gy - px(13f), lx + px(9f), gy + px(11f), px(3f), px(3f), paint);
+            boolean on = (i < litCount);
+            paint.setColor(((on ? alpha : alpha / 4) << 24) | (on ? 0x00FF1801 : 0x00481014));
+            c.drawCircle(lx, gy - px(4f), px(4.2f), paint);
+            c.drawCircle(lx, gy + px(4.5f), px(4.2f), paint);
+            if (on) {
+                paint.setColor((alpha / 3 << 24) | 0x00FF1801);
+                c.drawCircle(lx, gy, px(13f), paint);
+            }
+        }
+    }
+
+    /**
+     * Bespoke Team-Accurate Formula 1 Car Renderer:
+     * - Sculpted ground-effect Venturi floor, low nose cone, multi-element front wing & DRS rear wing
+     * - Titanium Halo cockpit protection bar, driver helmet with team visor & roll-hoop airbox intake
+     * - 18-inch Pirelli P-Zero color-coded tires (Soft Red, Medium Yellow, Hard White, Wet Blue) + glowing brake discs
+     * - Titanium underfloor skid-block sparks & exhaust afterburner flames at high speed
+     */
+    private void drawF1Car(Canvas c, float x, float y, float t, int alpha,
+                           int bodyRgb, int accentRgb, int tireWallRgb,
+                           boolean drsOpen, boolean sparksAndFlames, boolean facingLeft, float s) {
+        float dir = facingLeft ? -1f : 1f;
+        int bodyCol = bodyRgb & 0xFFFFFF;
+        int accCol = accentRgb & 0xFFFFFF;
+        int tireCol = tireWallRgb & 0xFFFFFF;
+
+        // 1. Titanium Underfloor Skid-Block Sparks & Exhaust Flame
+        if (sparksAndFlames) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeWidth(px(2.0f * s));
+            for (int sp = 0; sp < 6; sp++) {
+                float prog = ((t * 4.5f + sp * 0.17f) % 1.0f);
+                float sx = x - dir * px(28f * s + prog * 54f * s);
+                float sy = y + px(2f * s) - (float) Math.abs(Math.sin(t * 16f + sp * 2.1f)) * px(14f * s * prog);
+                int spAlpha = Math.round(alpha * (1f - prog));
+                paint.setColor((spAlpha << 24) | (sp % 2 == 0 ? 0x00FFE868 : 0x00FF6D00));
+                c.drawLine(sx, sy, sx - dir * px(9f * s), sy - px(2f * s), paint);
+            }
+            // Blinking red FIA ERS rain light at rear diffuser
+            paint.setStyle(Paint.Style.FILL);
+            if (((int) (t * 12f)) % 2 == 0) {
+                paint.setColor((alpha << 24) | 0x00FF1801);
+                c.drawCircle(x - dir * px(44f * s), y - px(5f * s), px(3.2f * s), paint);
+            }
+        }
+
+        // 2. Carbon Venturi Underfloor Plank
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x0012151E);
+        float flL = Math.min(x - dir * px(42f * s), x + dir * px(46f * s));
+        float flR = Math.max(x - dir * px(42f * s), x + dir * px(46f * s));
+        c.drawRoundRect(flL, y - px(4f * s), flR, y + px(1f * s), px(2f * s), px(2f * s), paint);
+
+        // 3. Sculpted Monocoque Chassis, Engine Cover Shark-Fin, Sidepod & Low Nose Cone
+        paint.setColor((alpha << 24) | bodyCol);
+        actorPath.reset();
+        actorPath.moveTo(x - dir * px(38f * s), y - px(3f * s)); // Rear gearbox
+        actorPath.lineTo(x - dir * px(36f * s), y - px(18f * s)); // Rear engine cover
+        actorPath.lineTo(x - dir * px(10f * s), y - px(24f * s)); // Roll-hoop airbox peak
+        actorPath.lineTo(x - dir * px(4f * s), y - px(14f * s));  // Cockpit opening rear
+        actorPath.lineTo(x + dir * px(12f * s), y - px(13f * s)); // Cockpit front cowling
+        actorPath.lineTo(x + dir * px(48f * s), y - px(4f * s));  // Sleek low nose tip
+        actorPath.lineTo(x + dir * px(44f * s), y - px(1f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+
+        // 4. Team-Accurate Livery Stripe & Undercut Sidepod Accent
+        paint.setColor((alpha << 24) | accCol);
+        actorPath.reset();
+        actorPath.moveTo(x - dir * px(30f * s), y - px(6f * s));
+        actorPath.lineTo(x - dir * px(12f * s), y - px(16f * s));
+        actorPath.lineTo(x + dir * px(14f * s), y - px(10f * s));
+        actorPath.lineTo(x + dir * px(34f * s), y - px(5f * s));
+        actorPath.lineTo(x - dir * px(26f * s), y - px(4f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+
+        // 5. Driver Helmet & Curved Titanium HALO Cockpit Protection Bar
+        paint.setColor((alpha << 24) | accCol);
+        c.drawCircle(x + dir * px(1f * s), y - px(16.5f * s), px(4.5f * s), paint);
+        paint.setColor((alpha << 24) | 0x00141822);
+        c.drawRect(Math.min(x + dir * px(1f * s), x + dir * px(5.5f * s)), y - px(18f * s),
+                   Math.max(x + dir * px(1f * s), x + dir * px(5.5f * s)), y - px(15.5f * s), paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(2.4f * s));
+        paint.setColor((alpha << 24) | 0x00DCE2EC);
+        c.drawLine(x - dir * px(5f * s), y - px(15f * s), x + dir * px(11f * s), y - px(18.5f * s), paint);
+        c.drawLine(x + dir * px(11f * s), y - px(18.5f * s), x + dir * px(13f * s), y - px(13f * s), paint);
+
+        // 6. Dual-Plane Rear Wing with Open/Closed DRS Flap + Front Wing Endplates
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | bodyCol);
+        float rwL = Math.min(x - dir * px(43f * s), x - dir * px(34f * s));
+        float rwR = Math.max(x - dir * px(43f * s), x - dir * px(34f * s));
+        c.drawRoundRect(rwL, y - px(25f * s), rwR, y - px(6f * s), px(2f * s), px(2f * s), paint);
+        // DRS Top Flap (tilted open in green/white when DRS is active!)
+        paint.setColor((alpha << 24) | (drsOpen ? 0x0000E676 : accCol));
+        c.drawRect(rwL - px(1f * s), y - px(drsOpen ? 28f * s : 25f * s), rwR + px(1f * s), y - px(22f * s), paint);
+
+        // Front multi-element wing
+        float fwL = Math.min(x + dir * px(38f * s), x + dir * px(51f * s));
+        float fwR = Math.max(x + dir * px(38f * s), x + dir * px(51f * s));
+        paint.setColor((alpha << 24) | accCol);
+        c.drawRoundRect(fwL, y - px(6f * s), fwR, y, px(2f * s), px(2f * s), paint);
+
+        // 7. 18-Inch Front & Rear F1 Wheels with Glowing Brake Discs & Pirelli Color-Coded Sidewalls
+        float rearWheelX = x - dir * px(26f * s);
+        float frontWheelX = x + dir * px(28f * s);
+        float wheelY = y - px(6.5f * s);
+        float wheelR = px(9.5f * s);
+        float spinDeg = (t * 540f) % 360f;
+
+        for (int wIdx = 0; wIdx < 2; wIdx++) {
+            float wx = (wIdx == 0) ? rearWheelX : frontWheelX;
+            // Black Pirelli tire rubber
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor((alpha << 24) | 0x0012151C);
+            c.drawCircle(wx, wheelY, wheelR, paint);
+            // Glowing orange-red carbon-ceramic brake rotor inside wheel rim
+            paint.setColor((alpha * 4 / 5 << 24) | 0x00FF5500);
+            c.drawCircle(wx, wheelY, wheelR * 0.42f, paint);
+            // Spinning Pirelli P-Zero color-coded sidewall ring
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.2f * s));
+            paint.setColor((alpha << 24) | tireCol);
+            c.drawArc(rectF(wx - wheelR * 0.72f, wheelY - wheelR * 0.72f, wx + wheelR * 0.72f, wheelY + wheelR * 0.72f),
+                    spinDeg + wIdx * 90f, 245f, false, paint);
+        }
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    /**
+     * Bespoke F1 Driver Podium Celebration & Winning Trophy Lift Renderer:
+     * - Team-accurate racing overalls with racing stripes & constructor chest badge
+     * - Both arms raised high overhead lifting the gleaming Grand Prix Trophy
+     * - Optional high-pressure sparkling Podium Champagne spray arc & waving National/Team Flag
+     */
+    private void drawF1DriverTrophyLift(Canvas c, float x, float y, float t, int alpha,
+                                        int suitRgb, int accentRgb, int trophyRgb,
+                                        boolean champagneSpray, boolean waveFlag, int flagRgb, float s) {
+        int suitCol = suitRgb & 0xFFFFFF;
+        int accCol = accentRgb & 0xFFFFFF;
+        int trCol = trophyRgb & 0xFFFFFF;
+        float bounce = (float) Math.abs(Math.sin(t * 5.5f)) * px(4.5f * s);
+        float dy = y - bounce;
+
+        // 1. Optional Waving Team / National Flag behind driver
+        if (waveFlag) {
+            float wave = (float) Math.sin(t * 7.5f) * px(6f * s);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.0f * s));
+            paint.setColor((alpha << 24) | 0x00E0E6F0);
+            c.drawLine(x + px(8f * s), dy + px(14f * s), x + px(22f * s), dy - px(42f * s), paint);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor((alpha * 4 / 5 << 24) | (flagRgb & 0xFFFFFF));
+            actorPath.reset();
+            actorPath.moveTo(x + px(21f * s), dy - px(42f * s));
+            actorPath.quadTo(x + px(36f * s), dy - px(46f * s) + wave, x + px(48f * s), dy - px(38f * s) - wave);
+            actorPath.lineTo(x + px(45f * s), dy - px(22f * s) - wave);
+            actorPath.quadTo(x + px(33f * s), dy - px(28f * s) + wave, x + px(18f * s), dy - px(26f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+        }
+
+        // 2. Racing Suit Legs & Boots
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(px(5.0f * s));
+        paint.setColor((alpha << 24) | suitCol);
+        c.drawLine(x - px(4f * s), dy + px(6f * s), x - px(7f * s), dy + px(34f * s), paint);
+        c.drawLine(x + px(4f * s), dy + px(6f * s), x + px(7f * s), dy + px(34f * s), paint);
+
+        // 3. Racing Overalls Torso & Team Sponsor Stripe
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | suitCol);
+        c.drawRoundRect(x - px(8.5f * s), dy - px(18f * s), x + px(8.5f * s), dy + px(8f * s), px(3f * s), px(3f * s), paint);
+        paint.setColor((alpha << 24) | accCol);
+        c.drawRect(x - px(6.5f * s), dy - px(13f * s), x + px(6.5f * s), dy - px(8.5f * s), paint);
+        c.drawRect(x - px(8.5f * s), dy + px(2f * s), x + px(8.5f * s), dy + px(5.5f * s), paint);
+
+        // 4. Both Arms Raised High in Victory Lifting the Grand Prix Trophy Overhead!
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(4.2f * s));
+        paint.setColor((alpha << 24) | suitCol);
+        c.drawLine(x - px(7f * s), dy - px(15f * s), x - px(9f * s), dy - px(35f * s), paint);
+        c.drawLine(x + px(7f * s), dy - px(15f * s), x + px(9f * s), dy - px(35f * s), paint);
+
+        // 5. Driver Head & Pirelli Podium Winner Cap / Helmet
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00F4D0B4);
+        c.drawCircle(x, dy - px(25.5f * s), px(6.0f * s), paint);
+        paint.setColor((alpha << 24) | suitCol);
+        c.drawArc(rectF(x - px(6.5f * s), dy - px(32f * s), x + px(6.5f * s), dy - px(22f * s)), 180, 180, true, paint);
+        paint.setColor((alpha << 24) | 0x00FFD700); // Golden laurels on winner cap visor
+        c.drawRect(x - px(6f * s), dy - px(27.5f * s), x + px(7.5f * s), dy - px(25.5f * s), paint);
+
+        // 6. Gleaming Golden Grand Prix Trophy Held High Overhead!
+        float tx = x, ty = dy - px(45f * s);
+        // Golden Trophy Aura Glow
+        paint.setColor((alpha / 3 << 24) | trCol);
+        c.drawCircle(tx, ty, px(16f * s), paint);
+        // Trophy Pedestal, Stem, Sculpted Cup & Twin Handles
+        paint.setColor((alpha << 24) | 0x001E222A);
+        c.drawRoundRect(tx - px(5.5f * s), ty + px(7f * s), tx + px(5.5f * s), ty + px(11f * s), px(1.5f * s), px(1.5f * s), paint);
+        paint.setColor((alpha << 24) | trCol);
+        actorPath.reset();
+        actorPath.moveTo(tx - px(8.5f * s), ty - px(9f * s));
+        actorPath.lineTo(tx + px(8.5f * s), ty - px(9f * s));
+        actorPath.quadTo(tx + px(6f * s), ty + px(3f * s), tx + px(2.2f * s), ty + px(7f * s));
+        actorPath.lineTo(tx - px(2.2f * s), ty + px(7f * s));
+        actorPath.quadTo(tx - px(6f * s), ty + px(3f * s), tx - px(8.5f * s), ty - px(9f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(1.8f * s));
+        c.drawOval(rectF(tx - px(11.5f * s), ty - px(7f * s), tx + px(11.5f * s), ty + px(1f * s)), paint);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00FFFFFF);
+        c.drawCircle(tx - px(3f * s), ty - px(4f * s), px(2.0f * s), paint);
+
+        // 7. Sparkling Podium Champagne Spray Arcs!
+        if (champagneSpray) {
+            for (int sp = 0; sp < 10; sp++) {
+                float spProg = ((t * 2.4f + sp * 0.1f) % 1.0f);
+                float dirSp = (sp % 2 == 0) ? 1f : -1f;
+                float sx = tx + dirSp * spProg * px(52f * s);
+                float sy = ty + px(6f * s) - (float) Math.sin(spProg * Math.PI) * px(28f * s) + spProg * spProg * px(22f * s);
+                int spA = Math.round(alpha * (1f - spProg * 0.7f));
+                paint.setColor((spA << 24) | (sp % 3 == 0 ? 0x00FFE898 : 0x00FFFFFF));
+                c.drawCircle(sx, sy, px((2.8f - spProg * 1.2f) * s), paint);
+            }
+        }
+    }
+
+    /**
+     * Full 1st / 2nd / 3rd Grand Prix Podium Ceremony with Trophy Lift, Dual Champagne Spray & Falling Confetti.
+     */
+    private void drawF1PodiumCeremony(Canvas c, float cx, float groundY, float t, int alpha,
+                                      int p1Suit, int p1Acc, int p2Suit, int p3Suit, boolean confetti) {
+        paint.setStyle(Paint.Style.FILL);
+        // 1st (Center, Tallest), 2nd (Left), 3rd (Right) Podium Steps
+        paint.setColor((alpha * 4 / 5 << 24) | 0x00181E2C);
+        c.drawRoundRect(cx - px(34f), groundY - px(34f), cx + px(34f), groundY, px(4f), px(4f), paint);
+        c.drawRoundRect(cx - px(98f), groundY - px(24f), cx - px(36f), groundY, px(4f), px(4f), paint);
+        c.drawRoundRect(cx + px(36f), groundY - px(18f), cx + px(98f), groundY, px(4f), px(4f), paint);
+
+        // Gold/Silver/Bronze Top Strips on Podium Steps
+        paint.setColor((alpha << 24) | 0x00FFD700);
+        c.drawRect(cx - px(34f), groundY - px(34f), cx + px(34f), groundY - px(29f), paint);
+        paint.setColor((alpha << 24) | 0x00DCE2EC);
+        c.drawRect(cx - px(98f), groundY - px(24f), cx - px(36f), groundY - px(20f), paint);
+        paint.setColor((alpha << 24) | 0x00E09048);
+        c.drawRect(cx + px(36f), groundY - px(18f), cx + px(98f), groundY - px(14f), paint);
+
+        // P2 (Left) & P3 (Right) Drivers celebrating & spraying champagne toward P1
+        drawF1DriverTrophyLift(c, cx - px(67f), groundY - px(58f), t + 0.4f, alpha,
+                p2Suit, 0x00FFFFFF, 0x00DCE2EC, true, false, 0, 1.08f);
+        drawF1DriverTrophyLift(c, cx + px(67f), groundY - px(52f), t + 0.8f, alpha,
+                p3Suit, 0x00FFFFFF, 0x00E09048, true, false, 0, 1.05f);
+        // P1 Race Winner on Center Step Lifting the Gold Grand Prix Trophy!
+        drawF1DriverTrophyLift(c, cx, groundY - px(72f), t, alpha,
+                p1Suit, p1Acc, 0x00FFD700, true, false, 0, 1.28f);
+
+        // Falling Gold & Crimson Victory Confetti
+        if (confetti) {
+            for (int cf = 0; cf < 14; cf++) {
+                float cxPos = cx + (cf - 6.5f) * px(20f) + (float) Math.sin(t * 3f + cf) * px(8f);
+                float cyPos = groundY - px(135f) + ((t * 48f + cf * 17f) % px(125f));
+                paint.setColor(((alpha * 3 / 4) << 24) | (cf % 2 == 0 ? 0x00FFD700 : 0x00FF1801));
+                c.drawRect(cxPos, cyPos, cxPos + px(4.5f), cyPos + px(3.0f), paint);
+            }
+        }
+    }
+
+    /**
+     * 1.8-Second World Record Pit Stop Crew with Overhead Pit Rig, Wheel-Gun Sparks & Jack Crew.
+     */
+    private void drawF1PitStopCrew(Canvas c, float cx, float groundY, float t, float p, int alpha, int bodyCol, int accCol) {
+        // Overhead Carbon Pit Gantry Boom & Compressed Air Hoses
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(3.5f));
+        paint.setColor((alpha * 4 / 5 << 24) | 0x00384458);
+        c.drawLine(cx - px(75f), groundY - px(78f), cx + px(75f), groundY - px(78f), paint);
+        c.drawLine(cx - px(32f), groundY - px(78f), cx - px(28f), groundY - px(22f), paint);
+        c.drawLine(cx + px(32f), groundY - px(78f), cx + px(28f), groundY - px(22f), paint);
+        paint.setStyle(Paint.Style.FILL);
+
+        float carOffset = p < 0.72f ? 0f : ((p - 0.72f) / 0.28f) * px(140f);
+        drawF1Car(c, cx + carOffset, groundY - px(11f), t * 3f, alpha,
+                bodyCol, accCol, 0x00FF1801, false, p >= 0.72f, false, 1.32f);
+
+        // Pit Crew Mechanics kneeling at front & rear wheels with glowing LED wheel guns
+        float[] crewX = {cx - px(62f), cx - px(30f), cx + px(30f), cx + px(62f)};
+        for (int m = 0; m < 4; m++) {
+            paint.setColor((alpha << 24) | bodyCol);
+            c.drawRoundRect(crewX[m] - px(5f), groundY - px(26f), crewX[m] + px(5f), groundY, px(2f), px(2f), paint);
+            paint.setColor((alpha << 24) | accCol);
+            c.drawCircle(crewX[m], groundY - px(31f), px(4.5f), paint);
+            // Flashing green/cyan wheel-gun torque indicator light
+            paint.setColor((alpha << 24) | (p < 0.65f ? 0x00FF1801 : 0x0000E676));
+            c.drawCircle(crewX[m], groundY - px(14f), px(3.5f), paint);
+        }
+    }
+
+    /**
+     * World Championship Victory Donuts with Billowing Pirelli Tire Smoke & Grand Prix Fireworks.
+     */
+    private void drawF1DonutCelebration(Canvas c, float cx, float groundY, float t, int alpha, int bodyCol, int accCol) {
+        // Billowing White Pirelli Tire Smoke Rings behind the spinning F1 car
+        paint.setStyle(Paint.Style.FILL);
+        for (int sm = 0; sm < 7; sm++) {
+            float sp = ((t * 1.8f + sm * 0.14f) % 1.0f);
+            float sx = cx + (float) Math.cos(t * 4f + sm) * px(46f * sp);
+            float sy = groundY - px(12f + sp * 42f);
+            int sa = Math.round(alpha * (1f - sp) * 0.55f);
+            paint.setColor((sa << 24) | 0x00E8EEF8);
+            c.drawCircle(sx, sy, px(14f + sp * 22f), paint);
+        }
+        boolean flip = ((int) (t * 2.2f)) % 2 == 1;
+        drawF1Car(c, cx + (float) Math.sin(t * 4.4f) * px(18f), groundY - px(10f), t * 4f, alpha,
+                bodyCol, accCol, 0x00FF1801, false, true, flip, 1.32f);
+
+        // Twin Championship Fireworks Bursting in the Sky Above the Circuit
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(2.0f));
+        float[] fwX = {cx - px(72f), cx + px(72f)};
+        for (int f = 0; f < 2; f++) {
+            float fp = ((t * 1.4f + f * 0.5f) % 1.0f);
+            int fa = Math.round(alpha * (1f - fp));
+            paint.setColor((fa << 24) | (f == 0 ? 0x00FFD700 : 0x00FF1801));
+            for (int r = 0; r < 8; r++) {
+                double ang = r * Math.PI / 4.0;
+                float r1 = fp * px(12f), r2 = fp * px(34f);
+                c.drawLine(fwX[f] + (float) Math.cos(ang) * r1, groundY - px(88f) + (float) Math.sin(ang) * r1,
+                           fwX[f] + (float) Math.cos(ang) * r2, groundY - px(88f) + (float) Math.sin(ang) * r2, paint);
+            }
+        }
+        paint.setStyle(Paint.Style.FILL);
+    }
+
     private void drawHogwartsExpressScene(Canvas c, int w, int h, float groundY, float t, float p, int aBase) {
         float trainX = w * (0.05f + p * 0.52f);
         float trainY = groundY - px(38f);
@@ -8016,6 +9007,24 @@ final class SkyView extends View {
                 topBg = 0xFF140C2C; botBg = 0xFF080514; glowCol = 0x5848A8FF;
                 houseSub = "JUSTICE LEAGUE  |  WATCHTOWER"; emblemType = 505;
             }
+        } else if (theme == 6) {
+            // Theme 7: FORMULA 1 Constructor App Banners (Ferrari, Red Bull Racing, McLaren, Mercedes-AMG, Aston Martin)
+            if (styleSlot == 0) {
+                topBg = 0xFF300608; botBg = 0xFF140203; glowCol = 0x64FF1801;
+                houseSub = "SCUDERIA FERRARI  |  MARANELLO"; emblemType = 601;
+            } else if (styleSlot == 1) {
+                topBg = 0xFF07102E; botBg = 0xFF030614; glowCol = 0x60FF1E38;
+                houseSub = "RED BULL RACING  |  CHAMPIONS"; emblemType = 602;
+            } else if (styleSlot == 2) {
+                topBg = 0xFF2E1404; botBg = 0xFF140802; glowCol = 0x64FF8000;
+                houseSub = "McLAREN F1  |  PAPAYA SPEED"; emblemType = 603;
+            } else if (styleSlot == 3) {
+                topBg = 0xFF052422; botBg = 0xFF02100F; glowCol = 0x6000D2BE;
+                houseSub = "MERCEDES-AMG  |  SILVER ARROW"; emblemType = 604;
+            } else {
+                topBg = 0xFF06241A; botBg = 0xFF02100B; glowCol = 0x6000A86B;
+                houseSub = "ASTON MARTIN  |  GRAND PRIX"; emblemType = 605;
+            }
         } else if (styleSlot == 0) {
             topBg = 0xFF28090E; botBg = 0xFF110407; glowCol = 0x58E83038;
             houseSub = "GRYFFINDOR  |  PENSIEVE";
@@ -8273,6 +9282,40 @@ final class SkyView extends View {
                 c.drawLine(cx + er * 0.20f, cy - er * 0.65f, cx - er * 0.25f, cy + er * 0.05f, p);
                 c.drawLine(cx - er * 0.25f, cy + er * 0.05f, cx + er * 0.20f, cy + er * 0.05f, p);
                 c.drawLine(cx + er * 0.20f, cy + er * 0.05f, cx - er * 0.20f, cy + er * 0.65f, p);
+            }
+        } else if (emblemType >= 601 && emblemType <= 605) {
+            // FORMULA 1 Custom Constructor Emblems: Scuderia Ferrari Shield, Red Bull Charging Sun, McLaren Speedmark, Mercedes 3-Pointed Star, Grand Prix Trophy
+            if (emblemType == 601) { // Scuderia Ferrari Shield & Prancing Horse Silhouette
+                Path sf = new Path();
+                sf.moveTo(cx - er * 0.72f, cy - er * 0.82f);
+                sf.lineTo(cx + er * 0.72f, cy - er * 0.82f);
+                sf.quadTo(cx + er * 0.72f, cy + er * 0.45f, cx, cy + er * 0.94f);
+                sf.quadTo(cx - er * 0.72f, cy + er * 0.45f, cx - er * 0.72f, cy - er * 0.82f);
+                sf.close();
+                c.drawPath(sf, p);
+                c.drawLine(cx - er * 0.15f, cy + er * 0.48f, cx + er * 0.22f, cy - er * 0.42f, p);
+                c.drawLine(cx + er * 0.22f, cy - er * 0.42f, cx + er * 0.42f, cy - er * 0.20f, p);
+            } else if (emblemType == 602) { // Red Bull Racing Sun Disc & Charging Bull Horns
+                c.drawCircle(cx, cy, er * 0.56f, p);
+                c.drawLine(cx - er * 0.98f, cy + er * 0.18f, cx - er * 0.25f, cy - er * 0.18f, p);
+                c.drawLine(cx + er * 0.98f, cy + er * 0.18f, cx + er * 0.25f, cy - er * 0.18f, p);
+            } else if (emblemType == 603) { // McLaren Papaya Speedmark Swoosh
+                Path mc = new Path();
+                mc.moveTo(cx - er * 0.92f, cy + er * 0.35f);
+                mc.quadTo(cx + er * 0.15f, cy - er * 0.85f, cx + er * 0.92f, cy - er * 0.35f);
+                mc.quadTo(cx + er * 0.20f, cy - er * 0.10f, cx - er * 0.25f, cy + er * 0.55f);
+                mc.close();
+                c.drawPath(mc, p);
+            } else if (emblemType == 604) { // Mercedes-AMG Three-Pointed Star in Ring
+                c.drawCircle(cx, cy, er * 0.92f, p);
+                c.drawLine(cx, cy, cx, cy - er * 0.88f, p);
+                c.drawLine(cx, cy, cx - er * 0.76f, cy + er * 0.44f, p);
+                c.drawLine(cx, cy, cx + er * 0.76f, cy + er * 0.44f, p);
+            } else { // Grand Prix Winner Trophy & Aston Wings
+                c.drawLine(cx - er * 0.95f, cy - er * 0.15f, cx + er * 0.95f, cy - er * 0.15f, p);
+                c.drawRoundRect(new RectF(cx - er * 0.45f, cy - er * 0.75f, cx + er * 0.45f, cy + er * 0.25f), er * 0.20f, er * 0.20f, p);
+                c.drawLine(cx, cy + er * 0.25f, cx, cy + er * 0.82f, p);
+                c.drawLine(cx - er * 0.42f, cy + er * 0.82f, cx + er * 0.42f, cy + er * 0.82f, p);
             }
         } else if (emblemType == 1) {
             Path tri = new Path();

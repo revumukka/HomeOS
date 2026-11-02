@@ -24,7 +24,7 @@
 | **`BIND_ACCESSIBILITY_SERVICE` (`HomeButton`, Optional on Google TV)** | Strictly opt-in helper on Google TV devices where the stock launcher cannot be disabled. Detects when `com.google.android.apps.tv.launcherx` opens on pressing the remote Home button and brings HomeScreen to the front. Does **not** read screen content (`canRetrieveWindowContent="false"`), does **not** log keystrokes, and never transmits data. | **Never.** |
 
 ## 3. Data Storage & Retention (`MASVS-STORAGE`)
-All user preferences (pinned Home Screen app package names, selected Universe Theme index, Sky Palette index, 12/24-hour clock format, and custom HDMI input labels) are stored locally on your device inside private application storage (`Context.MODE_PRIVATE`). Uninstalling the application or clearing app data permanently deletes all stored preferences.
+All user preferences (pinned Home Screen app package names, selected Theme Universe index, Sky Palette index, 12/24-hour clock format, and custom HDMI input labels) are stored locally on your device inside private application storage (`Context.MODE_PRIVATE`). Uninstalling the application or clearing app data permanently deletes all stored preferences.
 
 ## 4. Children's Privacy
 HomeScreen does not knowingly collect any personal information from anyone, including children under the age of 13 (COPPA / GDPR-K compliant).

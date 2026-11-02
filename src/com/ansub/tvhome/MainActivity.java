@@ -116,7 +116,8 @@ public class MainActivity extends Activity {
         "Demon Slayer",
         "Star Wars",
         "MCU",
-        "DCU"
+        "DCU",
+        "Formula 1"
     };
     private static final int[] UNIVERSE_THEME_COLORS = {
         0xFFFFD54F, // 1. Harry Potter
@@ -124,7 +125,8 @@ public class MainActivity extends Activity {
         0xFF00E5FF, // 3. Demon Slayer
         0xFF2979FF, // 4. Star Wars
         0xFFB388FF, // 5. MCU
-        0xFF00B0FF  // 6. DCU
+        0xFF00B0FF, // 6. DCU
+        0xFFFF1801  // 7. Formula 1
     };
     private static final String[] QUICK_NAMES = {"bluetooth", "sound", "picture"};
     private static final String[] QUICK_LABELS = {"Bluetooth", "Sound", "Picture"};
@@ -193,10 +195,10 @@ public class MainActivity extends Activity {
     private float scale = 1f;
     private float uiScale = 1f;
     private float settingsScale = 1f;
-    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27};
+    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27, 29};
 
     private static Typeface regular, semibold, defaultThemeFont, cinzelFont;
-    private static final Typeface[] themeFonts = new Typeface[6];
+    private static final Typeface[] themeFonts = new Typeface[7];
 
     private FrameLayout root; // the page, inside a vertical scroller
     private SkyView skyView;
@@ -1482,7 +1484,7 @@ public class MainActivity extends Activity {
 
             int qx = dockX + dockPad;
             glowIconView = null;
-            addIcon(THEME_PICK, "Theme", createThemeDrawable(universeTheme()), qx, iconY, itemW, itemH);
+            addIcon(THEME_PICK, "Theme Universe", createThemeDrawable(universeTheme()), qx, iconY, itemW, itemH);
             qx += itemW + ig;
             for (int q : quick) {
                 addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), qx, iconY, itemW, itemH);
@@ -1759,7 +1761,7 @@ public class MainActivity extends Activity {
                 else lp.topMargin = px(10);
                 inner.addView(t, lp);
             } else {
-                card.setContentDescription(THEME_PICK.equals(key) ? "Theme" : (ADD.equals(key) ? "Add app" : "Settings"));
+                card.setContentDescription(THEME_PICK.equals(key) ? "Theme Universe" : (ADD.equals(key) ? "Add app" : "Settings"));
             }
             card.addView(inner, new FrameLayout.LayoutParams(-1, -1));
         }
@@ -2136,7 +2138,7 @@ public class MainActivity extends Activity {
             p.setColor(0xFF00E5FF);
             c.drawRect(cx - er * 0.40f, cy - er * 0.12f, cx - er * 0.10f, cy + er * 0.04f, p);
             c.drawRect(cx + er * 0.10f, cy - er * 0.12f, cx + er * 0.40f, cy + er * 0.04f, p);
-        } else {
+        } else if (pos == 5) {
             // DCU: Classic Golden Oval Batman Bat-Symbol
             p.setStyle(Paint.Style.FILL);
             p.setColor(0xFFFFD54F);
@@ -2155,6 +2157,34 @@ public class MainActivity extends Activity {
             bt.lineTo(cx - er * 0.12f, cy - er * 0.45f); // Left bat ear
             bt.close();
             c.drawPath(bt, p);
+        } else {
+            // FORMULA 1: Official F1 Crimson Twin-Stripe Speed Wing + Slanted '1' + Checkered Flag Accent
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeCap(Paint.Cap.ROUND);
+            p.setStrokeWidth(Math.max(2.2f, 2.8f * scale));
+            p.setColor(0xFFFF1801);
+            // Upper & lower swept aerodynamic F-stripes
+            Path fTop = new Path();
+            fTop.moveTo(cx - er * 0.78f, cy + er * 0.38f);
+            fTop.lineTo(cx - er * 0.36f, cy - er * 0.34f);
+            fTop.lineTo(cx + er * 0.32f, cy - er * 0.34f);
+            c.drawPath(fTop, p);
+            Path fMid = new Path();
+            fMid.moveTo(cx - er * 0.50f, cy + er * 0.38f);
+            fMid.lineTo(cx - er * 0.22f, cy - er * 0.08f);
+            fMid.lineTo(cx + er * 0.22f, cy - er * 0.08f);
+            c.drawPath(fMid, p);
+            // Slanted F1 '1' slash on the right
+            p.setColor(0xFFFFFFFF);
+            c.drawLine(cx + er * 0.56f, cy - er * 0.36f, cx + er * 0.14f, cy + er * 0.38f, p);
+            // Mini Checkered Flag accent bar below
+            p.setStyle(Paint.Style.FILL);
+            float sq = er * 0.18f;
+            float baseX = cx - sq * 2f, baseY = cy + er * 0.52f;
+            for (int cl = 0; cl < 4; cl++) {
+                p.setColor((cl % 2 == 0) ? 0xFFFFFFFF : 0xFF1A1E28);
+                c.drawRect(baseX + cl * sq, baseY, baseX + (cl + 1) * sq, baseY + sq * 0.75f, p);
+            }
         }
         return new BitmapDrawable(getResources(), bm);
     }
@@ -2162,7 +2192,7 @@ public class MainActivity extends Activity {
     private void showThemePicker() {
         final int size = spx(44);
         final int current = universeTheme();
-        panel("Universe Theme", Arrays.asList(UNIVERSE_THEMES), pos -> createThemeRowIcon(pos, size), size, current, pos -> {
+        panel("Theme Universe", Arrays.asList(UNIVERSE_THEMES), pos -> createThemeRowIcon(pos, size), size, current, pos -> {
             if (skyView != null) skyView.setUniverseTheme(pos);
             applyThemeTypography(pos);
         }, which -> {
@@ -2466,7 +2496,7 @@ public class MainActivity extends Activity {
             @Override public Object getItem(int pos) { return labels.get(pos); }
             @Override public long getItemId(int pos) { return pos; }
             @Override public View getView(int pos, View convert, ViewGroup parent) {
-                boolean isThemePanel = "Universe Theme".equals(title);
+                boolean isThemePanel = "Theme Universe".equals(title);
                 Typeface rowTf = isThemePanel ? themeFontFor(pos) : (cinzelFont != null ? cinzelFont : semibold);
                 int rowSize = isThemePanel
                         ? spx(THEME_ROW_FONT_SIZES[Math.max(0, Math.min(THEME_ROW_FONT_SIZES.length - 1, pos))])
@@ -3252,11 +3282,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v6.5.3  \u00B7  Build 68");
+        appTitleTv.setText("HomeScreen v7.0.0  \u00B7  Build 70");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("6 Universes \u00B7 300 Live Story Scenes \u00B7 Dynamic 120 FPS \u00B7 Zero Ads");
+        appSubTv.setText("7 Theme Universes \u00B7 344 Live Story Scenes \u00B7 Dynamic 120 FPS \u00B7 Zero Ads");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -3441,7 +3471,7 @@ public class MainActivity extends Activity {
             if (meta != null && !meta.isEmpty()) {
                 backupMetaTv.setText("Saved backup: " + meta);
             } else {
-                backupMetaTv.setText("Saves pinned apps, row/column grid counts & universe theme.");
+                backupMetaTv.setText("Saves pinned apps, row/column grid counts & theme universe.");
             }
         };
         updateBackupMeta.run();
@@ -3987,7 +4017,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v6.5.3 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v7.0.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 7 Theme Universes (including Formula 1!) and 344 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -3998,7 +4028,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.3 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v7.0.0 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -4010,7 +4040,7 @@ public class MainActivity extends Activity {
 
     // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
     private void showInstallOnTvDialog() {
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.3_68.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v7.0.0_70.apk";
         List<String> options = Arrays.asList(
             "1. Share Download Link to TV (Quick Share / LocalSend)",
             "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",
@@ -4300,7 +4330,7 @@ public class MainActivity extends Activity {
         } catch (Throwable t) {
             cinzelFont = semibold;
         }
-        String[] fontAssets = {"harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf"};
+        String[] fontAssets = {"harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf", "f1.ttf"};
         for (int i = 0; i < fontAssets.length; i++) {
             try {
                 themeFonts[i] = Typeface.createFromAsset(c.getAssets(), fontAssets[i]);
