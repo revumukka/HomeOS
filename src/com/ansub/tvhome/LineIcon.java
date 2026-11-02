@@ -54,6 +54,11 @@ final class LineIcon extends Drawable {
             3, 105, 105, 55,
             0, 146, 146, 1, 200, 200
     };
+    // Double upward chevron for the minimal Swipe-Up Drawer Whisper Handle
+    static final int[] CHEVRON_UP = {
+            0, 56, 132, 1, 120, 68, 1, 184, 132,
+            0, 74, 178, 1, 120, 132, 1, 166, 178
+    };
 
     private final int[] ops;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);

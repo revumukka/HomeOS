@@ -884,65 +884,87 @@ public class MainActivity extends Activity {
         boolean tvMode = isTvDevice();
 
         if (!tvMode) {
-            // Award-Winning Phone / Foldable / Tablet Home Screen UX:
-            // 1. No hard-to-reach top-right TV dock — clean Clock + Weather header at top-left.
-            // 2. Pinned Home Screen apps rendered as sleek squircle medallion icons + single-line labels underneath
-            //    with open sky around them (4 columns on cover screen, 5 columns on unfolded inner screen / tablet).
-            // 3. Ergonomic thumb-zone 4-button glass control dock below the apps: All Apps, Theme, Pin, Settings.
-            // 4. Swipe Up anywhere -> All Apps Drawer with search; Swipe Down anywhere -> Android Notification Shade.
-            cols = (screenW < screenH * 0.65f) ? 4 : 5;
-            cols = Math.min(cols, Math.max(4, launchable));
-            int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-            int iconSize = Math.min(Math.round(w * 0.68f), upx(132));
-            int labelH = upx(38);
-            int h = iconSize + labelH;
-            tileW = w;
-            tileH = h;
-            rowStepPx = h + Math.max(upx(14), g / 2);
-
-            int rows = Math.max(1, (launchable + cols - 1) / cols);
-            gridTop = clockTop + upx(152);
-            int bottomTop = gridTop + rows * rowStepPx + upx(18);
-            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(40);
-
+            // Dual-Posture Continuity for Phones, Foldables & Tablets:
+            // - Folded Cover Screen / Vertical Phone (9:16, screenW < screenH * 0.72f):
+            //   4-column Sleek Squircle Medallion App Icons + crisp single-line labels underneath.
+            // - Unfolded Foldable Inner Screen / Tablet (screenW >= screenH * 0.72f):
+            //   Signature 16:9 Widescreen TV-Style Banner Cards (with emblem, title & lore subtitle inside),
+            //   proportioned so the entire grid sits cleanly in the upper sky above the castle.
+            // - Zero-Duplication Floating Command Trio below the grid:
+            //   [ Theme ]  ·  [ ︿ Whisper Chevron Handle ]  ·  [ Settings ]
+            boolean isNarrowVertical = screenW < screenH * 0.72f;
             for (String pkg : apps) {
                 if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
             }
-            for (int i = 0; i < rowApps.size(); i++) {
-                String pkg = rowApps.get(i);
-                String label = pkg;
-                Drawable defaultIcon = null;
-                try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
-                try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
-                Drawable badge = HogwartsSkyView.createHogwartsBanner(
-                        getResources(), pkg, label, iconSize, iconSize, uiScale,
-                        themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
-                addMobileAppTile(root, pkg, label, badge, defaultIcon, gridX(i), gridY(i), w, h, iconSize);
+            gridTop = clockTop + upx(148);
+            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(40);
+
+            if (isNarrowVertical) {
+                cols = 4;
+                int w = (screenW - 2 * m - g * (cols - 1)) / cols;
+                int iconSize = Math.min(Math.round(w * 0.68f), upx(128));
+                int labelH = upx(36);
+                int h = iconSize + labelH;
+                tileW = w;
+                tileH = h;
+                rowStepPx = h + Math.max(upx(12), g / 2);
+
+                for (int i = 0; i < rowApps.size(); i++) {
+                    String pkg = rowApps.get(i);
+                    String label = pkg;
+                    Drawable defaultIcon = null;
+                    try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
+                    try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
+                    Drawable badge = HogwartsSkyView.createHogwartsBanner(
+                            getResources(), pkg, label, iconSize, iconSize, uiScale,
+                            themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
+                    addMobileAppTile(root, pkg, label, badge, defaultIcon, gridX(i), gridY(i), w, h, iconSize);
+                }
+            } else {
+                // Unfolded Foldable Inner Screen & Tablet: Signature 16:9 Widescreen TV-Style Banner Cards
+                cols = launchable <= 6 ? Math.min(3, Math.max(1, launchable)) : (launchable <= 12 ? 4 : 5);
+                int rowsCount = Math.max(1, (launchable + cols - 1) / cols);
+                int w = (screenW - 2 * m - g * (cols - 1)) / cols;
+                int h = w * 9 / 16;
+                int maxRowH = (Math.round(screenH * 0.38f) - (rowsCount - 1) * g) / rowsCount;
+                if (h > maxRowH) {
+                    h = Math.max(upx(110), maxRowH);
+                }
+                tileW = w;
+                tileH = h;
+                rowStepPx = h + g;
+                float bannerScale = Math.min(uiScale * 0.95f, h / 185f);
+
+                for (int i = 0; i < rowApps.size(); i++) {
+                    String pkg = rowApps.get(i);
+                    String label = pkg;
+                    Drawable defaultIcon = null;
+                    try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
+                    try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
+                    Drawable banner = HogwartsSkyView.createHogwartsBanner(
+                            getResources(), pkg, label, w, h, bannerScale,
+                            themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
+                    addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
+                }
             }
 
-            // Thumb-zone 4-button ergonomic dock: All Apps, Theme, Pin App, Settings
-            int dockCount = 4;
-            int dockGap = Math.max(upx(10), g / 2);
-            int maxDockW = Math.min(screenW - 2 * m, upx(920));
-            int dockBtnW = (maxDockW - dockGap * (dockCount - 1)) / dockCount;
-            int dockBtnH = upx(58);
-            int dockStartX = (screenW - (dockCount * dockBtnW + (dockCount - 1) * dockGap)) / 2;
+            int rows = Math.max(1, (launchable + cols - 1) / cols);
+            int bottomTop = gridTop + rows * rowStepPx + upx(16);
 
-            addTile(root, ALL_APPS, "Apps", null, LineIcon.APPS_GRID, null, dockStartX, bottomTop, dockBtnW, dockBtnH);
-            addTile(root, THEME_PICK, "Theme", null, LineIcon.THEMES, null, dockStartX + (dockBtnW + dockGap), bottomTop, dockBtnW, dockBtnH);
-            addTile(root, ADD, "Pin", null, LineIcon.PLUS, null, dockStartX + 2 * (dockBtnW + dockGap), bottomTop, dockBtnW, dockBtnH);
-            addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, dockStartX + 3 * (dockBtnW + dockGap), bottomTop, dockBtnW, dockBtnH);
+            // Sleek Zero-Duplication Floating Trio: [ Theme ]  [ ︿ Whisper Handle ]  [ Settings ]
+            int pillGap = upx(14);
+            int btnW = Math.min(upx(210), (screenW - 2 * m - upx(84) - 2 * pillGap) / 2);
+            int btnH = upx(54);
+            int chevW = upx(76);
+            int totalDockW = 2 * btnW + chevW + 2 * pillGap;
+            int dockStartX = (screenW - totalDockW) / 2;
 
-            // Subtle gesture hint pill underneath the control dock
-            TextView gestureHint = text(upx(16), 0x88FFE8B0, cinzelFont != null ? cinzelFont : regular);
-            gestureHint.setText("\u2303 Swipe up for All Apps   \u00B7   \u2304 Swipe down for Notifications");
-            gestureHint.setLetterSpacing(0.06f);
-            gestureHint.setGravity(Gravity.CENTER);
-            gestureHint.setShadowLayer(px(6), 0, px(2), 0xAA000000);
-            root.addView(gestureHint, at(m, bottomTop + dockBtnH + upx(12), screenW - 2 * m, -2));
-            chrome.add(gestureHint);
+            addTile(root, THEME_PICK, "Theme", null, LineIcon.THEMES, null, dockStartX, bottomTop, btnW, btnH);
+            addWhisperChevron(root, dockStartX + btnW + pillGap, bottomTop, chevW, btnH);
+            addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null,
+                    dockStartX + btnW + pillGap + chevW + pillGap, bottomTop, btnW, btnH);
 
-            root.setMinimumHeight(bottomTop + dockBtnH + upx(48) + m);
+            root.setMinimumHeight(bottomTop + btnH + m);
             netIcon = null;
             glowIconView = null;
         } else {
@@ -1036,6 +1058,53 @@ public class MainActivity extends Activity {
         View restore = null;
         for (View t : tiles) if (t.getTag().equals(want)) restore = t;
         if (restore != null) restore.requestFocus();
+    }
+
+    // Minimalist breathing golden double-chevron Whisper Handle (︿) that visually signals Swipe-Up for All Apps
+    // with zero text clutter and zero button duplication. Tapping it also opens the All Apps Drawer.
+    private void addWhisperChevron(ViewGroup parent, int x, int y, int w, int h) {
+        FrameLayout pill = new FrameLayout(this);
+        final GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(h / 2f);
+        bg.setColor(0x24181210);
+        bg.setStroke(Math.max(1, upx(1)), 0x48F5D078);
+        pill.setBackground(bg);
+
+        ImageView iv = new ImageView(this);
+        LineIcon li = new LineIcon(LineIcon.CHEVRON_UP);
+        li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
+        iv.setImageDrawable(li);
+        int sz = Math.max(upx(20), Math.round(h * 0.46f));
+        FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(sz, sz);
+        ilp.gravity = Gravity.CENTER;
+        pill.addView(iv, ilp);
+
+        // Gentle breathing pulse on the chevron icon
+        ValueAnimator pulse = ValueAnimator.ofFloat(0.45f, 1.0f);
+        pulse.setDuration(1800);
+        pulse.setRepeatCount(ValueAnimator.INFINITE);
+        pulse.setRepeatMode(ValueAnimator.REVERSE);
+        pulse.addUpdateListener(a -> {
+            float v = (float) a.getAnimatedValue();
+            iv.setAlpha(v);
+            iv.setTranslationY(-upx(2) * (v - 0.45f));
+        });
+        pulse.start();
+
+        pill.setFocusable(true);
+        pill.setTag(ALL_APPS);
+        pill.setContentDescription("All Apps");
+        pill.setOnClickListener(v -> showAllAppsDrawer(false));
+        pill.setOnFocusChangeListener((v, has) -> {
+            bg.setStroke(Math.max(1, upx(has ? 2 : 1)), has ? 0xEEFFE082 : 0x48F5D078);
+            lift(v, bg, has, 0x24181210, 0x44382A18, h / 2, h / 2);
+        });
+
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.setClipChildren(false);
+        wrap.addView(pill, new FrameLayout.LayoutParams(w, h));
+        parent.addView(wrap, at(x, y, w, h));
+        tiles.add(pill);
     }
 
     // Sleek Phone / Foldable / Tablet Home Screen App Icon Tile:
@@ -1644,7 +1713,7 @@ public class MainActivity extends Activity {
             showThemePicker();
             return;
         } else if (ALL_APPS.equals(key)) {
-            showAllAppsDrawer();
+            showAllAppsDrawer(false);
             return;
         } else if (ADD.equals(key)) {
             showAddMenu(-1);
@@ -1653,6 +1722,9 @@ public class MainActivity extends Activity {
             // Deduplicated Settings menu tailored to device class:
             // Theme has its own dedicated button; on TV, Glow also has its own dock button.
             List<String> list = new ArrayList<>();
+            if (!isTvDevice()) {
+                list.add("Pin / Manage Apps");
+            }
             list.add("Sky Palette");
             if (!isTvDevice()) {
                 boolean glowOn = skyView == null || skyView.isEdgeGlowEnabled();
@@ -1668,7 +1740,9 @@ public class MainActivity extends Activity {
             final String[] items = list.toArray(new String[0]);
             dropdown(tile(SETTINGS), items, which -> {
                 String picked = items[which];
-                if ("Sky Palette".equals(picked) || "Wallpaper".equals(picked)) {
+                if ("Pin / Manage Apps".equals(picked)) {
+                    showAllAppsDrawer(true);
+                } else if ("Sky Palette".equals(picked) || "Wallpaper".equals(picked)) {
                     showWallpapers();
                 } else if ("Next Story Scene".equals(picked)) {
                     if (skyView != null) skyView.nextStoryScene();
@@ -2260,10 +2334,13 @@ public class MainActivity extends Activity {
         });
     }
 
-    // Full-screen / Bottom-Sheet Searchable All Apps Drawer triggered by Swipe-Up or the "Apps" dock button.
-    // Displays every launchable app installed on the device in a 4/5-column grid with instant search,
-    // tap-to-launch, and long-press to Pin/Unpin, App Info, or Uninstall.
     private void showAllAppsDrawer() {
+        showAllAppsDrawer(false);
+    }
+
+    // Full-screen / Bottom-Sheet Searchable All Apps Drawer triggered by Swipe-Up or the Whisper Chevron.
+    // Includes a one-tap "★ Pin Apps" toggle chip in the header so users can pin/unpin multiple apps in seconds!
+    private void showAllAppsDrawer(final boolean startInPinMode) {
         if (activeDialog != null && activeDialog.isShowing()) {
             try { activeDialog.dismiss(); } catch (Exception ignored) {}
         }
@@ -2286,6 +2363,7 @@ public class MainActivity extends Activity {
         final List<String> filteredLabels = new ArrayList<>(allLabels);
         final List<String> filteredPkgs = new ArrayList<>(allPkgs);
         final Map<String, Drawable> iconCache = new HashMap<>();
+        final boolean[] pinMode = {startInPinMode};
 
         final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
         activeDialog = d;
@@ -2315,19 +2393,30 @@ public class MainActivity extends Activity {
         hlp.bottomMargin = spx(14);
         sheet.addView(handle, hlp);
 
-        // Header row: "ALL APPS" + count badge
+        // Header row: Title + One-Tap "★ Pin Apps" / "✓ Done" toggle pill
         LinearLayout headerRow = new LinearLayout(this);
         headerRow.setOrientation(LinearLayout.HORIZONTAL);
         headerRow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView headTitle = text(spx(26), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
-        headTitle.setText("ALL APPS");
-        headTitle.setLetterSpacing(0.10f);
+        final TextView headTitle = text(spx(24), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        headTitle.setText(pinMode[0] ? "TAP APPS TO PIN / UNPIN" : ("ALL APPS  \u00B7  " + allPkgs.size()));
+        headTitle.setLetterSpacing(0.08f);
         headerRow.addView(headTitle, new LinearLayout.LayoutParams(0, -2, 1f));
 
-        final TextView countBadge = text(spx(16), 0xAAFFE8B0, cinzelFont != null ? cinzelFont : regular);
-        countBadge.setText(allPkgs.size() + " APPS");
-        countBadge.setLetterSpacing(0.08f);
-        headerRow.addView(countBadge, new LinearLayout.LayoutParams(-2, -2));
+        final TextView pinToggleBtn = text(spx(16), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        final GradientDrawable pinBtnBg = new GradientDrawable();
+        pinBtnBg.setCornerRadius(spx(20));
+        final Runnable updatePinHeader = () -> {
+            headTitle.setText(pinMode[0] ? "TAP APPS TO PIN / UNPIN" : ("ALL APPS  \u00B7  " + filteredPkgs.size()));
+            pinToggleBtn.setText(pinMode[0] ? "\u2713 DONE" : "\u2605 PIN APPS");
+            pinToggleBtn.setTextColor(pinMode[0] ? 0xFF141018 : 0xFFFFE8A8);
+            pinBtnBg.setColor(pinMode[0] ? 0xFFFFD54F : 0x28FFFFFF);
+            pinBtnBg.setStroke(Math.max(1, spx(1)), pinMode[0] ? 0xFFFFF4D2 : 0x55F5D078);
+        };
+        updatePinHeader.run();
+        pinToggleBtn.setBackground(pinBtnBg);
+        pinToggleBtn.setPadding(spx(18), spx(8), spx(18), spx(8));
+        headerRow.addView(pinToggleBtn, new LinearLayout.LayoutParams(-2, -2));
+
         LinearLayout.LayoutParams hrlp = new LinearLayout.LayoutParams(-1, -2);
         hrlp.bottomMargin = spx(14);
         sheet.addView(headerRow, hrlp);
@@ -2438,11 +2527,25 @@ public class MainActivity extends Activity {
         };
         grid.setAdapter(adapter);
 
+        pinToggleBtn.setOnClickListener(v -> {
+            pinMode[0] = !pinMode[0];
+            updatePinHeader.run();
+            adapter.notifyDataSetChanged();
+        });
+
         grid.setOnItemClickListener((parent, v, pos, id) -> {
             if (pos >= 0 && pos < filteredPkgs.size()) {
                 String pkg = filteredPkgs.get(pos);
-                d.dismiss();
-                open(pkg);
+                if (pinMode[0]) {
+                    if (rowApps.contains(pkg)) rowApps.remove(pkg);
+                    else rowApps.add(pkg);
+                    saveRow();
+                    buildTiles();
+                    adapter.notifyDataSetChanged();
+                } else {
+                    d.dismiss();
+                    open(pkg);
+                }
             }
         });
 
@@ -2488,7 +2591,7 @@ public class MainActivity extends Activity {
                         filteredPkgs.add(pk);
                     }
                 }
-                countBadge.setText(filteredPkgs.size() + " APPS");
+                updatePinHeader.run();
                 adapter.notifyDataSetChanged();
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
