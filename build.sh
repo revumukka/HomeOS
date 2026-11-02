@@ -37,8 +37,8 @@ cp out/base.apk out/unsigned.apk; (cd out/dex && zip -q ../unsigned.apk classes.
 # (Releases are signed with their own key: set KEYSTORE and KEYSTORE_PASS.)
 APP_NAME="HomeOS"
 VARIANT="Release"
-VERSION_NAME="3.1.0"
-VERSION_CODE="31"
+VERSION_NAME="3.2.0"
+VERSION_CODE="32"
 PLAY_APK="out/${APP_NAME}_${VARIANT}_v${VERSION_NAME}_${VERSION_CODE}.apk"
 UNIVERSAL_APK="out/${APP_NAME}-Universal-TV-Foldable-Tablet-${VARIANT}-v${VERSION_NAME}-b${VERSION_CODE}.apk"
 

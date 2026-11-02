@@ -23,14 +23,12 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
- * Lightweight Harry Potter / Hogwarts Great Hall Enchanted Ceiling & 24-Scene Saga Theater view:
- * - Top Enchanted Ceiling (y = 30..280): Twinkling stars, 18 floating Great Hall candles,
- *   and 5 translucent pearlescent Hogwarts House Ghosts gliding among the candles.
- * - Expanded Bottom Theater Stage (y = 576..1080): 24 Iconic Harry Potter Scenes in chronological
- *   order from Privet Drive & The Hogwarts Express through The Battle of Hogwarts & Final Duel,
- *   rendered at 30 FPS with zero per-frame object allocations.
+ * Universal Multi-Universe Animated Sky & 248-Scene Saga Theater view (SkyView):
+ * Supports 6 interactive franchises: Harry Potter, Naruto Shippuden, Demon Slayer, Star Wars, MCU, and DCU.
+ * - Top Animated Sky: Twinkling stars, floating atmospheric elements, and reactive companion sprites.
+ * - Bottom Saga Theater Stage: Chronological animated story scenes rendered at 60 FPS with zero per-frame allocations.
  */
-final class HogwartsSkyView extends View {
+final class SkyView extends View {
     private static final int STAR_COUNT = 56;
     private static final int CANDLE_COUNT = 18;
     private static final int SPARK_COUNT = 36;
@@ -366,7 +364,7 @@ final class HogwartsSkyView extends View {
     }
     private HubStatusListener hubListener;
 
-    HogwartsSkyView(Context context, float scale, int paletteIndex, Typeface cinzel) {
+    SkyView(Context context, float scale, int paletteIndex, Typeface cinzel) {
         super(context);
         this.scale = scale;
         this.paletteIndex = paletteIndex;
@@ -6653,7 +6651,7 @@ final class HogwartsSkyView extends View {
         paint.setStyle(Paint.Style.FILL);
     }
 
-    static int houseColorFor(String key) {
+    static int themeAccentFor(String key) {
         if (key == null) return 0xFFE83838;
         String k = key.toLowerCase();
         if (k.contains("youtube")) return 0xFFE83038;
@@ -6686,16 +6684,16 @@ final class HogwartsSkyView extends View {
         return er * 1.15f;
     }
 
-    static Drawable createHogwartsBanner(Resources res, String pkg, String label,
-                                         int w, int h, float scale,
-                                         Typeface harryFont, Typeface cinzelFont) {
-        return createHogwartsBanner(res, pkg, label, w, h, scale, harryFont, cinzelFont, 0, null, 0);
+    static Drawable createThemeBanner(Resources res, String pkg, String label,
+                                      int w, int h, float scale,
+                                      Typeface themeFont, Typeface cinzelFont) {
+        return createThemeBanner(res, pkg, label, w, h, scale, themeFont, cinzelFont, 0, null, 0);
     }
 
-    static Drawable createHogwartsBanner(Resources res, String pkg, String label,
-                                         int w, int h, float scale,
-                                         Typeface harryFont, Typeface cinzelFont, int theme,
-                                         Drawable defaultIcon, int slotIndex) {
+    static Drawable createThemeBanner(Resources res, String pkg, String label,
+                                      int w, int h, float scale,
+                                      Typeface themeFont, Typeface cinzelFont, int theme,
+                                      Drawable defaultIcon, int slotIndex) {
         int bw = Math.max(1, w), bh = Math.max(1, h);
         Bitmap bm = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
         if (res != null) bm.setDensity(res.getDisplayMetrics().densityDpi);
@@ -6713,8 +6711,9 @@ final class HogwartsSkyView extends View {
         else if (k.contains("plex")) packSlot = 3;
         else if (k.contains("hotstar") || k.contains("disney")) packSlot = 4;
 
-        boolean useCustomPackIcon = (packSlot >= 0);
-        int styleSlot = useCustomPackIcon ? packSlot : (Math.abs(slotIndex) % 5);
+        boolean squareBadge = Math.abs(bw - bh) <= 4;
+        boolean useCustomPackIcon = (packSlot >= 0) && !squareBadge;
+        int styleSlot = (packSlot >= 0) ? packSlot : (Math.abs(slotIndex) % 5);
 
         int topBg, botBg, glowCol, emblemType;
         String houseSub;
@@ -6830,7 +6829,6 @@ final class HogwartsSkyView extends View {
             emblemType = 5;
         }
 
-        boolean squareBadge = Math.abs(bw - bh) <= 4;
         p.setShader(new LinearGradient(0, 0, 0, bh, topBg, botBg, Shader.TileMode.CLAMP));
         c.drawRect(0, 0, bw, bh, p);
 
@@ -7148,7 +7146,7 @@ final class HogwartsSkyView extends View {
         if (!squareBadge) {
             p.setStyle(Paint.Style.FILL);
             p.setTextAlign(Paint.Align.CENTER);
-            if (harryFont != null) p.setTypeface(harryFont);
+            if (themeFont != null) p.setTypeface(themeFont);
             float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * contentScale;
             p.setTextSize(titleSize);
             float maxTextW = bw - 34f * cardScale;

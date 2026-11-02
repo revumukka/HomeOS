@@ -183,11 +183,11 @@ public class MainActivity extends Activity {
     private float settingsScale = 1f;
     private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27};
 
-    private static Typeface regular, semibold, harryFont, cinzelFont;
+    private static Typeface regular, semibold, defaultThemeFont, cinzelFont;
     private static final Typeface[] themeFonts = new Typeface[6];
 
     private FrameLayout root; // the page, inside a vertical scroller
-    private HogwartsSkyView skyView;
+    private SkyView skyView;
     private LinearLayout clockContainer;
     private Dialog activeDialog;
     private TextClock dateClockView, timeClockView;
@@ -362,7 +362,7 @@ public class MainActivity extends Activity {
         getWindow().setBackgroundDrawable(new ColorDrawable(0xFF060916));
 
         FrameLayout viewport = new FrameLayout(this);
-        skyView = new HogwartsSkyView(this, scale, wallpaper(), cinzelFont);
+        skyView = new SkyView(this, scale, wallpaper(), cinzelFont);
         skyView.setUniverseTheme(universeTheme());
         boolean glowOn = prefs().getBoolean("edge_glow", true);
         skyView.setEdgeGlowEnabled(glowOn);
@@ -902,12 +902,12 @@ public class MainActivity extends Activity {
             if (isNarrowVertical) {
                 cols = 4;
                 int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-                int iconSize = Math.min(Math.round(w * 0.68f), upx(128));
-                int labelH = upx(36);
+                int iconSize = Math.min(Math.round(w * 0.62f), upx(108));
+                int labelH = upx(48);
                 int h = iconSize + labelH;
                 tileW = w;
                 tileH = h;
-                rowStepPx = h + Math.max(upx(12), g / 2);
+                rowStepPx = h + Math.max(upx(14), g / 2);
 
                 for (int i = 0; i < rowApps.size(); i++) {
                     String pkg = rowApps.get(i);
@@ -915,7 +915,7 @@ public class MainActivity extends Activity {
                     Drawable defaultIcon = null;
                     try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
-                    Drawable badge = HogwartsSkyView.createHogwartsBanner(
+                    Drawable badge = SkyView.createThemeBanner(
                             getResources(), pkg, label, iconSize, iconSize, uiScale,
                             themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
                     addMobileAppTile(root, pkg, label, badge, defaultIcon, gridX(i), gridY(i), w, h, iconSize);
@@ -941,7 +941,7 @@ public class MainActivity extends Activity {
                     Drawable defaultIcon = null;
                     try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
-                    Drawable banner = HogwartsSkyView.createHogwartsBanner(
+                    Drawable banner = SkyView.createThemeBanner(
                             getResources(), pkg, label, w, h, bannerScale,
                             themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
                     addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
@@ -949,22 +949,24 @@ public class MainActivity extends Activity {
             }
 
             int rows = Math.max(1, (launchable + cols - 1) / cols);
-            int bottomTop = gridTop + rows * rowStepPx + upx(16);
+            int bottomTop = gridTop + rows * rowStepPx + upx(14);
 
-            // Sleek Zero-Duplication Floating Trio: [ Theme ]  [ ︿ Whisper Handle ]  [ Settings ]
-            int pillGap = upx(14);
-            int btnW = Math.min(upx(210), (screenW - 2 * m - upx(84) - 2 * pillGap) / 2);
+            // Easy 3-Button Control Row: [ Theme ]  [ + Add App ]  [ Settings ] + subtle Whisper Chevron below
+            int pillGap = Math.max(upx(10), g / 2);
+            int maxDockW = Math.min(screenW - 2 * m, upx(780));
+            int btnW = (maxDockW - 2 * pillGap) / 3;
             int btnH = upx(54);
-            int chevW = upx(76);
-            int totalDockW = 2 * btnW + chevW + 2 * pillGap;
-            int dockStartX = (screenW - totalDockW) / 2;
+            int dockStartX = (screenW - (3 * btnW + 2 * pillGap)) / 2;
 
             addTile(root, THEME_PICK, "Theme", null, LineIcon.THEMES, null, dockStartX, bottomTop, btnW, btnH);
-            addWhisperChevron(root, dockStartX + btnW + pillGap, bottomTop, chevW, btnH);
+            addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, dockStartX + btnW + pillGap, bottomTop, btnW, btnH);
             addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null,
-                    dockStartX + btnW + pillGap + chevW + pillGap, bottomTop, btnW, btnH);
+                    dockStartX + 2 * (btnW + pillGap), bottomTop, btnW, btnH);
 
-            root.setMinimumHeight(bottomTop + btnH + m);
+            int chevW = upx(72), chevH = upx(32);
+            addWhisperChevron(root, (screenW - chevW) / 2, bottomTop + btnH + upx(10), chevW, chevH);
+
+            root.setMinimumHeight(bottomTop + btnH + chevH + upx(20) + m);
             netIcon = null;
             glowIconView = null;
         } else {
@@ -1011,7 +1013,7 @@ public class MainActivity extends Activity {
                 Drawable defaultIcon = null;
                 try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                 try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
-                Drawable banner = HogwartsSkyView.createHogwartsBanner(
+                Drawable banner = SkyView.createThemeBanner(
                         getResources(), pkg, label, w, h, scale, themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
                 addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
             }
@@ -1132,8 +1134,8 @@ public class MainActivity extends Activity {
             iv.setImageDrawable(badge);
             iconBox.addView(iv, new FrameLayout.LayoutParams(-1, -1));
         }
-        if (appIcon != null && !HogwartsSkyView.isCustomIconPackApp(key)) {
-            int d = Math.max(1, Math.round(iconSize * 0.62f));
+        if (appIcon != null) {
+            int d = Math.max(1, Math.round(iconSize * 0.72f));
             ImageView iconIv = new ImageView(this);
             iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
             iconIv.setImageDrawable(appIcon);
@@ -1154,17 +1156,18 @@ public class MainActivity extends Activity {
         iconBox.setForeground(border);
         cell.addView(iconBox, new LinearLayout.LayoutParams(iconSize, iconSize));
 
-        final TextView titleView = text(upx(20), 0xF5FFF4D2, themeFontFor(universeTheme()));
+        final TextView titleView = text(upx(17), 0xF5FFF4D2, semibold);
         titleView.setText(label);
+        titleView.setIncludeFontPadding(false);
         titleView.setSingleLine(true);
         titleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         titleView.setGravity(Gravity.CENTER_HORIZONTAL);
         titleView.setShadowLayer(px(8), 0, px(2), 0xDD000000);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(w, -2);
-        tlp.topMargin = upx(6);
+        tlp.topMargin = upx(7);
         cell.addView(titleView, tlp);
 
-        final int houseCol = HogwartsSkyView.houseColorFor(key);
+        final int houseCol = SkyView.themeAccentFor(key);
         final int focusBorderCol = blend(0xFFFFE082, (0xFF << 24) | (houseCol & 0xFFFFFF), 0.45f);
         cell.setOnFocusChangeListener((v, has) -> {
             if (has) {
@@ -1215,8 +1218,8 @@ public class MainActivity extends Activity {
 
         FrameLayout wrap = new FrameLayout(this);
         wrap.setClipChildren(false);
-        wrap.addView(cell, new FrameLayout.LayoutParams(w, h));
-        parent.addView(wrap, at(x, y, w, h));
+        wrap.addView(cell, new FrameLayout.LayoutParams(w, -2));
+        parent.addView(wrap, at(x, y, w, -2));
         tiles.add(cell);
     }
 
@@ -1232,9 +1235,10 @@ public class MainActivity extends Activity {
             iv.setScaleType(ImageView.ScaleType.FIT_XY);
             iv.setImageDrawable(banner);
             card.addView(iv, new FrameLayout.LayoutParams(-1, -1));
-            if (appIcon != null && !HogwartsSkyView.isCustomIconPackApp(key)) {
-                // Hardware-accelerated circular medallion ImageView for fallback device-default app icons
-                float ir = HogwartsSkyView.getMedallionRadius(w, h);
+            if (appIcon != null && (!isTvDevice() || !SkyView.isCustomIconPackApp(key))) {
+                // Hardware-accelerated circular medallion ImageView for default device app icons
+                // (On phones/foldables/tablets, always show the real default device icon; on TV, keep custom pack icons)
+                float ir = SkyView.getMedallionRadius(w, h);
                 int d = Math.max(1, Math.round(ir * 2f));
                 ImageView iconIv = new ImageView(this);
                 iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -1294,7 +1298,7 @@ public class MainActivity extends Activity {
         card.setFocusable(true);
         card.setTag(key);
 
-        // Custom Hogwarts banners already include the title & house subtitle inside the card.
+        // Custom theme banners already include the title & lore subtitle inside the card.
         final TextView caption = null;
 
         final GradientDrawable border = new GradientDrawable();
@@ -1304,7 +1308,7 @@ public class MainActivity extends Activity {
         card.setForeground(border);
 
         final boolean glass = banner == null;
-        final int houseCol = HogwartsSkyView.houseColorFor(key);
+        final int houseCol = SkyView.themeAccentFor(key);
         final int focusBorderCol = blend(0xFFFFE082, (0xFF << 24) | (houseCol & 0xFFFFFF), 0.42f);
         card.setOnFocusChangeListener((v, has) -> {
             if (has) {
@@ -1487,7 +1491,7 @@ public class MainActivity extends Activity {
 
     private static Typeface themeFontFor(int theme) {
         int idx = Math.max(0, Math.min(themeFonts.length - 1, theme));
-        return themeFonts[idx] != null ? themeFonts[idx] : (harryFont != null ? harryFont : semibold);
+        return themeFonts[idx] != null ? themeFonts[idx] : (defaultThemeFont != null ? defaultThemeFont : semibold);
     }
 
     private void applyThemeTypography(int theme) {
@@ -2453,66 +2457,88 @@ public class MainActivity extends Activity {
         sblp.bottomMargin = spx(18);
         sheet.addView(searchBox, sblp);
 
-        // Responsive GridView of all installed apps
-        final android.widget.GridView grid = new android.widget.GridView(this);
-        grid.setNumColumns(drawerCols);
-        grid.setVerticalSpacing(spx(18));
-        grid.setHorizontalSpacing(spx(12));
-        grid.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
-        grid.setVerticalScrollBarEnabled(false);
-        grid.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        GradientDrawable gridSel = new GradientDrawable();
-        gridSel.setCornerRadius(spx(20));
-        gridSel.setColor(0x28FFE8B0);
-        grid.setSelector(gridSel);
+        // Spacious Vertical Scroll List of all installed apps (clean icon + full app name + pin status)
+        final ListView list = new ListView(this);
+        list.setDivider(new ColorDrawable(Color.TRANSPARENT));
+        list.setDividerHeight(spx(10));
+        list.setVerticalScrollBarEnabled(false);
+        list.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        GradientDrawable listSel = new GradientDrawable();
+        listSel.setCornerRadius(spx(22));
+        listSel.setColor(0x28FFE8B0);
+        list.setSelector(listSel);
 
-        final int cellIconSize = spx(76);
+        final int rowIconSize = spx(56);
         final BaseAdapter adapter = new BaseAdapter() {
             @Override public int getCount() { return filteredPkgs.size(); }
             @Override public Object getItem(int pos) { return filteredPkgs.get(pos); }
             @Override public long getItemId(int pos) { return pos; }
             @Override public View getView(int pos, View convert, ViewGroup parent) {
-                LinearLayout cell;
+                LinearLayout row;
                 ImageView iconIv;
                 TextView nameTv;
+                TextView badgeTv;
                 if (convert instanceof LinearLayout) {
-                    cell = (LinearLayout) convert;
-                    FrameLayout box = (FrameLayout) cell.getChildAt(0);
+                    row = (LinearLayout) convert;
+                    FrameLayout box = (FrameLayout) row.getChildAt(0);
                     iconIv = (ImageView) box.getChildAt(0);
-                    nameTv = (TextView) cell.getChildAt(1);
+                    nameTv = (TextView) row.getChildAt(1);
+                    badgeTv = (TextView) row.getChildAt(2);
                 } else {
-                    cell = new LinearLayout(MainActivity.this);
-                    cell.setOrientation(LinearLayout.VERTICAL);
-                    cell.setGravity(Gravity.CENTER_HORIZONTAL);
-                    cell.setPadding(spx(4), spx(8), spx(4), spx(8));
+                    row = new LinearLayout(MainActivity.this);
+                    row.setOrientation(LinearLayout.HORIZONTAL);
+                    row.setGravity(Gravity.CENTER_VERTICAL);
+                    row.setPadding(spx(18), spx(12), spx(18), spx(12));
+                    GradientDrawable rowBg = new GradientDrawable();
+                    rowBg.setCornerRadius(spx(22));
+                    rowBg.setColor(0x18FFFFFF);
+                    rowBg.setStroke(Math.max(1, spx(1)), 0x26F5D078);
+                    row.setBackground(rowBg);
 
                     FrameLayout box = new FrameLayout(MainActivity.this);
                     GradientDrawable bBg = new GradientDrawable();
-                    bBg.setCornerRadius(Math.round(cellIconSize * 0.26f));
-                    bBg.setColor(0xFF181422);
+                    bBg.setCornerRadius(Math.round(rowIconSize * 0.26f));
+                    bBg.setColor(0xFF14101E);
                     bBg.setStroke(Math.max(1, spx(1)), 0x44F5D078);
                     box.setBackground(bBg);
 
                     iconIv = new ImageView(MainActivity.this);
                     iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    int pad = Math.round(cellIconSize * 0.14f);
+                    int pad = Math.round(rowIconSize * 0.12f);
                     iconIv.setPadding(pad, pad, pad, pad);
-                    box.addView(iconIv, new FrameLayout.LayoutParams(cellIconSize, cellIconSize));
-                    cell.addView(box, new LinearLayout.LayoutParams(cellIconSize, cellIconSize));
+                    box.addView(iconIv, new FrameLayout.LayoutParams(rowIconSize, rowIconSize));
+                    row.addView(box, new LinearLayout.LayoutParams(rowIconSize, rowIconSize));
 
-                    nameTv = text(spx(16), 0xEEFFF4D2, regular);
+                    nameTv = text(spx(21), 0xF5FFF4D2, semibold);
                     nameTv.setSingleLine(true);
                     nameTv.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                    nameTv.setGravity(Gravity.CENTER_HORIZONTAL);
-                    LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(-1, -2);
-                    nlp.topMargin = spx(6);
-                    cell.addView(nameTv, nlp);
+                    nameTv.setGravity(Gravity.CENTER_VERTICAL);
+                    LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(0, -2, 1f);
+                    nlp.leftMargin = spx(18);
+                    row.addView(nameTv, nlp);
+
+                    badgeTv = text(spx(15), 0xFFFFE082, cinzelFont != null ? cinzelFont : semibold);
+                    badgeTv.setGravity(Gravity.CENTER);
+                    badgeTv.setPadding(spx(12), spx(6), spx(12), spx(6));
+                    row.addView(badgeTv, new LinearLayout.LayoutParams(-2, -2));
                 }
                 String pkg = filteredPkgs.get(pos);
                 String lbl = filteredLabels.get(pos);
                 boolean pinned = rowApps.contains(pkg);
-                nameTv.setText(pinned ? ("\u2605 " + lbl) : lbl);
-                nameTv.setTextColor(pinned ? 0xFFFFE082 : 0xEEFFF4D2);
+                nameTv.setText(lbl);
+                nameTv.setTextColor(pinned ? 0xFFFFF4D2 : 0xE6FFF4D2);
+
+                if (pinned) {
+                    badgeTv.setVisibility(View.VISIBLE);
+                    badgeTv.setText("\u2605 PINNED");
+                    badgeTv.setTextColor(0xFFFFD54F);
+                } else if (pinMode[0]) {
+                    badgeTv.setVisibility(View.VISIBLE);
+                    badgeTv.setText("+ PIN");
+                    badgeTv.setTextColor(0x99FFE8B0);
+                } else {
+                    badgeTv.setVisibility(View.GONE);
+                }
 
                 Drawable ic = iconCache.get(pkg);
                 if (ic == null) {
@@ -2522,10 +2548,10 @@ public class MainActivity extends Activity {
                     } catch (Exception ignored) {}
                 }
                 iconIv.setImageDrawable(ic);
-                return cell;
+                return row;
             }
         };
-        grid.setAdapter(adapter);
+        list.setAdapter(adapter);
 
         pinToggleBtn.setOnClickListener(v -> {
             pinMode[0] = !pinMode[0];
@@ -2533,7 +2559,7 @@ public class MainActivity extends Activity {
             adapter.notifyDataSetChanged();
         });
 
-        grid.setOnItemClickListener((parent, v, pos, id) -> {
+        list.setOnItemClickListener((parent, v, pos, id) -> {
             if (pos >= 0 && pos < filteredPkgs.size()) {
                 String pkg = filteredPkgs.get(pos);
                 if (pinMode[0]) {
@@ -2549,7 +2575,7 @@ public class MainActivity extends Activity {
             }
         });
 
-        grid.setOnItemLongClickListener((parent, v, pos, id) -> {
+        list.setOnItemLongClickListener((parent, v, pos, id) -> {
             if (pos < 0 || pos >= filteredPkgs.size()) return false;
             final String pkg = filteredPkgs.get(pos);
             final boolean pinned = rowApps.contains(pkg);
@@ -2597,7 +2623,7 @@ public class MainActivity extends Activity {
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
-        sheet.addView(grid, new LinearLayout.LayoutParams(-1, 0, 1f));
+        sheet.addView(list, new LinearLayout.LayoutParams(-1, 0, 1f));
         d.setContentView(sheet);
 
         int sheetH = Math.round(screenH * 0.86f);
@@ -2819,9 +2845,9 @@ public class MainActivity extends Activity {
         regular = fromFile("/system/fonts/MILanPro_Normal.ttf", Typeface.create("sans-serif", Typeface.NORMAL));
         semibold = fromFile("/system/fonts/MILanPro_SemiBold.ttf", Typeface.create("sans-serif-medium", Typeface.NORMAL));
         try {
-            harryFont = Typeface.createFromAsset(c.getAssets(), "harryp.ttf");
+            defaultThemeFont = Typeface.createFromAsset(c.getAssets(), "harryp.ttf");
         } catch (Throwable t) {
-            harryFont = semibold;
+            defaultThemeFont = semibold;
         }
         try {
             cinzelFont = Typeface.createFromAsset(c.getAssets(), "cinzel.ttf");
@@ -2833,7 +2859,7 @@ public class MainActivity extends Activity {
             try {
                 themeFonts[i] = Typeface.createFromAsset(c.getAssets(), fontAssets[i]);
             } catch (Throwable t) {
-                themeFonts[i] = harryFont;
+                themeFonts[i] = defaultThemeFont;
             }
         }
     }
