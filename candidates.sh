@@ -182,7 +182,7 @@ com.google.android.tungsten.setupwraith	Google TV setup
 com.dolby.android.audio.service	Dolby audio
 org.droidtv.homeintentresolver	Philips Home key router
 org.droidtv.GlobalKey	Philips remote buttons
-com.ansub.tvhome	TV Detox home screen
+com.ansub.tvhome	HomeScreen Launcher
 com.tcl.inputmethod.international	TV keyboard
 com.google.android.webview	Web pages inside apps
 com.tcl.android.webview	Web pages inside apps

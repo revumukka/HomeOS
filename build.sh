@@ -45,7 +45,7 @@ LEGACY_PLAY_APK="out/HomeOS_${VARIANT}_v${VERSION_NAME}_${VERSION_CODE}.apk"
 
 KS=${KEYSTORE:-key.jks}; PASS=${KEYSTORE_PASS:-tvhome123}
 [ -f "$KS" ] || keytool -genkeypair -keystore "$KS" -storepass "$PASS" -keypass "$PASS" -alias tvhome \
-  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=HomeScreen, O=Ansub, C=US" >/dev/null 2>&1
+  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=HomeScreen, O=RevanthMukka, C=US" >/dev/null 2>&1
 "$BT/apksigner" sign --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
   --ks "$KS" --ks-pass "pass:$PASS" --out out/tvhome.apk out/aligned.apk
 "$BT/apksigner" verify out/tvhome.apk

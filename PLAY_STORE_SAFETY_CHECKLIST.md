@@ -1,6 +1,6 @@
 # Vibe-Coded Android App → Google Play Store Safety, Security & Regulatory Checklist
 
-This checklist synthesizes the industry-standard GitHub repositories used to audit AI-assisted ("vibe-coded") and indie Android apps prior to a final **Google Play Store** launch, together with the concrete hardening applied in **HomeScreen `v4.2.0` (`versionCode = 42`)**.
+This checklist synthesizes the industry-standard GitHub repositories used to audit AI-assisted ("vibe-coded") and indie Android apps prior to a final **Google Play Store** launch, together with the concrete hardening applied in **HomeScreen `v5.1.0` (`versionCode = 51`)**, created by **Revanth Mukka (`@revumukka`)** and vibe-coded from scratch with **Google Gemini Antigravity**.
 
 ---
 
