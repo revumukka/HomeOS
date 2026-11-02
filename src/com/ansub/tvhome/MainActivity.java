@@ -354,11 +354,11 @@ public class MainActivity extends Activity {
     private boolean gestureHandled;
     private boolean gestureLockedHorizontal;
 
-    // v5.1 Universal Landscape & Unfolded Foldable Cinema Story Screensaver Mode (2 minutes of inactivity):
+    // v6.0 Universal Landscape & Unfolded Foldable Cinema Story Screensaver Mode (2 minutes of inactivity):
     // Active on Android TV, any landscape orientation (width > height), and unfolded/open foldables (width >= height * 0.75f).
     // Hides all app tiles, page dots, bottom buttons, and quick icon dock while keeping the
     // top-left Date, Time & Weather and SkyView, scaling the story stage to the bottom 3/4th of the screen
-    // and randomizing across all 248 stories from all 6 Universe Themes with matching font & sky.
+    // and randomizing across all 300 stories from all 6 Universe Themes with matching font & sky.
     private static final long SCREENSAVER_IDLE_MS = 2 * 60 * 1000L;
     private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean screensaverActive = false;
@@ -382,6 +382,48 @@ public class MainActivity extends Activity {
             } else if (!isTvDevice()) {
                 win.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
+        } catch (Throwable ignored) {}
+    }
+
+    // v6.0 Dynamic High-Refresh-Rate Negotiation (60Hz / 90Hz / 120Hz LTPO adaptive support):
+    // Requests the highest refresh rate mode matching the active display's native resolution (up to 120Hz),
+    // re-negotiating automatically across Foldable cover/inner display posture transitions and TVs.
+    private void configureDynamicHighRefreshRate() {
+        try {
+            Window win = getWindow();
+            if (win == null) return;
+            android.view.Display display = (android.os.Build.VERSION.SDK_INT >= 30)
+                    ? getDisplay()
+                    : getWindowManager().getDefaultDisplay();
+            if (display == null) return;
+            WindowManager.LayoutParams lp = win.getAttributes();
+            if (android.os.Build.VERSION.SDK_INT >= 23) {
+                android.view.Display.Mode active = display.getMode();
+                android.view.Display.Mode[] modes = display.getSupportedModes();
+                android.view.Display.Mode best = active;
+                float bestRate = active != null ? active.getRefreshRate() : 60f;
+                if (active != null && modes != null) {
+                    for (android.view.Display.Mode m : modes) {
+                        if (m.getPhysicalWidth() == active.getPhysicalWidth()
+                                && m.getPhysicalHeight() == active.getPhysicalHeight()) {
+                            float r = m.getRefreshRate();
+                            if (r > bestRate && r <= 120.5f) {
+                                best = m;
+                                bestRate = r;
+                            }
+                        }
+                    }
+                }
+                if (best != null) {
+                    lp.preferredDisplayModeId = best.getModeId();
+                    lp.preferredRefreshRate = bestRate;
+                } else {
+                    lp.preferredRefreshRate = 120f;
+                }
+            } else {
+                lp.preferredRefreshRate = 120f;
+            }
+            win.setAttributes(lp);
         } catch (Throwable ignored) {}
     }
 
@@ -557,6 +599,7 @@ public class MainActivity extends Activity {
         Window win = getWindow();
         win.setBackgroundDrawable(new ColorDrawable(0xFF060916));
         updateKeepScreenOn();
+        configureDynamicHighRefreshRate();
         if (!isTvDevice()) {
             try {
                 win.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
@@ -879,6 +922,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        configureDynamicHighRefreshRate();
         // Rebuild only when apps were installed, removed or updated.
         if (dirty) {
             dirty = false;
@@ -968,6 +1012,7 @@ public class MainActivity extends Activity {
         }
         applyThemeTypography(universeTheme());
         updateKeepScreenOn();
+        configureDynamicHighRefreshRate();
         buildTiles();
         resetIdleTimer();
     }

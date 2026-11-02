@@ -23,18 +23,20 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
- * Universal Multi-Universe Animated Sky & 248-Scene Saga Theater view (SkyView):
+ * Universal Multi-Universe Animated Sky & 300-Scene Saga Theater view (SkyView):
  * Supports 6 interactive franchises: Harry Potter, Naruto Shippuden, Demon Slayer, Star Wars, MCU, and DCU.
  * - Top Animated Sky: Twinkling stars, floating atmospheric elements, and reactive companion sprites.
- * - Bottom Saga Theater Stage: Chronological animated story scenes rendered at 60 FPS with zero per-frame allocations.
+ * - Bottom Saga Theater Stage: Chronological animated story scenes rendered at up to 120 FPS (dynamic LTPO/VRR
+ *   sub-microsecond elapsedRealtimeNanos timing) with zero per-frame allocations.
  */
 final class SkyView extends View {
     private static final int STAR_COUNT = 56;
     private static final int CANDLE_COUNT = 18;
     private static final int SPARK_COUNT = 36;
     private static final int GHOST_COUNT = 5;
-    private static final int SCENE_COUNT = 68;
-    private static final float CHAPTER_SEC = 5.0f; // 68 HP scenes / 36 Universe scenes * 5.0s saga loop
+    private static final int SCENE_COUNT = 80;
+    private static final int UNIVERSE_SCENE_COUNT = 44;
+    private static final float CHAPTER_SEC = 5.0f; // 80 HP scenes / 44 Universe scenes * 5.0s saga loop
 
     private static final String[] CHAPTER_TITLES = {
         "I  |  PRIVET DRIVE  |  DUMBLEDORE & THE DELUMINATOR",
@@ -104,7 +106,19 @@ final class SkyView extends View {
         "LXV  |  THE BURROW MARSHES  |  RING OF FIRE DEATH EATER AMBUSH",
         "LXVI  |  MALFOY MANOR  |  DOBBY & THE CRYSTAL CHANDELIER",
         "LXVII  |  THE PRINCE'S TALE  |  SNAPE'S PENSIEVE & SILVER DOE",
-        "LXVIII  |  NINETEEN YEARS LATER  |  PLATFORM 9 3/4 EPILOGUE"
+        "LXVIII  |  NINETEEN YEARS LATER  |  PLATFORM 9 3/4 EPILOGUE",
+        "LXIX  |  PRIVET DRIVE BEDROOM  |  UNDER-COVERS LUMOS MAXIMA",
+        "LXX  |  HOGWARTS EXPRESS  |  DEMENTOR BOARDING & FROSTED GLASS",
+        "LXXI  |  HOGSMEADE VILLAGE  |  CROOKSHANKS & SCABBERS CHASE",
+        "LXXII  |  GREAT HALL  |  PARCHMENT NAMES IN GOBLET OF FIRE",
+        "LXXIII  |  CHAMPIONS' TENT  |  RITA SKEETER & QUICK-QUOTES QUILL",
+        "LXXIV  |  DIAGON ALLEY  |  WEASLEYS' WIZARD WHEEZES EMPORIUM",
+        "LXXV  |  SIXTH-FLOOR BATHROOM  |  HARRY VS. DRACO SECTUMSEMPRA",
+        "LXXVI  |  GRIMMAULD PLACE  |  KREACHER'S TALE & REGULUS LOCKET",
+        "LXXVII  |  GODRIC'S HOLLOW  |  CHRISTMAS EVE GRAVEYARD IN SNOW",
+        "LXXVIII  |  SHELL COTTAGE  |  BILL & FLEUR BY THE CRASHING SEA",
+        "LXXIX  |  HOGWARTS COURTYARD  |  NEVILLE & THE SWORD OF GRYFFINDOR",
+        "LXXX  |  VIADUCT BRIDGE  |  REPARO OF THE HOLLY WAND & ELDER WAND"
     };
 
     private float scale;
@@ -115,8 +129,13 @@ final class SkyView extends View {
     private final Paint bitmapPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final Path flamePath = new Path();
     private final Path actorPath = new Path();
-    private final RectF storyRect = new RectF();
+    private static final RectF storyRect = new RectF();
     private Typeface cinzelFont;
+
+    private static RectF rectF(float l, float t, float r, float b) {
+        storyRect.set(l, t, r, b);
+        return storyRect;
+    }
 
     // Stars: x, y, radius, speed, phase, isMajor(0/1)
     private final float[] stars = new float[STAR_COUNT * 6];
@@ -182,7 +201,15 @@ final class SkyView extends View {
         "XXXIII  |  CATACLYSM  |  REVIVAL OF THE TEN-TAILS JUBI",
         "XXXIV  |  EIGHTH GATE OF DEATH  |  MIGHT GUY: NIGHT GUY DRAGON",
         "XXXV  |  KAGUYA DIMENSION  |  TEAM SEVEN SIX PATHS SEALING",
-        "XXXVI  |  NEW ERA KONOHA  |  SEVENTH HOKAGE NARUTO UZUMAKI"
+        "XXXVI  |  NEW ERA KONOHA  |  SEVENTH HOKAGE NARUTO UZUMAKI",
+        "XXXVII  |  ACADEMY SWING  |  YOUNG NARUTO BENEATH HOKAGE ROCK",
+        "XXXVIII  |  LAND OF WAVES BRIDGE  |  NINE-TAILS RED CHAKRA AWAKENING",
+        "XXXIX  |  ROOFTOP CLASH  |  NARUTO RASENGAN VS. SASUKE CHIDORI",
+        "XL  |  FINAL VALLEY WATERFALL  |  WINGED CURSE MARK SASUKE VS. NARUTO",
+        "XLI  |  MOUNT MYOBOKU  |  SAGE MODE JIRAIYA & TWO GREAT SAGE TOADS",
+        "XLII  |  DESERT BATTLEFIELD  |  GAARA GRAND SAND MAUSOLEUM SEAL",
+        "XLIII  |  FOUNDERS ERA  |  FIRST HOKAGE HASHIRAMA THOUSAND-ARMED BUDDHA",
+        "XLIV  |  BARYON MODE  |  NARUTO & KURAMA FINAL CRIMSON FUSION"
     };
 
     private static final String[] DEMON_SLAYER_TITLES = {
@@ -221,7 +248,15 @@ final class SkyView extends View {
         "XXXIII  |  INFINITY CASTLE  |  ZENITSU SEVENTH FORM FLAMING THUNDER GOD",
         "XXXIV  |  UPPER MOON TWO  |  SHINOBU, KANAO & INOSUKE VS. DOMA",
         "XXXV  |  UPPER MOON ONE  |  GYOMEI, SANEMI & MUICHIRO VS. KOKUSHIBO",
-        "XXXVI  |  DAWN OVER TOKYO  |  THIRTEENTH FORM SUN BREATHING FINALE"
+        "XXXVI  |  DAWN OVER TOKYO  |  THIRTEENTH FORM SUN BREATHING FINALE",
+        "XXXVII  |  DRUM MANSION  |  TANJIRO VS. KYOGAI ROTATING CLAW SLASH",
+        "XXXVIII  |  MOUNT NATAGUMO  |  SHINOBU KOCHO WISTERIA MOONLIT DESCENT",
+        "XXXIX  |  BUTTERFLY MANSION  |  TOTAL CONCENTRATION GOURD BURST",
+        "XL  |  ENTERTAINMENT DISTRICT  |  INOSUKE BEAST BREATHING FANG SLASH",
+        "XLI  |  SWORDSMITH VILLAGE  |  GENYA SHINAZUGAWA DOUBLE-BARREL SHOT",
+        "XLII  |  INFINITY CASTLE  |  GIYU & TANJIRO VS. AKAZA COMPASS NEEDLE",
+        "XLIII  |  INFINITY CASTLE  |  OBANAI IGURO SERPENT BREATHING",
+        "XLIV  |  SPRINGTIME EPILOGUE  |  KAMADO DESCENDANTS BENEATH SAKURA"
     };
 
     private static final String[] STAR_WARS_TITLES = {
@@ -260,7 +295,15 @@ final class SkyView extends View {
         "XXXIII  |  BATTLE OF CRAIT  |  LUKE SKYWALKER FACES THE FIRST ORDER",
         "XXXIV  |  KEF BIR OCEAN WRECKAGE  |  REY VS. KYLO REN AMID CRASHING WAVES",
         "XXXV  |  IMPERIAL LIGHT CRUISER  |  LUKE SKYWALKER & GROGU RESCUE",
-        "XXXVI  |  EXEGOL SITH CITADEL  |  REY ALL THE JEDI VS. PALPATINE"
+        "XXXVI  |  EXEGOL SITH CITADEL  |  REY ALL THE JEDI VS. PALPATINE",
+        "XXXVII  |  JUNDLAND WASTES  |  OBI-WAN & LUKE SKYWALKER LANDSPEEDER",
+        "XXXVIII  |  MOS EISLEY CANTINA  |  HAN SOLO & CHEWBACCA BLASTER STANDOFF",
+        "XXXIX  |  CLOUD CITY CHAMBER  |  DARTH VADER & BOBA FETT CARBON FREEZE",
+        "XL  |  DEATH STAR II CORE  |  MILLENNIUM FALCON MAIN REACTOR STRIKE",
+        "XLI  |  ENDOR SANCTUARY MOON  |  FORCE GHOSTS OF ANAKIN, OBI-WAN & YODA",
+        "XLII  |  NEVARRO STREETS  |  MANDALORIAN WHISTLING BIRDS & JETPACK",
+        "XLIII  |  CORVUS FOREST  |  AHSOKA TANO DUAL WHITE LIGHTSABERS",
+        "XLIV  |  ALDANI EYE  |  CASSIAN ANDOR & LUTHEN RAEL HAULCRAFT ESCAPE"
     };
 
     private static final String[] MCU_TITLES = {
@@ -299,7 +342,15 @@ final class SkyView extends View {
         "XXXIII  |  TA LO VILLAGE  |  SHANG-CHI TEN RINGS & GREAT PROTECTOR",
         "XXXIV  |  STATUE OF LIBERTY  |  THREE SPIDER-MEN SWING IN UNISON",
         "XXXV  |  END OF TIME CITADEL  |  LOKI GOD OF STORIES WORLD TREE",
-        "XXXVI  |  FINAL SACRIFICE  |  AND I... AM... IRON MAN SNAP"
+        "XXXVI  |  FINAL SACRIFICE  |  AND I... AM... IRON MAN SNAP",
+        "XXXVII  |  BROOKLYN 1943  |  STEVE ROGERS SUPER-SOLDIER VITA-RAY CHAMBER",
+        "XXXVIII  |  STARK TOWER  |  IRON MAN MARK VII VS. LOKI CHITAURI SCEPTER",
+        "XXXIX  |  ASGARD RAGNAROK  |  ETERNAL FLAME SURTUR TWILIGHT SWORD",
+        "XL  |  VORMIR ECLIPSE  |  RED SKULL & THE SOUL STONE ALTAR",
+        "XLI  |  QUANTUM REALM  |  ANT-MAN SUBATOMIC TIME VORTEX",
+        "XLII  |  KAMAR-TAJ SIEGE  |  DOCTOR STRANGE VS. THE SCARLET WITCH",
+        "XLIII  |  TALOKAN RISING  |  SHURI BLACK PANTHER VS. NAMOR",
+        "XLIV  |  MULTIVERSE SAGA  |  WOLVERINE & DEADPOOL PORTAL SHOWDOWN"
     };
 
     private static final String[] DCU_TITLES = {
@@ -338,7 +389,15 @@ final class SkyView extends View {
         "XXXIII  |  POZNAN NUCLEAR PLANT  |  THE FLASH AT THE SPEED OF TIME",
         "XXXIV  |  SOLAR ORBIT  |  BLACK SUIT SUPERMAN SOLAR RECHARGE",
         "XXXV  |  NEO-GOTHAM 2039  |  BATMAN BEYOND TERRY MCGINNIS FLIGHT",
-        "XXXVI  |  WATCHTOWER ORBIT  |  JUSTICE LEAGUE OVER PLANET EARTH"
+        "XXXVI  |  WATCHTOWER ORBIT  |  JUSTICE LEAGUE OVER PLANET EARTH",
+        "XXXVII  |  WAYNE MANOR BATCAVE  |  BATMAN AT THE BATCOMPUTER",
+        "XXXVIII  |  METROPOLIS DAILY PLANET  |  SUPERMAN CATCHES THE HELICOPTER",
+        "XXXIX  |  THEMYSCIRA BEACH  |  WONDER WOMAN AMAZONIAN SHIELD WALL",
+        "XL  |  ATLANTIS RING OF FIRE  |  AQUAMAN VS. KING ORM TRIDENT DUEL",
+        "XLI  |  GOTHAM FLOOD  |  THE BATMAN RED FLARE WALK IN THE DARK",
+        "XLII  |  APOKOLIPS CITADEL  |  SUPERMAN VS. STEPPENWOLF ELECTRO-AXE",
+        "XLIII  |  TOWER OF FATE  |  DOCTOR FATE GOLDEN ANKH OF NABU",
+        "XLIV  |  KINGDOM COME  |  ELDER SUPERMAN & ARMORED BATMAN"
     };
 
     // Cached Ambilight Edge LinearGradients (rebuilt ONLY when RGB or screen dimensions change)
@@ -347,6 +406,24 @@ final class SkyView extends View {
 
     private boolean running = false;
     private int paletteIndex = 0;
+
+    // v6.0 Dynamic 120 FPS (60Hz / 90Hz / 120Hz VRR) sub-microsecond frame timing & exponential damping state
+    private long lastFrameNanos = 0L;
+    private float frameDt = 1f / 60f;
+
+    private static float nowSec() {
+        return (SystemClock.elapsedRealtimeNanos() % 3_600_000_000_000L) * 1e-9f;
+    }
+
+    private static float smoothstep(float x) {
+        float c = Math.max(0f, Math.min(1f, x));
+        return c * c * (3f - 2f * c);
+    }
+
+    private static float dampFactor(float rate60Hz, float dt) {
+        float lambda = -60f * (float) Math.log(Math.max(0.001f, 1f - rate60Hz));
+        return 1f - (float) Math.exp(-lambda * dt);
+    }
 
     // Reactive FancyLEDs / Hogwarts House color state
     private float curR = 228f, curG = 58f, curB = 54f;
@@ -369,16 +446,16 @@ final class SkyView extends View {
     }
     private ScreensaverThemeListener screensaverThemeListener;
 
-    // v5.0 TV Cinema Story Screensaver Mode (triggered after 2 minutes of inactivity on TV):
+    // v6.0 Universal Landscape & Foldable Cinema Story Screensaver Mode (triggered after 2 minutes of inactivity):
     // - Story animations grow huge and fill up to the bottom 3/4th of the screen.
     // - Story caption & dots at the bottom keep their standard size.
-    // - All 248 story scenes across all 6 Universe Themes are pooled into a single randomized shuffle,
+    // - All 300 story scenes across all 6 Universe Themes are pooled into a single randomized shuffle,
     //   updating both SkyView's universe backdrop and the top-left Clock's franchise typography.
     private boolean screensaverMode = false;
     private float screensaverZoom = 0f;
     private int screensaverOverrideScene = -1;
     private int lastScreensaverSlot = -1;
-    private static final int TOTAL_POOL_SCENES = 68 + 36 * 5; // 248 total story scenes across 6 themes
+    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 5; // 300 total story scenes across 6 themes
     private final int[] shuffledPool = new int[TOTAL_POOL_SCENES];
     private int poolCursor = TOTAL_POOL_SCENES;
     private final java.util.Random poolRng = new java.util.Random();
@@ -470,7 +547,7 @@ final class SkyView extends View {
         this.screensaverMode = active;
         if (active) {
             lastScreensaverSlot = -1;
-            float rawT = (SystemClock.elapsedRealtime() % 3600000L) / 1000f;
+            float rawT = nowSec();
             int slot = (int) ((rawT * 0.5f) / CHAPTER_SEC);
             advanceRandomScreensaverScene(slot);
         } else {
@@ -512,7 +589,7 @@ final class SkyView extends View {
      * 3. Emits a 14-particle House-colored Lumos Maxima wand-spark burst around the tile.
      */
     void onTileFocused(float cx, float cy, float topY, int houseCol) {
-        float now = (SystemClock.elapsedRealtime() % 3600000L) / 1000f;
+        float now = nowSec();
         snitchTargetX = cx;
         snitchTargetY = Math.max(px(32f), topY - px(16f));
 
@@ -559,7 +636,7 @@ final class SkyView extends View {
     }
 
     private int activeSceneCount() {
-        return universeTheme == 0 ? CHAPTER_TITLES.length : 36;
+        return universeTheme == 0 ? CHAPTER_TITLES.length : UNIVERSE_SCENE_COUNT;
     }
 
     void nextStoryScene() {
@@ -790,20 +867,32 @@ final class SkyView extends View {
     // any landscape orientation, or unfolded/open foldables, stories grow huge to take over up to the bottom 3/4th of the screen.
     private void applyStageTransform(Canvas c, int w, int h, float groundY) {
         boolean isNarrowVertical = w < h * 0.75f;
-        if (isNarrowVertical && screensaverZoom <= 0.001f) {
+        float z = smoothstep(screensaverZoom);
+        if (isNarrowVertical && z <= 0.001f) {
             float stScale = getStageScale(w, h);
             c.scale(stScale, stScale, w * 0.45f, groundY);
         } else {
             float baseScale = h > w ? Math.min(1.85f, Math.max(1.55f, (h / (float) Math.max(1, w)) * 1.05f)) : 1.50f;
-            float sx = baseScale + 0.80f * screensaverZoom;
-            float sy = baseScale + 1.05f * screensaverZoom;
-            float pivotX = w * (0.45f - 0.04f * screensaverZoom);
+            float sx = baseScale + 0.80f * z;
+            float sy = baseScale + 1.05f * z;
+            float pivotX = w * (0.45f - 0.04f * z);
             c.scale(sx, sy, pivotX, groundY);
         }
     }
 
+    // Renders a subtle cinematic stage ground-plane reflection & rim glow (Gestalt Figure-Ground & Disney Staging)
+    private void drawStageGroundGlow(Canvas c, int w, float groundY, int aBase, int glowRgb) {
+        paint.setStyle(Paint.Style.FILL);
+        int rgb = glowRgb & 0x00FFFFFF;
+        paint.setColor((Math.max(0, aBase / 9) << 24) | rgb);
+        c.drawOval(w * 0.24f, groundY - px(10f), w * 0.68f, groundY + px(8f), paint);
+        paint.setColor((Math.max(0, aBase / 5) << 24) | rgb);
+        c.drawOval(w * 0.31f, groundY - px(4f), w * 0.61f, groundY + px(3.5f), paint);
+    }
+
     private void drawStoryCaptionAndDots(Canvas c, int w, int h, String title, int scene, int count,
                                          int aBase, int textRgb, int activeDotCol, int idleDotCol, float defaultDotStep) {
+        drawStageGroundGlow(c, w, h * 0.900f, aBase, activeDotCol);
         boolean isPortrait = h > w;
         paint.setStyle(Paint.Style.FILL);
         paint.setTextAlign(Paint.Align.CENTER);
@@ -816,8 +905,9 @@ final class SkyView extends View {
             c.drawText(title != null ? title : "", w * 0.5f, h * 0.976f, paint);
             paint.setLetterSpacing(0f);
 
+            float step = count > 1 ? Math.min(defaultDotStep, (w * 0.74f) / (count - 1)) : defaultDotStep;
             for (int i = 0; i < count; i++) {
-                float dx = w * 0.5f + (i - (count - 1) / 2f) * defaultDotStep;
+                float dx = w * 0.5f + (i - (count - 1) / 2f) * step;
                 float dy = h * 0.946f;
                 paint.setColor(i == scene ? activeDotCol : idleDotCol);
                 c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.5f), paint);
@@ -1159,7 +1249,7 @@ final class SkyView extends View {
                 c.drawCircle(mx, my, mr * 3.8f, p);
                 p.setShader(null);
                 p.setColor(0x52FFEA98);
-                c.drawOval(new RectF(mx - mr * 1.15f, my - mr * 0.78f, mx + mr * 1.15f, my + mr * 0.78f), p);
+                c.drawOval(rectF(mx - mr * 1.15f, my - mr * 0.78f, mx + mr * 1.15f, my + mr * 0.78f), p);
                 // Dark Bat-Emblem inside the Bat-Signal spotlight
                 p.setColor(0xCC060914);
                 Path bat = new Path();
@@ -1268,7 +1358,7 @@ final class SkyView extends View {
             p.setColor(0x36F5D078);
             for (int a = 0; a < 7; a++) {
                 float ax = w * (0.035f + a * 0.043f);
-                c.drawArc(new RectF(ax, groundY, ax + w * 0.035f, groundY + px(52)), 180, 180, false, p);
+                c.drawArc(rectF(ax, groundY, ax + w * 0.035f, groundY + px(52)), 180, 180, false, p);
             }
 
             // Lit Hogwarts Castle windows
@@ -1306,9 +1396,17 @@ final class SkyView extends View {
             canvas.drawBitmap(baseSky, 0, 0, bitmapPaint);
         }
 
-        float t = (SystemClock.elapsedRealtime() % 3600000L) / 1000f;
+        long nowNanos = SystemClock.elapsedRealtimeNanos();
+        if (lastFrameNanos > 0L) {
+            float rawDt = (nowNanos - lastFrameNanos) * 1e-9f;
+            frameDt = Math.max(0.002f, Math.min(0.05f, rawDt));
+        } else {
+            frameDt = 1f / 60f;
+        }
+        lastFrameNanos = nowNanos;
+        float t = (nowNanos % 3_600_000_000_000L) * 1e-9f;
         float targetZoom = screensaverMode ? 1f : 0f;
-        screensaverZoom += (targetZoom - screensaverZoom) * 0.08f;
+        screensaverZoom += (targetZoom - screensaverZoom) * dampFactor(0.08f, frameDt);
         if (Math.abs(targetZoom - screensaverZoom) < 0.002f) screensaverZoom = targetZoom;
         if (screensaverMode) {
             float storyT = t * 0.5f;
@@ -1324,9 +1422,10 @@ final class SkyView extends View {
             targetG = 145f + 95f * (float) Math.sin(t * 1.4f + 2.09f);
             targetB = 165f + 85f * (float) Math.sin(t * 1.4f + 4.18f);
         }
-        curR += (targetR - curR) * 0.14f;
-        curG += (targetG - curG) * 0.14f;
-        curB += (targetB - curB) * 0.14f;
+        float colDamp = dampFactor(0.14f, frameDt);
+        curR += (targetR - curR) * colDamp;
+        curG += (targetG - curG) * colDamp;
+        curB += (targetB - curB) * colDamp;
         if (fancyPulseEnergy > 0) fancyPulseEnergy = Math.max(0, fancyPulseEnergy - 2);
 
         int ir = Math.min(255, Math.max(0, Math.round(curR)));
@@ -1568,8 +1667,9 @@ final class SkyView extends View {
             snitchTargetX = getWidth() * (0.54f + 0.30f * (float) Math.sin(t * 0.42f));
             snitchTargetY = getHeight() * (0.18f + 0.06f * (float) Math.cos(t * 0.68f));
         }
-        snitchCurX += (snitchTargetX - snitchCurX) * 0.15f;
-        snitchCurY += (snitchTargetY - snitchCurY) * 0.15f;
+        float snitchDamp = dampFactor(0.15f, frameDt);
+        snitchCurX += (snitchTargetX - snitchCurX) * snitchDamp;
+        snitchCurY += (snitchTargetY - snitchCurY) * snitchDamp;
         float sx = snitchCurX + (float) Math.cos(t * 5.5f) * px(14f);
         float sy = snitchCurY + (float) Math.sin(t * 7.2f) * px(5f);
         if (universeTheme == 1) {
@@ -1629,7 +1729,7 @@ final class SkyView extends View {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(px(2.4f));
             paint.setColor(0xFFFFD848);
-            c.drawArc(new RectF(sx - px(14f), sy - px(6f), sx + px(14f), sy + px(8f)), 200, 140, false, paint);
+            c.drawArc(rectF(sx - px(14f), sy - px(6f), sx + px(14f), sy + px(8f)), 200, 140, false, paint);
             paint.setStyle(Paint.Style.FILL);
             return;
         }
@@ -1672,7 +1772,7 @@ final class SkyView extends View {
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(px(1.5f * sc));
                 paint.setColor(0xAAFFE8E8);
-                c.drawArc(new RectF(gx - px(18f * sc), gy - px(14f * sc), gx + px(22f * sc), gy + px(10f * sc)), 195, 150, false, paint);
+                c.drawArc(rectF(gx - px(18f * sc), gy - px(14f * sc), gx + px(22f * sc), gy + px(10f * sc)), 195, 150, false, paint);
                 drawBird(c, gx + dir * px(26f * sc), gy - px(8f * sc), t * 11f + g, px(14f * sc), 0xCC18080C);
                 paint.setStyle(Paint.Style.FILL);
                 continue;
@@ -1828,7 +1928,7 @@ final class SkyView extends View {
                 ? (screensaverOverrideScene % SCENE_COUNT)
                 : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % SCENE_COUNT);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC; // 0.0 -> 1.0 progress within current scene
-        float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float fade = p < 0.08f ? smoothstep(p / 0.08f) : (p > 0.92f ? smoothstep((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
 
         float groundY = h * 0.900f;
@@ -2400,11 +2500,32 @@ final class SkyView extends View {
                 break;
             }
             case 31: {
-                // SCENE 32 (NEW): The Shrieking Shack — Padfoot the Grim & Moony the Werewolf Under the Full Moon
-                paint.setColor((aBase / 2 << 24) | 0x00FFF8D8);
-                c.drawCircle(w * 0.48f, h * 0.67f, px(36f), paint);
-                drawStagPatronus(c, w * 0.34f, groundY - px(58f), t, aBase, 1.15f);
-                drawWizardStanding(c, w * 0.56f, groundY - px(68f), t, aBase, 0xFFB8C8D8, false, false, 1.60f);
+                // SCENE 32: The Shrieking Shack — Padfoot the Grim & Moony the Werewolf Under the Full Moon
+                paint.setColor((aBase / 3 << 24) | 0x00FFF8D8);
+                c.drawCircle(w * 0.48f, h * 0.67f, px(48f), paint);
+                paint.setColor((aBase * 4 / 5 << 24) | 0x00FFFCE8);
+                c.drawCircle(w * 0.48f, h * 0.67f, px(30f), paint);
+                // Padfoot the Grim (shaggy black hound with glowing amber eyes)
+                drawGrimHound(c, w * 0.36f, groundY, t, aBase, 1.35f);
+                // Moony the Werewolf (tall hunched lycanthrope howling toward the full moon)
+                float wx = w * 0.58f, wy = groundY - px(68f);
+                paint.setColor((aBase << 24) | 0x00687488);
+                c.drawOval(wx - px(14f), wy - px(18f), wx + px(14f), wy + px(32f), paint);
+                c.drawCircle(wx - px(4f), wy - px(26f), px(10f), paint);
+                actorPath.reset();
+                actorPath.moveTo(wx - px(10f), wy - px(28f));
+                actorPath.lineTo(wx - px(22f), wy - px(34f));
+                actorPath.lineTo(wx - px(10f), wy - px(20f));
+                actorPath.close();
+                c.drawPath(actorPath, paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(4.5f));
+                c.drawLine(wx - px(8f), wy + px(26f), wx - px(14f), groundY, paint);
+                c.drawLine(wx + px(8f), wy + px(26f), wx + px(14f), groundY, paint);
+                c.drawLine(wx - px(8f), wy - px(8f), wx - px(26f), wy - px(2f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((aBase << 24) | 0x00FFE048);
+                c.drawCircle(wx - px(8f), wy - px(28f), px(2.4f), paint);
                 break;
             }
             case 32: {
@@ -2553,10 +2674,21 @@ final class SkyView extends View {
                 break;
             }
             case 42: {
-                // SCENE 43 (NEW): Forbidden Forest — Luna Lovegood & The Winged Thestrals
-                drawWizardStanding(c, w * 0.32f, groundY - px(62f), t, aBase, 0xFFFFF0B8, false, false, 1.45f);
-                drawStagPatronus(c, w * 0.52f, groundY - px(64f), t, aBase, 1.40f);
-                drawDragonCustom(c, w * 0.52f, groundY - px(84f), t, aBase, 0xFF7898B8, 0.95f);
+                // SCENE 43: Forbidden Forest — Luna Lovegood & The Winged Skeletal Thestrals
+                drawWizardStanding(c, w * 0.34f, groundY - px(60f), t, aBase, 0xFFFFF0B8, false, false, 1.42f);
+                float thx = w * 0.53f, thy = groundY - px(60f);
+                drawStagPatronus(c, thx, thy, t, aBase * 4 / 5, 1.28f);
+                // Leathery bat-like Thestral wings arching from the shoulders
+                float flap = (float) Math.sin(t * 6.5f) * px(22f);
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((aBase * 3 / 4 << 24) | 0x00486078);
+                actorPath.reset();
+                actorPath.moveTo(thx - px(4f), thy - px(10f));
+                actorPath.lineTo(thx + px(14f), thy - px(58f) + flap);
+                actorPath.lineTo(thx + px(42f), thy - px(36f) + flap * 0.7f);
+                actorPath.lineTo(thx + px(18f), thy - px(4f));
+                actorPath.close();
+                c.drawPath(actorPath, paint);
                 break;
             }
             case 43: {
@@ -2660,14 +2792,25 @@ final class SkyView extends View {
                 break;
             }
             case 51: {
-                // SCENE 52 (NEW): Xenophilius's House — The Tale of the Three Brothers & Deathly Hallows Symbol
+                // SCENE 52: Xenophilius's House — The Tale of the Three Brothers & Deathly Hallows Symbol
+                // Arched Stone Bridge over the winding river
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(4.0f));
+                paint.setColor((aBase * 3 / 4 << 24) | 0x00C8A868);
+                c.drawArc(rectF(w * 0.24f, groundY - px(28f), w * 0.66f, groundY + px(24f)), 180, 180, false, paint);
+                paint.setStyle(Paint.Style.FILL);
                 for (int br = 0; br < 3; br++) {
-                    drawWizardStanding(c, w * (0.26f + br * 0.07f), groundY - px(62f), t + br, aBase, 0xFFFFDF88, true, false, 1.45f);
+                    drawWizardStanding(c, w * (0.28f + br * 0.065f), groundY - px(64f), t + br, aBase, 0xFFFFDF88, true, false, 1.40f);
                 }
-                drawDementor(c, w * 0.60f, groundY - px(68f), t, aBase, 1.75f);
+                drawDementor(c, w * 0.58f, groundY - px(72f), t, aBase, 1.72f);
+                // Death's Curved Scythe
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.4f));
+                paint.setColor((aBase << 24) | 0x00FFE898);
+                c.drawLine(w * 0.54f, groundY - px(18f), w * 0.56f, groundY - px(112f), paint);
+                c.drawArc(rectF(w * 0.50f, groundY - px(120f), w * 0.57f, groundY - px(96f)), 180, 135, false, paint);
                 // Glowing Deathly Hallows triangle, circle & Elder Wand line overhead
                 float hx = w * 0.46f, hy = h * 0.69f;
-                paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(px(3.2f));
                 paint.setColor((aBase << 24) | 0x00FFE082);
                 actorPath.reset();
@@ -2857,11 +3000,152 @@ final class SkyView extends View {
                 drawStagPatronus(c, w * 0.58f, groundY - px(58f), t, aBase, 1.18f);
                 break;
             }
-            default: {
+            case 67: {
                 // SCENE 68: Nineteen Years Later — Platform 9 3/4 Epilogue & Hogwarts Express
                 drawHogwartsExpressScene(c, w, h, groundY, t, p, aBase);
                 drawWizardStanding(c, w * 0.34f, groundY - px(56f), t, aBase, 0xFFFFE082, true, true, 1.32f);
                 drawWizardStanding(c, w * 0.41f, groundY - px(52f), t + 0.5f, aBase, 0xFFFF7848, true, false, 1.24f);
+                break;
+            }
+            case 68: {
+                // SCENE 69: Privet Drive Bedroom — Under-Covers Lumos Maxima Practice
+                float bx = w * 0.46f, by = groundY - px(18f);
+                float flash = Math.max(0f, (float) Math.sin(t * 7.5f));
+                paint.setColor((Math.round(aBase * 0.45f * flash) << 24) | 0x00FFF8B8);
+                c.drawCircle(bx, by - px(28f), px(82f * flash), paint);
+                paint.setColor((aBase << 24) | 0x00384868);
+                c.drawArc(rectF(bx - px(62f), by - px(68f), bx + px(62f), by + px(18f)), 180, 180, true, paint);
+                paint.setColor((Math.round(aBase * (0.35f + 0.65f * flash)) << 24) | 0x00FFFFFF);
+                c.drawCircle(bx + px(10f), by - px(32f), px(14f + 12f * flash), paint);
+                break;
+            }
+            case 69: {
+                // SCENE 70: Hogwarts Express — Dementor Boarding & Frosted Compartment Glass
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(3.2f));
+                paint.setColor((aBase << 24) | 0x0088D8FF);
+                c.drawRoundRect(w * 0.38f, groundY - px(108f), w * 0.54f, groundY - px(18f), px(6f), px(6f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((Math.round(aBase * p * 0.55f) << 24) | 0x00B8F0FF);
+                c.drawRoundRect(w * 0.385f, groundY - px(104f), w * 0.535f, groundY - px(22f), px(5f), px(5f), paint);
+                drawWizardStanding(c, w * 0.31f, groundY - px(58f), t, aBase, 0xFFFFE082, true, false, 1.36f);
+                drawDementor(c, w * (0.62f - p * 0.06f), groundY - px(68f), t, aBase, 1.55f);
+                break;
+            }
+            case 70: {
+                // SCENE 71: Hogsmeade Village — Crookshanks Chasing Scabbers Toward the Shrieking Shack
+                float rx = w * (0.32f + p * 0.28f);
+                drawCatSilhouette(c, rx - px(38f), groundY - px(14f), aBase);
+                paint.setColor((aBase << 24) | 0x00B89880);
+                c.drawOval(rx, groundY - px(10f), rx + px(12f), groundY - px(3f), paint);
+                drawWizardStanding(c, w * 0.28f, groundY - px(58f), t, aBase, 0xFFFF7848, false, true, 1.36f);
+                break;
+            }
+            case 71: {
+                // SCENE 72: Great Hall — Flaming Parchment Names Erupting from the Goblet of Fire
+                float gx = w * 0.48f;
+                paint.setColor((aBase << 24) | 0x00D8B468);
+                c.drawRect(gx - px(16f), groundY - px(64f), gx + px(16f), groundY, paint);
+                c.drawRoundRect(gx - px(26f), groundY - px(94f), gx + px(26f), groundY - px(60f), px(8f), px(8f), paint);
+                drawLightningStreak(c, gx, groundY - px(94f), gx - px(46f), h * 0.69f,
+                        t, 710, 0x00FF2898, 0x00FF88D8, 0x00FFFFFF, px(3.8f), aBase, true);
+                paint.setColor((aBase << 24) | 0x00FFF4D0);
+                c.drawRoundRect(gx - px(54f), h * 0.68f, gx - px(34f), h * 0.71f, px(2f), px(2f), paint);
+                drawWizardStanding(c, w * 0.32f, groundY - px(60f), t, aBase, 0xFFFFF0C8, false, true, 1.42f);
+                break;
+            }
+            case 72: {
+                // SCENE 73: Champions' Tent — Rita Skeeter & the Acid-Green Quick-Quotes Quill
+                drawWizardStanding(c, w * 0.35f, groundY - px(58f), t, aBase, 0xFFFFE082, false, false, 1.36f);
+                drawWizardStanding(c, w * 0.58f, groundY - px(58f), t + 0.8f, aBase, 0xFF58FF78, false, false, 1.36f);
+                float qx = w * 0.46f + (float) Math.sin(t * 14f) * px(12f);
+                float qy = groundY - px(68f);
+                paint.setColor((aBase << 24) | 0x00FFF6D8);
+                c.drawRoundRect(w * 0.43f, qy, w * 0.49f, qy + px(24f), px(2f), px(2f), paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.8f));
+                paint.setColor((aBase << 24) | 0x0038FF68);
+                c.drawLine(qx, qy + px(4f), qx + px(14f), qy - px(24f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                break;
+            }
+            case 73: {
+                // SCENE 74: Diagon Alley — Weasleys' Wizard Wheezes Joke Shop & Fireworks
+                drawWizardStanding(c, w * 0.38f, groundY - px(58f), t, aBase, 0xFFFF7820, true, false, 1.36f);
+                drawWizardStanding(c, w * 0.54f, groundY - px(58f), t + 0.6f, aBase, 0xFFFF7820, true, false, 1.36f);
+                for (int sp = 0; sp < 8; sp++) {
+                    double ang = t * 4f + sp * Math.PI * 0.25;
+                    float r = px(28f + p * 36f);
+                    paint.setColor((aBase << 24) | (sp % 2 == 0 ? 0x00FFD838 : 0x00FF48A8));
+                    c.drawCircle(w * 0.46f + (float) Math.cos(ang) * r, h * 0.72f + (float) Math.sin(ang) * r * 0.6f, px(4.0f), paint);
+                }
+                break;
+            }
+            case 74: {
+                // SCENE 75: Sixth-Floor Bathroom — Harry vs. Draco Malfoy Sectumsempra Duel
+                drawWizardStanding(c, w * 0.34f, groundY - px(58f), t, aBase, 0xFFFFE082, true, false, 1.38f);
+                drawWizardStanding(c, w * 0.58f, groundY - px(58f), t + 0.7f, aBase, 0xFFA8D8E8, true, false, 1.38f);
+                drawLightningStreak(c, w * 0.38f, groundY - px(68f), w * 0.55f, groundY - px(68f),
+                        t, 740, 0x0058C8FF, 0x00C8F4FF, 0x00FFFFFF, px(3.8f), aBase, true);
+                break;
+            }
+            case 75: {
+                // SCENE 76: Grimmauld Place — Kreacher's Tale & Regulus Black's Locket Horcrux
+                drawWizardStanding(c, w * 0.35f, groundY - px(58f), t, aBase, 0xFFFFE082, false, false, 1.36f);
+                drawWizardStanding(c, w * 0.56f, groundY - px(42f), t + 0.5f, aBase, 0xFFD8C8B0, false, false, 1.02f);
+                float lx = w * 0.46f, ly = groundY - px(66f) + (float) Math.sin(t * 5f) * px(6f);
+                paint.setColor((aBase / 3 << 24) | 0x0028FF78);
+                c.drawCircle(lx, ly, px(22f), paint);
+                paint.setColor((aBase << 24) | 0x00FFD848);
+                c.drawOval(lx - px(8f), ly - px(11f), lx + px(8f), ly + px(11f), paint);
+                break;
+            }
+            case 76: {
+                // SCENE 77: Godric's Hollow — Christmas Eve Graveyard & Conjured Wreath in the Snow
+                paint.setColor((aBase << 24) | 0x0098A8B8);
+                c.drawRoundRect(w * 0.46f, groundY - px(68f), w * 0.52f, groundY, px(6f), px(6f), paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.6f));
+                paint.setColor((aBase << 24) | 0x0038C868);
+                c.drawCircle(w * 0.49f, groundY - px(38f), px(12f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                drawWizardStanding(c, w * 0.34f, groundY - px(58f), t, aBase, 0xFFFFE082, true, true, 1.36f);
+                drawWizardStanding(c, w * 0.39f, groundY - px(56f), t + 0.4f, aBase, 0xFFFFB8C8, false, false, 1.32f);
+                break;
+            }
+            case 77: {
+                // SCENE 78: Shell Cottage — Bill & Fleur by the Crashing Tinworth Sea Waves
+                paint.setColor((aBase * 3 / 5 << 24) | 0x0038B8FF);
+                c.drawArc(rectF(w * 0.24f, groundY - px(48f), w * 0.42f, groundY + px(16f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.38f, groundY - px(56f), w * 0.56f, groundY + px(16f)), 180, 180, true, paint);
+                drawWizardStanding(c, w * 0.54f, groundY - px(58f), t, aBase, 0xFFFFE082, false, true, 1.35f);
+                drawWizardStanding(c, w * 0.61f, groundY - px(56f), t + 0.5f, aBase, 0xFFB8E8FF, false, false, 1.32f);
+                break;
+            }
+            case 78: {
+                // SCENE 79: Hogwarts Courtyard — Neville Longbottom & the Sword of Gryffindor vs. Nagini
+                drawWizardStanding(c, w * 0.36f, groundY - px(58f), t, aBase, 0xFFFFE082, false, false, 1.38f);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(3.2f));
+                paint.setColor((aBase << 24) | 0x00FFFFFF);
+                c.drawLine(w * 0.38f, groundY - px(64f), w * 0.46f, groundY - px(96f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((aBase << 24) | 0x00FF2438);
+                c.drawCircle(w * 0.38f, groundY - px(64f), px(4.5f), paint);
+                drawSerpent(c, w * 0.56f, groundY, t, aBase, 0xFF38A860, 0xFFA8F0C0, 1.35f, true);
+                break;
+            }
+            default: {
+                // SCENE 80: Viaduct Bridge — Harry Repairs the Phoenix-Feather Holly Wand with the Elder Wand
+                drawWizardStanding(c, w * 0.42f, groundY - px(60f), t, aBase, 0xFFFFE082, true, false, 1.42f);
+                drawLightningStreak(c, w * 0.45f, groundY - px(70f), w * 0.54f, groundY - px(70f),
+                        t, 799, 0x00FF8800, 0x00FFE858, 0x00FFFFFF, px(3.8f), aBase, true);
+                for (int sp = 0; sp < 10; sp++) {
+                    double ang = t * 6f + sp * Math.PI * 0.2;
+                    float r = px(10f + (sp % 3) * 12f);
+                    paint.setColor((aBase << 24) | 0x00FFF098);
+                    c.drawCircle(w * 0.54f + (float) Math.cos(ang) * r, groundY - px(70f) + (float) Math.sin(ang) * r, px(3.0f), paint);
+                }
                 break;
             }
         }
@@ -2876,7 +3160,8 @@ final class SkyView extends View {
                 ? (screensaverOverrideScene % count)
                 : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float fade = smoothstep(rawFade);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, NARUTO_TITLES[scene], scene, count, aBase,
@@ -2912,7 +3197,7 @@ final class SkyView extends View {
                 paint.setColor((aBase / 3 << 24) | 0x0038FF88);
                 c.drawCircle(w * (0.30f + p * 0.10f), groundY - px(62f), px(38f), paint);
                 paint.setColor((aBase * 4 / 5 << 24) | 0x00D8A860);
-                c.drawArc(new RectF(w * 0.50f, groundY - px(108f), w * 0.64f, groundY + px(16f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.50f, groundY - px(108f), w * 0.64f, groundY + px(16f)), 180, 180, true, paint);
                 c.drawOval(w * 0.59f, groundY - px(82f), w * 0.63f, groundY - px(42f), paint);
                 drawSasukeUchiha(c, w * 0.58f, groundY - px(56f), t, aBase, true, 1.28f);
                 break;
@@ -2963,10 +3248,10 @@ final class SkyView extends View {
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(px(3.5f));
                 paint.setColor((aBase * 4 / 5 << 24) | 0x003898FF);
-                c.drawArc(new RectF(w * 0.41f, groundY - px(135f), w * 0.59f, groundY), 180, 180, false, paint);
+                c.drawArc(rectF(w * 0.41f, groundY - px(135f), w * 0.59f, groundY), 180, 180, false, paint);
                 for (int rb = 0; rb < 3; rb++) {
                     float ry = groundY - px(32f + rb * 22f);
-                    c.drawArc(new RectF(w * 0.43f, ry - px(10f), w * 0.57f, ry + px(10f)), 180, 180, false, paint);
+                    c.drawArc(rectF(w * 0.43f, ry - px(10f), w * 0.57f, ry + px(10f)), 180, 180, false, paint);
                 }
                 c.drawLine(w * 0.57f, groundY - px(75f), w * 0.69f, groundY - px(128f), paint);
                 c.drawLine(w * 0.43f, groundY - px(75f), w * 0.31f, groundY - px(128f), paint);
@@ -2993,9 +3278,16 @@ final class SkyView extends View {
                 drawNinjaSilhouette(c, w * 0.55f, groundY - px(58f), t * 2f + 1f, aBase, 0xFF384878, 0xFF48E8FF, false, false, false, 0xFF48E8FF, 1.30f);
                 break;
             case 14: // Konoha Crush — Third Hokage Hiruzen & Reaper Death Seal Shinigami
-                // Spectral Purple Shinigami Reaper hovering behind Hiruzen
-                paint.setColor((aBase / 2 << 24) | 0x00B858FF);
-                c.drawCircle(w * 0.34f, groundY - px(102f), px(28f), paint);
+                // Spectral Purple Shinigami Reaper hovering behind Hiruzen with horned mask, white hair & tantō blade
+                paint.setColor((aBase / 3 << 24) | 0x00B858FF);
+                c.drawOval(w * 0.27f, groundY - px(142f), w * 0.41f, groundY - px(38f), paint);
+                paint.setColor((aBase * 3 / 4 << 24) | 0x00E8E0FF);
+                c.drawCircle(w * 0.34f, groundY - px(114f), px(14f), paint);
+                paint.setColor((aBase << 24) | 0x00FF2848);
+                c.drawCircle(w * 0.33f, groundY - px(126f), px(3.5f), paint);
+                c.drawCircle(w * 0.35f, groundY - px(126f), px(3.5f), paint);
+                drawLightningStreak(c, w * 0.34f, groundY - px(98f), w * 0.56f, groundY - px(68f),
+                        t, 914, 0x009838FF, 0x00E098FF, 0x00FFFFFF, px(3.2f), aBase, false);
                 drawNinjaSilhouette(c, w * 0.36f, groundY - px(58f), t, aBase, 0xFF282834, 0xFFFFE082, true, false, false, 0, 1.35f);
                 drawSasukeUchiha(c, w * 0.58f, groundY - px(58f), t + 1f, aBase, true, 1.35f);
                 break;
@@ -3022,8 +3314,8 @@ final class SkyView extends View {
                 break;
             case 18: // Bone Forest — Gaara's Giant Sand Tsunami
                 paint.setColor((aBase * 4 / 5 << 24) | 0x00D8A860);
-                c.drawArc(new RectF(w * 0.28f, groundY - px(98f), w * 0.52f, groundY + px(24f)), 180, 180, true, paint);
-                c.drawArc(new RectF(w * 0.46f, groundY - px(112f), w * 0.68f, groundY + px(24f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.28f, groundY - px(98f), w * 0.52f, groundY + px(24f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.46f, groundY - px(112f), w * 0.68f, groundY + px(24f)), 180, 180, true, paint);
                 drawNinjaSilhouette(c, w * 0.38f, h * 0.74f, t, aBase, 0xFF982830, 0xFFD8A860, true, false, false, 0, 1.28f);
                 break;
             case 19: // Kazekage Rescue — Sakura & Chiyo vs. Sasori's 100 Puppets
@@ -3081,7 +3373,7 @@ final class SkyView extends View {
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(px(3.5f));
                 paint.setColor((aBase * 4 / 5 << 24) | 0x00B848FF);
-                c.drawArc(new RectF(w * 0.30f, groundY - px(120f), w * 0.46f, groundY), 180, 180, false, paint);
+                c.drawArc(rectF(w * 0.30f, groundY - px(120f), w * 0.46f, groundY), 180, 180, false, paint);
                 paint.setStyle(Paint.Style.FILL);
                 drawSasukeUchiha(c, w * 0.38f, groundY - px(58f), t, aBase, false, 1.34f);
                 drawNinjaSilhouette(c, w * 0.58f, groundY - px(60f), t * 2f, aBase, 0xFFD8A838, 0xFF58F0FF, true, false, false, 0xFF58F0FF, 1.40f);
@@ -3122,10 +3414,29 @@ final class SkyView extends View {
                         t, 1011, 0x007818FF, 0x00C868FF, 0x00FFFFFF, px(3.6f), aBase, true);
                 break;
             case 32: // Cataclysm — Revival of the Ten-Tails Jubi & Obito
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeCap(Paint.Cap.ROUND);
+                paint.setStrokeWidth(px(5.2f));
+                paint.setColor((aBase * 4 / 5 << 24) | 0x00786458);
+                for (int tl = 0; tl < 10; tl++) {
+                    double ta = -Math.PI * 0.88 + tl * (Math.PI * 0.76 / 9.0);
+                    float tx2 = w * 0.55f + (float) Math.cos(ta) * px(88f);
+                    float ty2 = groundY - px(72f) + (float) Math.sin(ta) * px(68f) + (float) Math.sin(t * 4f + tl) * px(6f);
+                    c.drawLine(w * 0.54f, groundY - px(56f), tx2, ty2, paint);
+                }
+                paint.setStyle(Paint.Style.FILL);
                 paint.setColor((aBase << 24) | 0x00685850);
-                c.drawOval(w * 0.44f, groundY - px(118f), w * 0.64f, groundY, paint);
+                c.drawOval(w * 0.45f, groundY - px(118f), w * 0.63f, groundY, paint);
+                // Ten-Tails Concentric Crimson Rinne-Sharingan Eye
                 paint.setColor((aBase << 24) | 0x00FF1828);
-                c.drawCircle(w * 0.54f, groundY - px(84f), px(12f), paint);
+                c.drawCircle(w * 0.54f, groundY - px(84f), px(13f), paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(1.5f));
+                paint.setColor((aBase << 24) | 0x00101018);
+                c.drawCircle(w * 0.54f, groundY - px(84f), px(8.5f), paint);
+                c.drawCircle(w * 0.54f, groundY - px(84f), px(4.5f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                c.drawCircle(w * 0.54f, groundY - px(84f), px(2.2f), paint);
                 drawNarutoUzumaki(c, w * 0.32f, groundY - px(58f), t, aBase, 2, 1.34f);
                 break;
             case 33: // Eighth Gate of Death — Might Guy: Night Guy Crimson Dragon Kick vs. Madara
@@ -3141,9 +3452,95 @@ final class SkyView extends View {
                 drawNinjaSilhouette(c, w * 0.46f, groundY - px(108f), t + 1f, aBase, 0xFFE84878, 0xFFFFFFFF, false, false, false, 0, 1.25f);
                 drawAkatsukiMember(c, w * 0.46f, groundY - px(58f), t, aBase, false, 1.38f);
                 break;
-            default: // Scene 36: New Era Konoha — Seventh Hokage Naruto Uzumaki & Shadow Hokage Sasuke
+            case 35: // Scene 36: New Era Konoha — Seventh Hokage Naruto Uzumaki & Shadow Hokage Sasuke
                 drawNarutoUzumaki(c, w * 0.40f, groundY - px(58f), t, aBase, 2, 1.38f);
                 drawSasukeUchiha(c, w * 0.54f, groundY - px(58f), t + 0.8f, aBase, false, 1.36f);
+                break;
+            case 36: // Scene 37: Academy Swing — Young Naruto Beneath the Hokage Monument
+                paint.setColor((aBase << 24) | 0x004A3424);
+                c.drawRect(w * 0.34f, groundY - px(112f), w * 0.37f, groundY, paint);
+                c.drawRect(w * 0.32f, groundY - px(112f), w * 0.46f, groundY - px(102f), paint);
+                float swA = (float) Math.sin(t * 2.4f) * px(10f);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(1.8f));
+                paint.setColor((aBase << 24) | 0x00C8A878);
+                c.drawLine(w * 0.41f, groundY - px(102f), w * 0.41f + swA, groundY - px(42f), paint);
+                c.drawLine(w * 0.44f, groundY - px(102f), w * 0.44f + swA, groundY - px(42f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                drawNarutoUzumaki(c, w * 0.425f + swA, groundY - px(52f), t * 0.5f, aBase, 0, 1.24f);
+                break;
+            case 37: // Scene 38: Land of Waves Bridge — Naruto Nine-Tails Red Chakra Awakening
+                paint.setColor((aBase / 3 << 24) | 0x00FF2418);
+                c.drawCircle(w * 0.45f, groundY - px(58f), px(52f + 8f * (float) Math.sin(t * 14f)), paint);
+                for (int ct = 0; ct < 4; ct++) {
+                    double ca = t * 4f + ct * Math.PI * 0.5;
+                    drawLightningStreak(c, w * 0.45f, groundY - px(58f),
+                            w * 0.45f + (float) Math.cos(ca) * px(58f),
+                            groundY - px(58f) + (float) Math.sin(ca) * px(46f),
+                            t, 1037 + ct, 0x00FF1800, 0x00FF6828, 0x00FFFFFF, px(3.4f), aBase, true);
+                }
+                drawNarutoUzumaki(c, w * 0.45f, groundY - px(58f), t * 1.8f, aBase, 0, 1.38f);
+                break;
+            case 38: // Scene 39: Rooftop Clash — Naruto Rasengan vs. Sasuke Chidori Water Tanks
+                paint.setColor((aBase << 24) | 0x0058687C);
+                c.drawRoundRect(w * 0.26f, groundY - px(96f), w * 0.35f, groundY - px(18f), px(6f), px(6f), paint);
+                c.drawRoundRect(w * 0.59f, groundY - px(96f), w * 0.68f, groundY - px(18f), px(6f), px(6f), paint);
+                drawNarutoUzumaki(c, w * (0.36f + p * 0.08f), groundY - px(58f), t, aBase, 0, 1.32f);
+                drawSasukeUchiha(c, w * (0.58f - p * 0.08f), groundY - px(58f), t + 0.8f, aBase, true, 1.32f);
+                drawLightningStreak(c, w * 0.35f, groundY - px(64f), w * 0.59f, groundY - px(64f),
+                        t, 1038, 0x000088FF, 0x0068F4FF, 0x00FFFFFF, px(3.8f), aBase, true);
+                break;
+            case 39: // Scene 40: Curse Mark Two — Winged Sasuke Chidori Lament at Final Valley
+                paint.setColor((aBase * 4 / 5 << 24) | 0x00382C48);
+                c.drawOval(w * 0.48f, groundY - px(108f), w * 0.58f, groundY - px(54f), paint);
+                c.drawOval(w * 0.56f, groundY - px(108f), w * 0.66f, groundY - px(54f), paint);
+                drawSasukeUchiha(c, w * 0.56f, groundY - px(58f), t, aBase, true, 1.36f);
+                drawNarutoUzumaki(c, w * 0.35f, groundY - px(58f), t + 0.6f, aBase, 1, 1.36f);
+                drawLightningStreak(c, w * 0.54f, groundY - px(68f), w * 0.38f, groundY - px(68f),
+                        t, 1039, 0x00381868, 0x009858FF, 0x00FFFFFF, px(4.0f), aBase, true);
+                break;
+            case 40: // Scene 41: Tale of Jiraiya — Sage Mode Jiraiya & Two Great Sage Toads
+                drawGamabuntaToad(c, w * 0.46f, groundY, t, aBase, 1.24f);
+                drawNinjaSilhouette(c, w * 0.46f, groundY - px(132f), t, aBase, 0xFFD82828, 0xFFF8F8FF, true, true, false, 0xFFFF6818, 1.12f);
+                paint.setColor((aBase << 24) | 0x0048A858);
+                c.drawCircle(w * 0.43f, groundY - px(152f), px(5.5f), paint);
+                c.drawCircle(w * 0.49f, groundY - px(152f), px(5.5f), paint);
+                break;
+            case 41: // Scene 42: Kage Summit — Gaara Sand Pyramid Sealing & Shukaku Claw
+                paint.setColor((aBase * 4 / 5 << 24) | 0x00D8A860);
+                actorPath.reset();
+                actorPath.moveTo(w * 0.55f, groundY - px(112f));
+                actorPath.lineTo(w * 0.66f, groundY);
+                actorPath.lineTo(w * 0.44f, groundY);
+                actorPath.close();
+                c.drawPath(actorPath, paint);
+                drawNinjaSilhouette(c, w * 0.34f, groundY - px(58f), t, aBase, 0xFF982430, 0xFFD8A860, true, false, false, 0, 1.35f);
+                break;
+            case 42: // Scene 43: Shinobi War — Reanimated Hokage Hashirama Thousand-Armed Buddha
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeCap(Paint.Cap.ROUND);
+                paint.setStrokeWidth(px(3.2f));
+                paint.setColor((aBase * 3 / 4 << 24) | 0x00C88848);
+                for (int arm = 0; arm < 14; arm++) {
+                    double aa = -Math.PI * 0.92 + arm * (Math.PI * 0.84 / 13.0);
+                    c.drawLine(w * 0.48f, groundY - px(68f),
+                            w * 0.48f + (float) Math.cos(aa) * px(84f),
+                            groundY - px(68f) + (float) Math.sin(aa) * px(68f), paint);
+                }
+                paint.setStyle(Paint.Style.FILL);
+                drawNinjaSilhouette(c, w * 0.48f, groundY - px(58f), t, aBase, 0xFFB82828, 0xFF281C18, true, true, false, 0, 1.36f);
+                break;
+            default: // Scene 44: Baryon Mode — Naruto & Kurama Final Crimson Nuclear Fusion
+                paint.setColor((aBase / 3 << 24) | 0x00FF2838);
+                c.drawCircle(w * 0.46f, groundY - px(64f), px(62f), paint);
+                for (int tail = 0; tail < 9; tail++) {
+                    double ta = -Math.PI * 0.9 + tail * (Math.PI * 0.8 / 8.0);
+                    drawLightningStreak(c, w * 0.46f, groundY - px(56f),
+                            w * 0.46f + (float) Math.cos(ta) * px(78f),
+                            groundY - px(56f) + (float) Math.sin(ta) * px(62f),
+                            t, 1044 + tail, 0x00FF1828, 0x00FFA828, 0x00FFFFFF, px(3.4f), aBase, false);
+                }
+                drawNarutoUzumaki(c, w * 0.46f, groundY - px(58f), t * 1.6f, aBase, 2, 1.42f);
                 break;
         }
         c.restore();
@@ -3516,8 +3913,8 @@ final class SkyView extends View {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(px(2.2f * s));
         paint.setColor((alpha * 4 / 5 << 24) | 0x00781C14);
-        c.drawArc(new RectF(x - px(20f * s), groundY - px(56f * s) + breathe, x - px(4f * s), groundY - px(36f * s) + breathe), 200, 140, false, paint);
-        c.drawArc(new RectF(x + px(4f * s), groundY - px(56f * s) + breathe, x + px(20f * s), groundY - px(36f * s) + breathe), 200, 140, false, paint);
+        c.drawArc(rectF(x - px(20f * s), groundY - px(56f * s) + breathe, x - px(4f * s), groundY - px(36f * s) + breathe), 200, 140, false, paint);
+        c.drawArc(rectF(x + px(4f * s), groundY - px(56f * s) + breathe, x + px(20f * s), groundY - px(36f * s) + breathe), 200, 140, false, paint);
 
         // 5. Blue Happi Coat Vest draped over left & right shoulders
         paint.setStyle(Paint.Style.FILL);
@@ -3638,7 +4035,7 @@ final class SkyView extends View {
         for (int rg = 1; rg <= 3; rg++) {
             float ry = groundY - px(rg * 20f * s) + bob * 0.4f;
             float rw = px((28f - rg * 3.5f) * s);
-            c.drawArc(new RectF(x - rw + sway * 0.3f * rg, ry - px(5f * s), x + rw + sway * 0.3f * rg, ry + px(5f * s)), 15, 150, false, paint);
+            c.drawArc(rectF(x - rw + sway * 0.3f * rg, ry - px(5f * s), x + rw + sway * 0.3f * rg, ry + px(5f * s)), 15, 150, false, paint);
         }
 
         // 3. Animated Swaying Upper Optical Tentacles (Eyestalks) & Lower Feelers
@@ -3678,9 +4075,9 @@ final class SkyView extends View {
     }
 
     /**
-     * High-Voltage Jagged, Multi-Layered, Branching Lightning Streak Engine:
-     * Renders a true crackling lightning bolt with sharp zig-zag vertices, 3-layer volumetric plasma glow
-     * (wide outer aura, intense mid-core, blinding white-hot center), and forked secondary branches.
+     * High-Voltage Jagged, Multi-Layered, Branching Lightning Streak Engine (v6.0 120Hz Sub-Frame Plasma):
+     * Renders a true crackling lightning bolt with sharp zig-zag vertices, sub-frame smoothstep interpolation
+     * across 120Hz frames, 4-layer volumetric plasma glow, endpoint corona flares, and forked secondary branches.
      */
     private void drawLightningStreak(Canvas c, float x1, float y1, float x2, float y2,
                                      float t, int seed, int outerGlowRgb, int midBoltRgb, int coreRgb,
@@ -3692,17 +4089,23 @@ final class SkyView extends View {
         float nx = -dy / len;
         float ny = dx / len;
         float maxJitter = Math.min(px(22f), len * 0.16f);
-        int tick = ((int) (t * 28f)) + seed * 19;
+        float rawTick = t * 26f;
+        int tick0 = ((int) rawTick) + seed * 19;
+        int tick1 = tick0 + 1;
+        float blend = smoothstep(rawTick - (int) rawTick);
         int segs = 12;
 
-        // Build main jagged zig-zag bolt path in actorPath
+        // Build main jagged zig-zag bolt path in actorPath with 120Hz sub-frame plasma interpolation
         actorPath.reset();
         actorPath.moveTo(x1, y1);
         for (int i = 1; i < segs; i++) {
             float f = i / (float) segs;
             float env = (float) Math.sin(f * Math.PI);
-            int h = (tick * 37 + i * 73 + seed * 131) & 0xFF;
-            float zig = ((i % 2 == 0) ? 1f : -1f) * (0.40f + (h / 255f) * 0.85f);
+            int h0 = (tick0 * 37 + i * 73 + seed * 131) & 0xFF;
+            int h1 = (tick1 * 37 + i * 73 + seed * 131) & 0xFF;
+            float hLerp = h0 + (h1 - h0) * blend;
+            float microWave = (float) Math.sin(t * 78f + i * 1.9f + seed) * 0.14f;
+            float zig = ((i % 2 == 0) ? 1f : -1f) * (0.40f + (hLerp / 255f) * 0.85f + microWave);
             float off = zig * maxJitter * (0.35f + 0.65f * env);
             actorPath.lineTo(x1 + dx * f + nx * off, y1 + dy * f + ny * off);
         }
@@ -3712,8 +4115,13 @@ final class SkyView extends View {
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStrokeJoin(Paint.Join.MITER);
 
+        // Pass 0: Atmospheric wide outer corona halo
+        paint.setStrokeWidth(widthPx * 5.2f);
+        paint.setColor((Math.max(0, alpha / 8) << 24) | (outerGlowRgb & 0xFFFFFF));
+        c.drawPath(actorPath, paint);
+
         // Pass 1: Wide outer electric plasma bloom
-        paint.setStrokeWidth(widthPx * 3.4f);
+        paint.setStrokeWidth(widthPx * 3.2f);
         paint.setColor((Math.max(0, alpha * 2 / 7) << 24) | (outerGlowRgb & 0xFFFFFF));
         c.drawPath(actorPath, paint);
 
@@ -3723,7 +4131,7 @@ final class SkyView extends View {
         c.drawPath(actorPath, paint);
 
         // Pass 3: Razor-sharp blinding white-hot core
-        paint.setStrokeWidth(widthPx * 0.65f);
+        paint.setStrokeWidth(widthPx * 0.68f);
         paint.setColor((alpha << 24) | (coreRgb & 0xFFFFFF));
         c.drawPath(actorPath, paint);
 
@@ -3732,8 +4140,10 @@ final class SkyView extends View {
             for (int b = 1; b <= 3; b++) {
                 int idx = b * 3;
                 float f = idx / (float) segs;
-                int h = (tick * 37 + idx * 73 + seed * 131) & 0xFF;
-                float zig = ((idx % 2 == 0) ? 1f : -1f) * (0.40f + (h / 255f) * 0.85f);
+                int h0 = (tick0 * 37 + idx * 73 + seed * 131) & 0xFF;
+                int h1 = (tick1 * 37 + idx * 73 + seed * 131) & 0xFF;
+                float hLerp = h0 + (h1 - h0) * blend;
+                float zig = ((idx % 2 == 0) ? 1f : -1f) * (0.40f + (hLerp / 255f) * 0.85f);
                 float off = zig * maxJitter * 0.8f;
                 float bx0 = x1 + dx * f + nx * off;
                 float by0 = y1 + dy * f + ny * off;
@@ -3754,6 +4164,11 @@ final class SkyView extends View {
             }
         }
         paint.setStyle(Paint.Style.FILL);
+        // Endpoint plasma contact flare
+        paint.setColor((Math.max(0, alpha / 3) << 24) | (midBoltRgb & 0xFFFFFF));
+        c.drawCircle(x2, y2, widthPx * 2.2f, paint);
+        paint.setColor((Math.max(0, alpha * 3 / 4) << 24) | (coreRgb & 0xFFFFFF));
+        c.drawCircle(x2, y2, widthPx * 0.95f, paint);
     }
 
     /**
@@ -3783,7 +4198,8 @@ final class SkyView extends View {
                 ? (screensaverOverrideScene % count)
                 : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float fade = smoothstep(rawFade);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, DEMON_SLAYER_TITLES[scene], scene, count, aBase,
@@ -3866,7 +4282,7 @@ final class SkyView extends View {
                 drawLightningStreak(c, tx + px(18f), groundY - px(64f), w * (0.46f + p * 0.12f), h * 0.76f,
                         t, 404, 0x00FF2800, 0x00FF9820, 0x00FFFFAA, px(3.4f), aBase, true);
                 if (scene == 11) {
-                    drawVoldemort(c, w * 0.64f, groundY - px(58f), t, aBase, 1.32f);
+                    drawMuzanKibutsuji(c, w * 0.64f, groundY - px(58f), t, aBase, 1.34f);
                 } else {
                     drawNezukoKamado(c, w * 0.62f, groundY - px(52f), t + 0.8f, aBase, 1.25f);
                 }
@@ -4097,14 +4513,70 @@ final class SkyView extends View {
                 drawLightningStreak(c, w * 0.58f, groundY - px(70f), w * 0.38f, groundY - px(62f),
                         t, 695, 0x00D81868, 0x00FFD848, 0x00FFFFFF, px(3.8f), aBase, true);
                 break;
-            default: // Scene 36: Dawn Over Tokyo — Thirteenth Form Sun Breathing Finale vs. Muzan
+            case 35: // Scene 36: Dawn Over Tokyo — Thirteenth Form Sun Breathing Finale vs. Muzan
                 paint.setColor((aBase / 3 << 24) | 0x00FF9828);
                 c.drawCircle(w * 0.48f, groundY - px(20f), px(78f), paint);
                 drawTanjiroKamado(c, w * 0.35f, groundY - px(58f), t * 1.5f, aBase, true, 1.36f);
                 drawDragonCustom(c, w * 0.48f, h * 0.74f, t * 1.5f, aBase, 0xFFFF5818, 1.26f);
-                drawVoldemort(c, w * 0.62f, groundY - px(58f), t, aBase, 1.36f);
+                drawMuzanKibutsuji(c, w * 0.62f, groundY - px(58f), t, aBase, 1.38f);
                 drawLightningStreak(c, w * 0.38f, groundY - px(64f), w * 0.60f, groundY - px(64f),
                         t, 699, 0x00FF2400, 0x00FFE038, 0x00FFFFFF, px(4.6f), aBase, true);
+                break;
+            case 36: // Scene 37: Drum Mansion — Kyogai Rotating Claw Slash vs. Tanjiro
+                drawTanjiroKamado(c, w * 0.34f, groundY - px(58f), t * 1.4f, aBase, false, 1.34f);
+                drawSlayerSilhouette(c, w * 0.59f, groundY - px(58f), t + 0.8f, aBase, 0xFF582838, 0xFFFF3848, 0xFFFF2438, 1.36f);
+                for (int cl = -1; cl <= 1; cl++) {
+                    drawLightningStreak(c, w * 0.57f, groundY - px(64f + cl * 10f), w * 0.38f, groundY - px(64f + cl * 14f),
+                            t, 701 + cl, 0x00D81828, 0x00FF6878, 0x00FFFFFF, px(2.8f), aBase, false);
+                }
+                break;
+            case 37: // Scene 38: Mount Natagumo — Shinobu Kocho Wisteria Moonlit Descent
+                drawSlayerSilhouette(c, w * 0.46f, groundY - px(88f) + (float) Math.sin(t * 4f) * px(10f), t, aBase, 0xFFC868FF, 0xFF68F8D8, 0xFFD878FF, 1.36f);
+                for (int bf = 0; bf < 10; bf++) {
+                    float bx = w * (0.30f + bf * 0.036f);
+                    float by = groundY - px(48f + (bf % 3) * 24f) + (float) Math.cos(t * 4f + bf) * px(8f);
+                    drawGlowingButterfly(c, bx, by, t + bf, px(7.5f), bf % 2 == 0 ? 0x00D878FF : 0x0068F8E0, aBase);
+                }
+                break;
+            case 38: // Scene 39: Rehabilitation Mansion — Tanjiro Total Concentration Gourd Burst
+                drawTanjiroKamado(c, w * 0.38f, groundY - px(58f), t, aBase, false, 1.35f);
+                paint.setColor((aBase << 24) | 0x00D8B880);
+                c.drawOval(w * 0.50f, groundY - px(72f), w * 0.58f, groundY - px(24f), paint);
+                drawLightningStreak(c, w * 0.54f, groundY - px(48f), w * 0.64f, groundY - px(78f),
+                        t, 704, 0x002898FF, 0x0088E8FF, 0x00FFFFFF, px(3.4f), aBase, true);
+                break;
+            case 39: // Scene 40: Entertainment District — Inosuke Beast Breathing Dislocated Slash
+                drawSlayerSilhouette(c, w * (0.32f + p * 0.24f), groundY - px(58f), t * 1.8f, aBase, 0xFF385888, 0xFF88C8FF, 0xFF58A8FF, 1.36f);
+                drawLightningStreak(c, w * 0.28f, groundY - px(74f), w * 0.62f, groundY - px(54f),
+                        t, 705, 0x001878FF, 0x0078D8FF, 0x00FFFFFF, px(3.8f), aBase, true);
+                drawLightningStreak(c, w * 0.28f, groundY - px(54f), w * 0.62f, groundY - px(74f),
+                        t, 706, 0x001878FF, 0x0078D8FF, 0x00FFFFFF, px(3.8f), aBase, true);
+                break;
+            case 40: // Scene 41: Swordsmith Village — Genya Shinazugawa Double-Barrel Demon Shot
+                drawSlayerSilhouette(c, w * 0.35f, groundY - px(58f), t, aBase, 0xFF482858, 0xFFFF6838, 0xFFFF3820, 1.35f);
+                drawLightningStreak(c, w * 0.39f, groundY - px(68f), w * 0.64f, groundY - px(64f),
+                        t, 707, 0x00FF2800, 0x00FFA828, 0x00FFFFFF, px(4.2f), aBase, true);
+                break;
+            case 41: // Scene 42: Infinity Castle — Giyu & Tanjiro vs. Akaza Compass Needle
+                drawSlayerSilhouette(c, w * 0.29f, groundY - px(58f), t, aBase, 0xFF982438, 0xFF38D8FF, 0xFF28B8FF, 1.32f);
+                drawTanjiroKamado(c, w * 0.41f, groundY - px(58f), t + 0.4f, aBase, true, 1.34f);
+                drawNinjaSilhouette(c, w * 0.60f, groundY - px(58f), t + 0.9f, aBase, 0xFF283868, 0xFFFF3878, true, false, false, 0xFF38C8FF, 1.36f);
+                drawLightningStreak(c, w * 0.44f, groundY - px(64f), w * 0.58f, groundY - px(64f),
+                        t, 708, 0x00FF3800, 0x0038D8FF, 0x00FFFFFF, px(4.0f), aBase, true);
+                break;
+            case 42: // Scene 43: Infinity Castle — Obanai Iguro Serpent Breathing & Kaburamaru
+                drawSlayerSilhouette(c, w * 0.36f, groundY - px(58f), t * 1.5f, aBase, 0xFF282C38, 0xFFC868FF, 0xFFA848FF, 1.35f);
+                drawSerpent(c, w * 0.52f, groundY, t * 1.4f, aBase, 0xFFF0F4FC, 0xFFFF2848, 1.24f, false);
+                break;
+            default: // Scene 44: Springtime Epilogue — Kamado Descendants Beneath Cherry Blossoms
+                drawTanjiroKamado(c, w * 0.40f, groundY - px(58f), t * 0.8f, aBase, false, 1.32f);
+                drawNezukoKamado(c, w * 0.52f, groundY - px(52f), t * 0.8f + 0.6f, aBase, 1.26f);
+                for (int pet = 0; pet < 14; pet++) {
+                    float pxP = w * (0.26f + ((p + pet * 0.07f) % 1.0f) * 0.44f);
+                    float pyP = h * 0.72f + (pet % 4) * px(22f) + (float) Math.sin(t * 3.5f + pet) * px(6f);
+                    paint.setColor((aBase * 4 / 5 << 24) | 0x00FFB8D8);
+                    c.drawOval(pxP - px(4.5f), pyP - px(2.5f), pxP + px(4.5f), pyP + px(2.5f), paint);
+                }
                 break;
         }
         c.restore();
@@ -4306,9 +4778,9 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x00F4D4B8);
         c.drawCircle(headX, headY, px(6.5f * s), paint);
         paint.setColor((alpha << 24) | 0x00FFE038);
-        c.drawArc(new RectF(headX - px(8.5f * s), headY - px(10.5f * s), headX + px(8.5f * s), headY + px(2f * s)), 155, 225, true, paint);
+        c.drawArc(rectF(headX - px(8.5f * s), headY - px(10.5f * s), headX + px(8.5f * s), headY + px(2f * s)), 155, 225, true, paint);
         paint.setColor((alpha << 24) | 0x00FF7818);
-        c.drawArc(new RectF(headX - px(8.5f * s), headY - px(5f * s), headX + px(8.5f * s), headY + px(2f * s)), 165, 205, false, paint);
+        c.drawArc(rectF(headX - px(8.5f * s), headY - px(5f * s), headX + px(8.5f * s), headY + px(2f * s)), 165, 205, false, paint);
 
         // Unsheathed Lightning Nichirin Blade Slash + Crackling Thunderbolt Arc
         float handX = x + px(12f * s), handY = y - px(6f * s);
@@ -4380,6 +4852,53 @@ final class SkyView extends View {
         paint.setStyle(Paint.Style.FILL);
     }
 
+    /**
+     * Bespoke Show-Accurate Muzan Kibutsuji (Demon King — Final Combat Form) Renderer:
+     * - Flowing shock-white hair crown & glowing plum-red cat-slit demon eyes
+     * - Crimson-and-obsidian biokinetic flesh armor torso
+     * - 9 whipping crimson-black bone-bladed back tentacles thrashing across the stage
+     */
+    private void drawMuzanKibutsuji(Canvas c, float x, float y, float t, int alpha, float s) {
+        // 1. 9 Whipping Crimson-Black Biokinetic Back Tentacles
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        for (int w = 0; w < 9; w++) {
+            double ang = -Math.PI * 0.85 + w * (Math.PI * 0.85 / 8.0) + Math.sin(t * 6.5f + w * 0.9f) * 0.22;
+            float len = px((42f + (w % 3) * 12f) * s);
+            float mx = x + (float) Math.cos(ang) * len * 0.55f;
+            float my = y - px(10f * s) + (float) Math.sin(ang) * len * 0.45f;
+            float tx = x + (float) Math.cos(ang + 0.25) * len;
+            float ty = y - px(10f * s) + (float) Math.sin(ang + 0.25) * len;
+            paint.setStrokeWidth(px(3.4f * s));
+            paint.setColor((alpha * 4 / 5 << 24) | 0x00B81428);
+            c.drawLine(x, y - px(10f * s), mx, my, paint);
+            paint.setStrokeWidth(px(2.2f * s));
+            paint.setColor((alpha << 24) | 0x00FF2848);
+            c.drawLine(mx, my, tx, ty, paint);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor((alpha << 24) | 0x00F4ECF0);
+            c.drawCircle(tx, ty, px(2.0f * s), paint);
+            paint.setStyle(Paint.Style.STROKE);
+        }
+        // 2. Crimson & Obsidian Biokinetic Torso & Legs
+        paint.setStrokeWidth(px(5.0f * s));
+        paint.setColor((alpha << 24) | 0x0018121C);
+        float stride = (float) Math.sin(t * 5.5f) * px(4f * s);
+        c.drawLine(x - px(4f * s), y + px(6f * s), x - px(9f * s) - stride, y + px(34f * s), paint);
+        c.drawLine(x + px(4f * s), y + px(6f * s), x + px(9f * s) + stride, y + px(34f * s), paint);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00781224);
+        c.drawRoundRect(x - px(8.5f * s), y - px(19f * s), x + px(8.5f * s), y + px(8f * s), px(3f * s), px(3f * s), paint);
+        // 3. Pale Demon Head, Flowing White Hair & Glowing Plum-Red Eyes
+        float headX = x - px(1f * s), headY = y - px(26.5f * s);
+        paint.setColor((alpha << 24) | 0x00ECE8F4);
+        c.drawCircle(headX, headY, px(6.5f * s), paint);
+        paint.setColor((alpha << 24) | 0x00F8F8FF);
+        c.drawArc(rectF(headX - px(8.5f * s), headY - px(9.5f * s), headX + px(8.5f * s), headY + px(4f * s)), 150, 240, true, paint);
+        paint.setColor((alpha << 24) | 0x00FF1838);
+        c.drawCircle(headX - px(2.5f * s), headY - px(1.0f * s), px(1.8f * s), paint);
+    }
+
     private void drawStarWarsStoryLoop(Canvas c, int w, int h, float t) {
         int count = STAR_WARS_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
@@ -4388,7 +4907,8 @@ final class SkyView extends View {
                 ? (screensaverOverrideScene % count)
                 : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float fade = smoothstep(rawFade);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, STAR_WARS_TITLES[scene], scene, count, aBase,
@@ -4441,7 +4961,7 @@ final class SkyView extends View {
                 c.drawCircle(fx, fy, px(24f), paint);
                 c.drawRect(fx, fy - px(8f), fx + px(32f), fy + px(8f), paint);
                 paint.setColor((aBase << 24) | 0x0048D8FF);
-                c.drawArc(new RectF(fx - px(28f), fy - px(18f), fx - px(12f), fy + px(18f)), 90, 180, false, paint);
+                c.drawArc(rectF(fx - px(28f), fy - px(18f), fx - px(12f), fy + px(18f)), 90, 180, false, paint);
                 break;
             case 5: // Yavin Trench Run — X-Wing vs. Darth Vader TIE Advanced
                 float xwX = w * (0.30f + p * 0.30f), xwY = h * 0.77f + (float) Math.sin(t * 5f) * px(10f);
@@ -4594,7 +5114,7 @@ final class SkyView extends View {
                 paint.setColor((aBase << 24) | 0x00C8D4E0);
                 c.drawCircle(mfX, mfY, px(22f), paint);
                 paint.setColor((aBase << 24) | 0x0048D8FF);
-                c.drawArc(new RectF(mfX - px(26f), mfY - px(16f), mfX - px(10f), mfY + px(16f)), 90, 180, false, paint);
+                c.drawArc(rectF(mfX - px(26f), mfY - px(16f), mfX - px(10f), mfY + px(16f)), 90, 180, false, paint);
                 for (int as = 0; as < 3; as++) {
                     paint.setColor((aBase << 24) | 0x00685850);
                     c.drawCircle(w * (0.28f + as * 0.16f), h * (0.71f + (as % 2) * 0.09f), px(14f), paint);
@@ -4646,7 +5166,7 @@ final class SkyView extends View {
                 break;
             case 33: // Kef Bir Ocean Wreckage — Rey vs. Kylo Ren Amid Crashing Waves
                 paint.setColor((aBase * 3 / 5 << 24) | 0x002878B8);
-                c.drawArc(new RectF(w * 0.28f, groundY - px(78f), w * 0.64f, groundY + px(24f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.28f, groundY - px(78f), w * 0.64f, groundY + px(24f)), 180, 180, true, paint);
                 drawJediMaster(c, w * 0.36f, groundY - px(58f), t, aBase, 0xFFE8E4DC, 0xFF38B8FF, false, 1.34f);
                 drawJediSith(c, w * 0.57f, groundY - px(58f), t + 0.7f, aBase, 0xFF14161E, 0xFFFF1824, true, false, 1.36f);
                 break;
@@ -4654,12 +5174,66 @@ final class SkyView extends View {
                 drawJediMaster(c, w * 0.34f, groundY - px(58f), t, aBase, 0xFF181C24, 0xFF38FF78, false, 1.35f);
                 drawMandalorianAndGrogu(c, w * 0.50f, groundY - px(58f), t + 0.6f, aBase, 1.28f);
                 break;
-            default: // Scene 36: Exegol Sith Citadel — Rey Dual Sabers ("I Am All The Jedi") vs. Palpatine
+            case 35: // Scene 36: Exegol Sith Citadel — Rey Dual Sabers ("I Am All The Jedi") vs. Palpatine
                 drawJediMaster(c, w * 0.35f, groundY - px(58f), t, aBase, 0xFFE8E4DC, 0xFF38B8FF, false, 1.36f);
                 drawJediSith(c, w * 0.37f, groundY - px(58f), t, aBase, 0xFFE8E4DC, 0xFF38FF78, false, false, 1.30f);
                 drawJediSith(c, w * 0.60f, groundY - px(58f), t + 1f, aBase, 0xFF181422, 0xFFFF1824, true, false, 1.36f);
                 drawLightningStreak(c, w * 0.58f, groundY - px(68f), w * 0.41f, groundY - px(68f),
                         t, 960, 0x001878FF, 0x0078F0FF, 0x00FFFFFF, px(4.6f), aBase, true);
+                break;
+            case 36: // Scene 37: Jundland Wastes — Obi-Wan Kenobi & Luke Skywalker Landspeeder
+                float lsX = w * (0.30f + p * 0.28f), lsY = groundY - px(28f) + (float) Math.sin(t * 5f) * px(3f);
+                paint.setColor((aBase << 24) | 0x00C86848);
+                c.drawRoundRect(lsX - px(34f), lsY - px(10f), lsX + px(34f), lsY + px(6f), px(6f), px(6f), paint);
+                drawJediMaster(c, lsX - px(14f), groundY - px(58f), t, aBase, 0xFFC8B898, 0xFF38B8FF, false, 1.32f);
+                break;
+            case 37: // Scene 38: Mos Eisley Cantina — Han Solo & Chewbacca Aboard the Falcon
+                drawJediMaster(c, w * 0.36f, groundY - px(58f), t, aBase, 0xFF282C38, 0xFFFF3828, false, 1.34f);
+                drawJediMaster(c, w * 0.48f, groundY - px(64f), t + 0.5f, aBase, 0xFF684428, 0xFFFF3828, false, 1.46f);
+                drawLightningStreak(c, w * 0.40f, groundY - px(68f), w * 0.64f, groundY - px(68f),
+                        t, 962, 0x00FF1824, 0x00FF6838, 0x00FFFFFF, px(3.2f), aBase, false);
+                break;
+            case 38: // Scene 39: Cloud City Carbon Freeze — Darth Vader & Boba Fett
+                paint.setColor((aBase / 3 << 24) | 0x00FF6820);
+                c.drawRect(w * 0.42f, groundY - px(110f), w * 0.52f, groundY, paint);
+                drawDarthVader(c, w * 0.34f, groundY - px(60f), t, aBase, false, 1.38f);
+                drawMandalorianAndGrogu(c, w * 0.58f, groundY - px(58f), t + 0.7f, aBase, 1.32f);
+                break;
+            case 39: // Scene 40: Battle of Endor — Millennium Falcon Inside Death Star II Reactor
+                float rcX = w * (0.28f + p * 0.32f), rcY = h * 0.76f;
+                paint.setColor((aBase << 24) | 0x00385068);
+                c.drawRect(w * 0.46f, groundY - px(120f), w * 0.54f, groundY, paint);
+                drawLightningStreak(c, rcX + px(24f), rcY, w * 0.50f, rcY,
+                        t, 964, 0x00FF2800, 0x00FFB838, 0x00FFFFFF, px(3.8f), aBase, true);
+                paint.setColor((aBase << 24) | 0x00C8D4E0);
+                c.drawCircle(rcX, rcY, px(22f), paint);
+                break;
+            case 40: // Scene 41: Force Ghosts — Anakin, Obi-Wan & Yoda Beneath Endor Stars
+                int fgA = aBase * 3 / 4;
+                drawYodaMaster(c, w * 0.34f, groundY - px(42f), t, fgA, 1.26f);
+                drawJediMaster(c, w * 0.46f, groundY - px(58f), t + 0.5f, fgA, 0xFF68C8FF, 0xFF68E8FF, false, 1.34f);
+                drawJediMaster(c, w * 0.58f, groundY - px(58f), t + 1.0f, fgA, 0xFF68C8FF, 0xFF68E8FF, false, 1.34f);
+                break;
+            case 41: // Scene 42: Nevarro Streets — Mandalorian Whistling Birds & Jetpack Salvo
+                drawMandalorianAndGrogu(c, w * 0.38f, groundY - px(76f) + (float) Math.sin(t * 5f) * px(8f), t, aBase, 1.35f);
+                for (int wb = 0; wb < 5; wb++) {
+                    drawLightningStreak(c, w * 0.40f, groundY - px(84f),
+                            w * (0.54f + wb * 0.03f), groundY - px(52f + (wb % 2) * 28f),
+                            t, 966 + wb, 0x003898FF, 0x0098E8FF, 0x00FFFFFF, px(2.4f), aBase, false);
+                }
+                break;
+            case 42: // Scene 43: Corvus Forest — Ahsoka Tano Dual White Sabers vs. Magistrate
+                drawJediSith(c, w * 0.36f, groundY - px(58f), t * 1.4f, aBase, 0xFF384860, 0xFFFFFFFF, false, true, 1.35f);
+                drawJediSith(c, w * 0.58f, groundY - px(58f), t * 1.4f + 0.7f, aBase, 0xFF681824, 0xFFD8E4F0, true, false, 1.35f);
+                drawLightningStreak(c, w * 0.42f, groundY - px(68f), w * 0.54f, groundY - px(68f),
+                        t, 972, 0x0088C8FF, 0x00FFFFFF, 0x00FFFFFF, px(3.4f), aBase, true);
+                break;
+            default: // Scene 44: Ferrix Rising — Cassian Andor & Luthen Rael Haulcraft Escape
+                float hcX = w * (0.28f + p * 0.34f), hcY = h * 0.76f;
+                paint.setColor((aBase << 24) | 0x0098A8B8);
+                c.drawOval(hcX - px(24f), hcY - px(8f), hcX + px(24f), hcY + px(8f), paint);
+                drawLightningStreak(c, hcX - px(82f), hcY - px(14f), hcX + px(82f), hcY + px(14f),
+                        t, 974, 0x00FF1824, 0x00FF6848, 0x00FFFFFF, px(3.6f), aBase, false);
                 break;
         }
         c.restore();
@@ -4720,7 +5294,7 @@ final class SkyView extends View {
         actorPath.lineTo(headX - px(11f * s), headY + px(4f * s));
         actorPath.close();
         c.drawPath(actorPath, paint);
-        c.drawArc(new RectF(headX - px(9f * s), headY - px(10f * s), headX + px(9f * s), headY + px(4f * s)), 180, 180, true, paint);
+        c.drawArc(rectF(headX - px(9f * s), headY - px(10f * s), headX + px(9f * s), headY + px(4f * s)), 180, 180, true, paint);
         // Glossy triangular breath grille & eye lenses
         paint.setColor((alpha << 24) | 0x00404858);
         c.drawCircle(headX - px(3.2f * s), headY - px(2.5f * s), px(1.8f * s), paint);
@@ -4779,7 +5353,7 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x00F0D0B4);
         c.drawCircle(headX, headY, px(6.5f * s), paint);
         paint.setColor((alpha << 24) | 0x00987040);
-        c.drawArc(new RectF(headX - px(7f * s), headY - px(8f * s), headX + px(7f * s), headY + px(2f * s)), 160, 210, true, paint);
+        c.drawArc(rectF(headX - px(7f * s), headY - px(8f * s), headX + px(7f * s), headY + px(2f * s)), 160, 210, true, paint);
 
         // Ignited Jedi Lightsaber
         float handX = x + dir * px(16f * s), handY = y - px(10f * s);
@@ -4906,7 +5480,8 @@ final class SkyView extends View {
                 ? (screensaverOverrideScene % count)
                 : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float fade = smoothstep(rawFade);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, MCU_TITLES[scene], scene, count, aBase,
@@ -5066,9 +5641,7 @@ final class SkyView extends View {
                         t, 772, 0x000088FF, 0x0078F8FF, 0x00FFFFFF, px(3.8f), aBase, true);
                 break;
             case 16: // Manhattan Skyline — Hulk ("I'm Always Angry") Smashes Chitauri Leviathan
-                drawThanosTitan(c, w * 0.36f, groundY - px(62f), t, aBase, false, 1.42f);
-                paint.setColor((aBase << 24) | 0x0038B848);
-                c.drawCircle(w * 0.36f, groundY - px(74f), px(18f), paint);
+                drawIncredibleHulk(c, w * 0.36f, groundY - px(62f), t, aBase, false, 1.42f);
                 drawDragonCustom(c, w * 0.56f, h * 0.75f, t, aBase, 0xFF687890, 1.32f);
                 drawLightningStreak(c, w * 0.41f, groundY - px(74f), w * 0.52f, h * 0.75f,
                         t, 773, 0x0038FF68, 0x00A8FF98, 0x00FFFFFF, px(4.0f), aBase, true);
@@ -5093,7 +5666,7 @@ final class SkyView extends View {
                 break;
             case 19: // Johannesburg Streets — Iron Man Hulkbuster Armor vs. Rampaging Hulk
                 drawIronMan(c, w * 0.35f, groundY - px(64f), t, aBase, false, true, 1.50f);
-                drawThanosTitan(c, w * 0.58f, groundY - px(64f), t + 0.8f, aBase, true, 1.45f);
+                drawIncredibleHulk(c, w * 0.58f, groundY - px(64f), t + 0.8f, aBase, true, 1.45f);
                 drawLightningStreak(c, w * 0.42f, groundY - px(74f), w * 0.53f, groundY - px(74f),
                         t, 780, 0x000088FF, 0x0058F8FF, 0x00FFFFFF, px(4.2f), aBase, true);
                 break;
@@ -5133,7 +5706,7 @@ final class SkyView extends View {
                 break;
             case 24: // Sakaar Arena — Gladiator Thor Lightning Leap vs. Incredible Hulk
                 drawThorOdinson(c, w * 0.36f, groundY - px(74f), t * 1.5f, aBase, false, 1.36f);
-                drawThanosTitan(c, w * 0.58f, groundY - px(62f), t + 0.8f, aBase, true, 1.44f);
+                drawIncredibleHulk(c, w * 0.58f, groundY - px(62f), t + 0.8f, aBase, true, 1.44f);
                 drawLightningStreak(c, w * 0.36f, h * 0.66f, w * 0.56f, groundY - px(68f),
                         t, 783, 0x000078FF, 0x0068F4FF, 0x00FFFFFF, px(4.2f), aBase, true);
                 break;
@@ -5175,7 +5748,7 @@ final class SkyView extends View {
                 drawThanosTitan(c, w * 0.62f, groundY - px(62f), t + 1.2f, aBase, true, 1.38f);
                 break;
             case 31: // Westview Hex — Wanda Maximoff Transforming into The Scarlet Witch
-                drawDoctorStrange(c, w * 0.46f, groundY - px(68f) + (float) Math.sin(t * 4f) * px(8f), t, aBase, 1.36f);
+                drawScarletWitch(c, w * 0.46f, groundY - px(68f) + (float) Math.sin(t * 4f) * px(8f), t, aBase, 1.38f);
                 for (int ch = 0; ch < 4; ch++) {
                     double ca = t * 3f + ch * Math.PI * 0.5;
                     drawLightningStreak(c, w * 0.46f, groundY - px(76f),
@@ -5208,7 +5781,7 @@ final class SkyView extends View {
                             t, 792 + br, 0x0000A848, 0x0038FF78, 0x00FFFFFF, px(3.4f), aBase, true);
                 }
                 break;
-            default: // Scene 36: Final Sacrifice — "And I... Am... Iron Man" Infinity Snap
+            case 35: // Scene 36: Final Sacrifice — "And I... Am... Iron Man" Infinity Snap
                 drawIronMan(c, w * 0.46f, groundY - px(58f), t, aBase, false, false, 1.42f);
                 int[] snapCols = {0xFF2888FF, 0xFFFFE038, 0xFFFF2438, 0xFFB838FF, 0xFF28FF78, 0xFFFF8820};
                 for (int s = 0; s < 6; s++) {
@@ -5218,6 +5791,61 @@ final class SkyView extends View {
                             groundY - px(82f) + (float) Math.sin(sa) * px(58f),
                             t, 795 + s, snapCols[s], snapCols[s], 0x00FFFFFF, px(3.4f), aBase, true);
                 }
+                break;
+            case 36: // Scene 37: Brooklyn 1943 — Steve Rogers Super-Soldier Vita-Ray Chamber
+                paint.setColor((aBase / 3 << 24) | 0x0048D8FF);
+                c.drawRoundRect(w * 0.41f, groundY - px(108f), w * 0.51f, groundY, px(8f), px(8f), paint);
+                drawCaptainAmerica(c, w * 0.46f, groundY - px(58f), t, aBase, false, false, 1.38f);
+                drawLightningStreak(c, w * 0.32f, groundY - px(68f), w * 0.46f, groundY - px(68f),
+                        t, 801, 0x001888FF, 0x0078F8FF, 0x00FFFFFF, px(3.8f), aBase, true);
+                break;
+            case 37: // Scene 38: Stark Tower — Loki Chitauri Scepter vs. Iron Man Mark VII
+                drawIronMan(c, w * 0.35f, groundY - px(60f), t, aBase, false, true, 1.35f);
+                drawThorOdinson(c, w * 0.58f, groundY - px(58f), t + 0.8f, aBase, false, 1.35f);
+                drawLightningStreak(c, w * 0.56f, groundY - px(68f), w * 0.38f, groundY - px(68f),
+                        t, 802, 0x001888FF, 0x0058F4FF, 0x00FFFFFF, px(3.8f), aBase, true);
+                break;
+            case 38: // Scene 39: Asgard Vault — Eternal Flame Surtur Twilight Sword Ragnarok
+                paint.setColor((aBase * 3 / 4 << 24) | 0x00FF4818);
+                c.drawOval(w * 0.46f, groundY - px(132f), w * 0.62f, groundY, paint);
+                drawThorOdinson(c, w * 0.33f, groundY - px(58f), t, aBase, false, 1.34f);
+                drawLightningStreak(c, w * 0.54f, groundY - px(124f), w * 0.38f, groundY - px(24f),
+                        t, 803, 0x00FF2400, 0x00FFB828, 0x00FFFFFF, px(4.8f), aBase, true);
+                break;
+            case 39: // Scene 40: Vormir Altar — Red Skull & The Golden Soul Stone Eclipse
+                paint.setColor((aBase / 2 << 24) | 0x00FF9820);
+                c.drawCircle(w * 0.48f, h * 0.72f, px(38f), paint);
+                paint.setColor((aBase << 24) | 0x0014101C);
+                c.drawCircle(w * 0.48f, h * 0.72f, px(28f), paint);
+                drawDoctorStrange(c, w * 0.42f, groundY - px(62f), t, aBase, 1.34f);
+                break;
+            case 40: // Scene 41: Quantum Realm — Ant-Man & The Wasp Subatomic Time Vortex
+                paint.setStyle(Paint.Style.STROKE);
+                for (int qr = 1; qr <= 4; qr++) {
+                    paint.setStrokeWidth(px(2.4f));
+                    paint.setColor((aBase * (5 - qr) / 5 << 24) | (qr % 2 == 0 ? 0x0048E8FF : 0x00D858FF));
+                    c.drawCircle(w * 0.48f, groundY - px(64f), px(18f * qr), paint);
+                }
+                paint.setStyle(Paint.Style.FILL);
+                drawIronMan(c, w * 0.42f, groundY - px(60f), t, aBase, false, false, 1.28f);
+                break;
+            case 41: // Scene 42: Kamar-Taj Siege — Doctor Strange Crimson Bands of Cyttorak
+                drawDoctorStrange(c, w * 0.35f, groundY - px(62f), t, aBase, 1.36f);
+                drawScarletWitch(c, w * 0.58f, groundY - px(62f), t + 0.7f, aBase, 1.36f);
+                drawLightningStreak(c, w * 0.38f, groundY - px(68f), w * 0.56f, groundY - px(68f),
+                        t, 806, 0x00FF5800, 0x00FFD038, 0x00FFFFFF, px(3.8f), aBase, true);
+                break;
+            case 42: // Scene 43: Atlantis Rising — Shuri Black Panther vs. Namor Winged Anklets
+                drawBlackPanther(c, w * 0.35f, groundY - px(58f), t, aBase, 1.34f);
+                drawThorOdinson(c, w * 0.58f, groundY - px(74f) + (float) Math.sin(t * 5f) * px(10f), t + 0.8f, aBase, false, 1.34f);
+                drawLightningStreak(c, w * 0.38f, groundY - px(66f), w * 0.55f, groundY - px(74f),
+                        t, 807, 0x008828FF, 0x00D878FF, 0x00FFFFFF, px(3.6f), aBase, true);
+                break;
+            default: // Scene 44: Multiverse Saga — Wolverine Adamantium Claws & Deadpool Katana
+                drawCaptainAmerica(c, w * 0.36f, groundY - px(58f), t * 1.5f, aBase, false, false, 1.35f);
+                drawSpiderMan(c, w * 0.56f, groundY - px(58f), groundY, t * 1.5f + 0.6f, aBase, 1.35f);
+                drawLightningStreak(c, w * 0.39f, groundY - px(66f), w * 0.53f, groundY - px(66f),
+                        t, 808, 0x00FF9800, 0x00FFE858, 0x00FFFFFF, px(3.8f), aBase, true);
                 break;
         }
         c.restore();
@@ -5332,7 +5960,7 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x00F4D0B4);
         c.drawCircle(headX, headY, px(6.5f * s), paint);
         paint.setColor((alpha << 24) | 0x001E3E88);
-        c.drawArc(new RectF(headX - px(7f * s), headY - px(7.5f * s), headX + px(7f * s), headY + px(2f * s)), 170, 200, true, paint);
+        c.drawArc(rectF(headX - px(7f * s), headY - px(7.5f * s), headX + px(7f * s), headY + px(2f * s)), 170, 200, true, paint);
         paint.setColor((alpha << 24) | 0x00FFFFFF);
         c.drawCircle(headX + px(1.5f * s), headY - px(3.8f * s), px(1.5f * s), paint);
 
@@ -5399,7 +6027,7 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x00F4D0B4);
         c.drawCircle(headX, headY, px(6.5f * s), paint);
         paint.setColor((alpha << 24) | 0x00FFD848);
-        c.drawArc(new RectF(headX - px(7.5f * s), headY - px(8.5f * s), headX + px(7.5f * s), headY + px(4f * s)), 140, 230, true, paint);
+        c.drawArc(rectF(headX - px(7.5f * s), headY - px(8.5f * s), headX + px(7.5f * s), headY + px(4f * s)), 140, 230, true, paint);
         paint.setColor((alpha << 24) | 0x0068F8FF);
         c.drawCircle(headX + px(2.2f * s), headY - px(1.0f * s), px(1.6f * s), paint);
 
@@ -5412,7 +6040,7 @@ final class SkyView extends View {
         paint.setStyle(Paint.Style.FILL);
         paint.setColor((alpha << 24) | 0x00C8D8E8);
         if (stormbreaker) {
-            c.drawArc(new RectF(wx - px(4f * s), wy - px(10f * s), wx + px(12f * s), wy + px(6f * s)), -60, 120, true, paint);
+            c.drawArc(rectF(wx - px(4f * s), wy - px(10f * s), wx + px(12f * s), wy + px(6f * s)), -60, 120, true, paint);
             c.drawRect(wx - px(7f * s), wy - px(5f * s), wx, wy + px(2f * s), paint);
         } else {
             c.drawRoundRect(wx - px(7f * s), wy - px(8f * s), wx + px(7f * s), wy, px(2f * s), px(2f * s), paint);
@@ -5519,12 +6147,102 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x008848A8);
         c.drawRoundRect(headX - px(7.5f * s), headY - px(7.5f * s), headX + px(7.5f * s), headY + px(7.5f * s), px(3f * s), px(3f * s), paint);
         paint.setColor((alpha << 24) | 0x00FFC838);
-        c.drawArc(new RectF(headX - px(8f * s), headY - px(8.5f * s), headX + px(8f * s), headY), 180, 180, true, paint);
+        c.drawArc(rectF(headX - px(8f * s), headY - px(8.5f * s), headX + px(8f * s), headY), 180, 180, true, paint);
         // Raised Golden Infinity Gauntlet with Glowing Infinity Stones
         float gx = x + dir * px(20f * s), gy = y - px(18f * s);
         c.drawRoundRect(gx - px(5.5f * s), gy - px(6.5f * s), gx + px(5.5f * s), gy + px(5.5f * s), px(2.5f * s), px(2.5f * s), paint);
         paint.setColor((alpha << 24) | 0x00FFFFFF);
         c.drawCircle(gx, gy - px(2f * s), px(3.0f * s), paint);
+    }
+
+    /**
+     * Bespoke MCU Incredible Hulk Renderer:
+     * - Colossal Gamma-Green Muscular Frame, Broad Trapezius & Pectoral Deltoids
+     * - Iconic Torn Purple Shorts & Bare Gamma-Green Calves
+     * - Shaggy Dark Hair, Roaring Brow & Raised Gamma-Charged Smash Fists
+     */
+    private void drawIncredibleHulk(Canvas c, float x, float y, float t, int alpha, boolean facingLeft, float s) {
+        float dir = facingLeft ? -1f : 1f;
+        float breathe = (float) Math.sin(t * 5f) * px(2.0f * s);
+        // Gamma radiation ground aura
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((Math.max(0, alpha / 5) << 24) | 0x0038FF68);
+        c.drawCircle(x, y - px(6f * s), px(34f * s), paint);
+        // Bare Gamma-Green Calves & Torn Purple Shorts
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(px(6.5f * s));
+        paint.setColor((alpha << 24) | 0x0038A848);
+        c.drawLine(x - dir * px(6f * s), y + px(14f * s), x - dir * px(10f * s), y + px(34f * s), paint);
+        c.drawLine(x + dir * px(6f * s), y + px(14f * s), x + dir * px(10f * s), y + px(34f * s), paint);
+        paint.setColor((alpha << 24) | 0x00582888); // Torn purple shorts
+        c.drawLine(x - dir * px(5f * s), y + px(4f * s), x - dir * px(7f * s), y + px(18f * s), paint);
+        c.drawLine(x + dir * px(5f * s), y + px(4f * s), x + dir * px(7f * s), y + px(18f * s), paint);
+        // Colossal Gamma-Green Torso & Shoulders
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x0038A848);
+        c.drawRoundRect(x - px(13.5f * s), y - px(22f * s) + breathe, x + px(13.5f * s), y + px(8f * s), px(5f * s), px(5f * s), paint);
+        c.drawCircle(x - px(14f * s), y - px(16f * s) + breathe, px(6.5f * s), paint);
+        c.drawCircle(x + px(14f * s), y - px(16f * s) + breathe, px(6.5f * s), paint);
+        // Hulk Head, Dark Unkempt Hair & Glowing Gamma-Green Eyes
+        float headX = x + dir * px(1.5f * s), headY = y - px(29.5f * s) + breathe;
+        c.drawRoundRect(headX - px(7.5f * s), headY - px(7.5f * s), headX + px(7.5f * s), headY + px(7.5f * s), px(3f * s), px(3f * s), paint);
+        paint.setColor((alpha << 24) | 0x00181C20);
+        c.drawArc(rectF(headX - px(8f * s), headY - px(9f * s), headX + px(8f * s), headY), 170, 200, true, paint);
+        paint.setColor((alpha << 24) | 0x0078FF88);
+        c.drawCircle(headX + dir * px(2.8f * s), headY - px(1.5f * s), px(1.8f * s), paint);
+        // Raised Smash Fist
+        float fx = x + dir * px(22f * s), fy = y - px(20f * s) + breathe;
+        paint.setColor((alpha << 24) | 0x0038A848);
+        c.drawCircle(fx, fy, px(6.2f * s), paint);
+    }
+
+    /**
+     * Bespoke MCU Scarlet Witch (Wanda Maximoff) Renderer:
+     * - Sculpted Crimson Tiara Crown with twin horns & flowing auburn hair
+     * - Crimson Sokovian Corset Coat & Billowing Cape
+     * - Twin Blazing Chaos Magic Hex Spheres in both hands
+     */
+    private void drawScarletWitch(Canvas c, float x, float y, float t, int alpha, float s) {
+        float capeWave = (float) Math.sin(t * 6.5f) * px(6.5f * s);
+        paint.setStyle(Paint.Style.FILL);
+        // Billowing Dark-Crimson Cape & Skirt
+        paint.setColor((alpha << 24) | 0x00881024);
+        actorPath.reset();
+        actorPath.moveTo(x - px(7f * s), y - px(18f * s));
+        actorPath.lineTo(x + px(7f * s), y - px(18f * s));
+        actorPath.lineTo(x + px(13f * s), y + px(30f * s));
+        actorPath.lineTo(x - px(22f * s) - capeWave, y + px(32f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+        // Scarlet Corset Bodice
+        paint.setColor((alpha << 24) | 0x00D81834);
+        c.drawRoundRect(x - px(7.0f * s), y - px(18f * s), x + px(7.0f * s), y + px(8f * s), px(3f * s), px(3f * s), paint);
+        // Head, Flowing Auburn Hair & Iconic Sculpted Scarlet Witch Crown Tiara
+        float headX = x + px(1f * s), headY = y - px(26f * s);
+        paint.setColor((alpha << 24) | 0x00983824);
+        c.drawOval(headX - px(9.5f * s), headY - px(8f * s), headX + px(8.5f * s), headY + px(12f * s), paint);
+        paint.setColor((alpha << 24) | 0x00F4D0B4);
+        c.drawCircle(headX, headY, px(6.0f * s), paint);
+        // Sculpted M-shaped Crimson Tiara Crown & Glowing Red Chaos Eyes
+        paint.setColor((alpha << 24) | 0x00FF1838);
+        actorPath.reset();
+        actorPath.moveTo(headX - px(5.5f * s), headY - px(3f * s));
+        actorPath.lineTo(headX - px(3.5f * s), headY - px(10.5f * s));
+        actorPath.lineTo(headX, headY - px(5.5f * s));
+        actorPath.lineTo(headX + px(3.5f * s), headY - px(10.5f * s));
+        actorPath.lineTo(headX + px(5.5f * s), headY - px(3f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+        c.drawCircle(headX + px(2.0f * s), headY - px(1.0f * s), px(1.6f * s), paint);
+        // Twin Blazing Chaos Magic Hex Orbs in both hands
+        float orbPulse = px((6.5f + 2.0f * (float) Math.sin(t * 14f)) * s);
+        paint.setColor((alpha / 2 << 24) | 0x00FF1848);
+        c.drawCircle(x - px(16f * s), y - px(8f * s), orbPulse * 1.4f, paint);
+        c.drawCircle(x + px(18f * s), y - px(10f * s), orbPulse * 1.4f, paint);
+        paint.setColor((alpha << 24) | 0x00FF98B0);
+        c.drawCircle(x - px(16f * s), y - px(8f * s), orbPulse * 0.65f, paint);
+        c.drawCircle(x + px(18f * s), y - px(10f * s), orbPulse * 0.65f, paint);
     }
 
     private void drawDcuStoryLoop(Canvas c, int w, int h, float t) {
@@ -5535,7 +6253,8 @@ final class SkyView extends View {
                 ? (screensaverOverrideScene % count)
                 : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
+        float fade = smoothstep(rawFade);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, DCU_TITLES[scene], scene, count, aBase,
@@ -5654,8 +6373,8 @@ final class SkyView extends View {
                 // Sculpted Cresting Ocean Tidal Waves
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor((aBase * 3 / 5 << 24) | 0x001888D8);
-                c.drawArc(new RectF(w * 0.28f, groundY - px(82f), w * 0.44f, groundY + px(20f)), 180, 180, true, paint);
-                c.drawArc(new RectF(w * 0.48f, groundY - px(82f), w * 0.64f, groundY + px(20f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.28f, groundY - px(82f), w * 0.44f, groundY + px(20f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.48f, groundY - px(82f), w * 0.64f, groundY + px(20f)), 180, 180, true, paint);
                 drawAquaman(c, w * 0.46f, groundY - px(58f), t, aBase, 1.36f);
                 drawLightningStreak(c, w * 0.46f + px(24f), h * 0.68f, w * 0.46f + px(24f), groundY - px(96f),
                         t, 861, 0x00FF8800, 0x00FFE048, 0x00FFFFFF, px(3.2f), aBase, true);
@@ -5859,14 +6578,65 @@ final class SkyView extends View {
                         t, 1252, 0x00FF1828, 0x00FF6838, 0x00FFFFFF, px(3.6f), aBase, false);
                 drawBatmanDarkKnight(c, bbX, bbY, t, aBase, false, 1.35f);
                 break;
-            default: // Scene 36: Watchtower Orbit — The Justice League Seven Looking Over Planet Earth
+            case 35: // Scene 36: Watchtower Orbit — The Justice League Seven Looking Over Planet Earth
                 paint.setColor((aBase / 3 << 24) | 0x002888FF);
-                c.drawArc(new RectF(w * 0.24f, groundY - px(24f), w * 0.68f, groundY + px(64f)), 180, 180, true, paint);
+                c.drawArc(rectF(w * 0.24f, groundY - px(24f), w * 0.68f, groundY + px(64f)), 180, 180, true, paint);
                 drawBatmanDarkKnight(c, w * 0.28f, groundY - px(58f), t, aBase, false, 1.24f);
                 drawSupermanManOfSteel(c, w * 0.37f, groundY - px(62f), t + 0.3f, aBase, false, false, 1.28f);
                 drawWonderWoman(c, w * 0.46f, groundY - px(58f), t + 0.6f, aBase, 1.24f);
                 drawTheFlash(c, w * 0.55f, groundY - px(56f), t + 0.9f, aBase, 1.24f);
                 drawAquaman(c, w * 0.63f, groundY - px(58f), t + 1.2f, aBase, 1.24f);
+                break;
+            case 36: // Scene 37: Wayne Manor Batcave — Batman at the Batcomputer & T-Rex Trophy
+                paint.setColor((aBase * 3 / 4 << 24) | 0x002898FF);
+                c.drawRoundRect(w * 0.48f, groundY - px(96f), w * 0.62f, groundY - px(42f), px(4f), px(4f), paint);
+                drawBatmanDarkKnight(c, w * 0.38f, groundY - px(58f), t, aBase, false, 1.36f);
+                break;
+            case 37: // Scene 38: Daily Planet Globe — Superman Catching the Falling Helicopter
+                paint.setColor((aBase << 24) | 0x00FFD848);
+                c.drawCircle(w * 0.32f, groundY - px(24f), px(22f), paint);
+                drawSupermanManOfSteel(c, w * 0.48f, h * 0.74f, t, aBase, false, false, 1.36f);
+                paint.setColor((aBase << 24) | 0x00DCE4F0);
+                c.drawRoundRect(w * 0.44f, h * 0.67f, w * 0.54f, h * 0.71f, px(4f), px(4f), paint);
+                break;
+            case 38: // Scene 39: Themyscira Beach — Wonder Woman Amazonian Shield Wall
+                for (int am = 0; am < 4; am++) {
+                    drawWonderWoman(c, w * (0.30f + am * 0.09f), groundY - px(58f), t + am * 0.4f, aBase, 1.28f);
+                }
+                break;
+            case 39: // Scene 40: Atlantis Throne — King Orm & Aquaman Underwater Trident Duel
+                drawAquaman(c, w * 0.35f, groundY - px(58f), t * 1.4f, aBase, 1.36f);
+                drawAquaman(c, w * 0.58f, groundY - px(58f), t * 1.4f + 0.8f, aBase, 1.36f);
+                drawLightningStreak(c, w * 0.40f, groundY - px(68f), w * 0.54f, groundY - px(68f),
+                        t, 1260, 0x00FF8800, 0x00FFE838, 0x00FFFFFF, px(3.8f), aBase, true);
+                break;
+            case 40: // Scene 41: Crime Alley Rain — The Batman Red Flare Walk Through Gotham Flood
+                drawBatmanDarkKnight(c, w * (0.34f + p * 0.20f), groundY - px(58f), t, aBase, false, 1.36f);
+                float flrX = w * (0.34f + p * 0.20f) + px(22f), flrY = groundY - px(66f);
+                paint.setColor((aBase / 2 << 24) | 0x00FF1824);
+                c.drawCircle(flrX, flrY, px(32f + 6f * (float) Math.sin(t * 18f)), paint);
+                paint.setColor((aBase << 24) | 0x00FFFFFF);
+                c.drawCircle(flrX, flrY, px(5.5f), paint);
+                break;
+            case 41: // Scene 42: Apokolips Citadel — Superman vs. Steppenwolf Electro-Axe
+                drawSupermanManOfSteel(c, w * 0.35f, groundY - px(62f), t, aBase, true, false, 1.36f);
+                drawDarkseid(c, w * 0.58f, groundY - px(60f), t + 0.8f, aBase, 1.36f);
+                drawLightningStreak(c, w * 0.38f, groundY - px(84f), w * 0.56f, groundY - px(72f),
+                        t, 1262, 0x00FF1800, 0x00FF7828, 0x00FFFFFF, px(4.0f), aBase, true);
+                break;
+            case 42: // Scene 43: Tower of Fate — Doctor Fate Golden Ankh Helmet of Nabu
+                drawSupermanManOfSteel(c, w * 0.46f, groundY - px(66f) + (float) Math.sin(t * 4f) * px(8f), t, aBase, false, false, 1.36f);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(3.6f));
+                paint.setColor((aBase << 24) | 0x00FFE048);
+                c.drawCircle(w * 0.46f, groundY - px(96f), px(18f), paint);
+                c.drawLine(w * 0.46f, groundY - px(78f), w * 0.46f, groundY - px(42f), paint);
+                c.drawLine(w * 0.42f, groundY - px(64f), w * 0.50f, groundY - px(64f), paint);
+                paint.setStyle(Paint.Style.FILL);
+                break;
+            default: // Scene 44: Kingdom Come — Elder Superman & Armored Batman Over Metropolis
+                drawSupermanManOfSteel(c, w * 0.39f, groundY - px(62f), t, aBase, false, false, 1.38f);
+                drawBatmanDarkKnight(c, w * 0.53f, groundY - px(58f), t + 0.6f, aBase, true, 1.38f);
                 break;
         }
         c.restore();
@@ -6000,7 +6770,7 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x00F4D0B4);
         c.drawCircle(headX, headY, px(6.5f * s), paint);
         paint.setColor((alpha << 24) | 0x00181C24);
-        c.drawArc(new RectF(headX - px(7f * s), headY - px(8f * s), headX + px(7f * s), headY + px(1f * s)), 165, 210, true, paint);
+        c.drawArc(rectF(headX - px(7f * s), headY - px(8f * s), headX + px(7f * s), headY + px(1f * s)), 165, 210, true, paint);
         if (heatVision) {
             paint.setColor((alpha << 24) | 0x00FF2424);
             c.drawCircle(headX + dir * px(2.2f * s), headY - px(1.0f * s), px(2.2f * s), paint);
@@ -6108,7 +6878,7 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x00F4D0B4);
         c.drawCircle(headX, headY, px(6.4f * s), paint);
         paint.setColor((alpha << 24) | 0x00E81C24);
-        c.drawArc(new RectF(headX - px(6.8f * s), headY - px(7.2f * s), headX + px(6.8f * s), headY + px(3.5f * s)), 145, 235, true, paint);
+        c.drawArc(rectF(headX - px(6.8f * s), headY - px(7.2f * s), headX + px(6.8f * s), headY + px(3.5f * s)), 145, 235, true, paint);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(px(2.4f * s));
         paint.setColor((alpha << 24) | 0x00FFE038);
@@ -6137,7 +6907,7 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | 0x00F4D0B4);
         c.drawCircle(headX, headY, px(6.4f * s), paint);
         paint.setColor((alpha << 24) | 0x00986830);
-        c.drawArc(new RectF(headX - px(8f * s), headY - px(8.5f * s), headX + px(7f * s), headY + px(6f * s)), 110, 250, true, paint);
+        c.drawArc(rectF(headX - px(8f * s), headY - px(8.5f * s), headX + px(7f * s), headY + px(6f * s)), 110, 250, true, paint);
         // 5-Pronged Golden Trident of Atlan
         float tx = x + px(18f * s);
         paint.setStyle(Paint.Style.STROKE);
@@ -6186,7 +6956,7 @@ final class SkyView extends View {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(px(2.4f * s));
         paint.setColor((alpha << 24) | 0x00FF2828);
-        c.drawArc(new RectF(x - px(5.5f * s), y - px(15f * s), x + px(5.5f * s), y - px(4f * s)), 140, 260, false, paint);
+        c.drawArc(rectF(x - px(5.5f * s), y - px(15f * s), x + px(5.5f * s), y - px(4f * s)), 140, 260, false, paint);
         // Stone-Grey New God Head & Blazing Crimson Eyes
         paint.setStyle(Paint.Style.FILL);
         float headX = x - px(1f * s), headY = y - px(30f * s);
@@ -6407,6 +7177,44 @@ final class SkyView extends View {
         actorPath.quadTo(x - px(22f), y + px(6f), x - px(18f), y - px(6f));
         c.drawPath(actorPath, paint);
         paint.setStyle(Paint.Style.FILL);
+    }
+
+    /**
+     * Bespoke Padfoot / The Grim Hound (Sirius Black Animagus) Renderer:
+     * Shaggy black hound with muscular chest, snarling wolf-hound snout, pointed ears, glowing amber eyes & tail.
+     */
+    private void drawGrimHound(Canvas c, float x, float groundY, float t, int alpha, float s) {
+        float stride = (float) Math.sin(t * 6.5f) * px(4.5f * s);
+        float y = groundY - px(26f * s);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(px(4.2f * s));
+        paint.setColor((alpha << 24) | 0x001E2430);
+        // 4 Articulated Hound Legs
+        c.drawLine(x - px(16f * s), y + px(6f * s), x - px(20f * s) - stride, groundY, paint);
+        c.drawLine(x - px(10f * s), y + px(6f * s), x - px(12f * s) + stride * 0.5f, groundY, paint);
+        c.drawLine(x + px(12f * s), y + px(6f * s), x + px(14f * s) - stride * 0.5f, groundY, paint);
+        c.drawLine(x + px(18f * s), y + px(6f * s), x + px(22f * s) + stride, groundY, paint);
+        // Whipping Hound Tail
+        c.drawLine(x - px(18f * s), y - px(2f * s), x - px(34f * s), y - px(14f * s) + stride, paint);
+
+        // Shaggy Muscular Hound Torso, Neck, Snout & Ears
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00242C3A);
+        c.drawOval(x - px(20f * s), y - px(10f * s), x + px(22f * s), y + px(10f * s), paint);
+        c.drawCircle(x + px(22f * s), y - px(14f * s), px(9.5f * s), paint);
+        actorPath.reset();
+        actorPath.moveTo(x + px(26f * s), y - px(18f * s));
+        actorPath.lineTo(x + px(38f * s), y - px(14f * s));
+        actorPath.lineTo(x + px(26f * s), y - px(9f * s));
+        actorPath.moveTo(x + px(18f * s), y - px(20f * s));
+        actorPath.lineTo(x + px(22f * s), y - px(30f * s));
+        actorPath.lineTo(x + px(26f * s), y - px(20f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+        // Glowing Gold-Amber Grim Eye
+        paint.setColor((alpha << 24) | 0x00FFE048);
+        c.drawCircle(x + px(26f * s), y - px(16f * s), px(2.2f * s), paint);
     }
 
     /**
@@ -7326,7 +8134,7 @@ final class SkyView extends View {
                     c.drawCircle(cx + (float) Math.cos(ang) * er * 0.56f, cy + (float) Math.sin(ang) * er * 0.56f, er * 0.14f, p);
                 }
             } else if (emblemType == 102) { // Konoha Hidden Leaf Crest
-                c.drawArc(new RectF(cx - er * 0.65f, cy - er * 0.65f, cx + er * 0.65f, cy + er * 0.65f), 0, 270, false, p);
+                c.drawArc(rectF(cx - er * 0.65f, cy - er * 0.65f, cx + er * 0.65f, cy + er * 0.65f), 0, 270, false, p);
                 c.drawLine(cx - er * 0.65f, cy, cx - er * 1.15f, cy, p);
                 c.drawLine(cx, cy - er * 0.65f, cx + er * 1.05f, cy - er * 0.10f, p);
                 c.drawLine(cx + er * 1.05f, cy - er * 0.10f, cx, cy + er * 0.65f, p);
@@ -7390,9 +8198,9 @@ final class SkyView extends View {
                 c.drawLine(cx, cy - er * 0.20f, cx, cy + er * 0.72f, p);
             } else if (emblemType == 303) { // Jedi Order Crest & Lightsaber
                 c.drawLine(cx, cy - er * 1.05f, cx, cy + er * 0.95f, p);
-                c.drawArc(new RectF(cx - er * 0.95f, cy - er * 0.65f, cx + er * 0.95f, cy + er * 0.85f), 190, 160, false, p);
+                c.drawArc(rectF(cx - er * 0.95f, cy - er * 0.65f, cx + er * 0.95f, cy + er * 0.85f), 190, 160, false, p);
             } else if (emblemType == 304) { // Rebel Alliance Starbird
-                c.drawArc(new RectF(cx - er * 0.92f, cy - er * 0.85f, cx + er * 0.92f, cy + er * 0.92f), 340, 220, false, p);
+                c.drawArc(rectF(cx - er * 0.92f, cy - er * 0.85f, cx + er * 0.92f, cy + er * 0.92f), 340, 220, false, p);
                 c.drawLine(cx, cy - er * 0.95f, cx, cy + er * 0.85f, p);
             } else { // Death Star Battle Station
                 c.drawCircle(cx, cy, er * 0.92f, p);
@@ -7436,7 +8244,7 @@ final class SkyView extends View {
                 sh.lineTo(cx - er * 0.98f, cy - er * 0.20f);
                 sh.close();
                 c.drawPath(sh, p);
-                c.drawArc(new RectF(cx - er * 0.45f, cy - er * 0.45f, cx + er * 0.45f, cy + er * 0.25f), 45, 240, false, p);
+                c.drawArc(rectF(cx - er * 0.45f, cy - er * 0.45f, cx + er * 0.45f, cy + er * 0.25f), 45, 240, false, p);
             } else if (emblemType == 502) { // Green Lantern Corps Symbol
                 c.drawCircle(cx, cy, er * 0.56f, p);
                 c.drawLine(cx - er * 0.78f, cy - er * 0.72f, cx + er * 0.78f, cy - er * 0.72f, p);
