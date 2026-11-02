@@ -943,7 +943,7 @@ public class MainActivity extends Activity {
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
                     Drawable banner = SkyView.createThemeBanner(
                             getResources(), pkg, label, w, h, bannerScale,
-                            themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
+                            themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i, true);
                     addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
                 }
             }
@@ -1237,8 +1237,11 @@ public class MainActivity extends Activity {
             card.addView(iv, new FrameLayout.LayoutParams(-1, -1));
             if (appIcon != null && (!isTvDevice() || !SkyView.isCustomIconPackApp(key))) {
                 // Hardware-accelerated circular medallion ImageView for default device app icons
-                // (On phones/foldables/tablets, always show the real default device icon; on TV, keep custom pack icons)
-                float ir = SkyView.getMedallionRadius(w, h);
+                // (On phones/foldables/tablets, always show the real default device icon on the left; on TV, keep centered)
+                boolean horiz = !isTvDevice();
+                float ir = SkyView.getMedallionRadius(w, h, horiz);
+                float mcx = SkyView.getMedallionCenterX(w, h, horiz);
+                float mcy = SkyView.getMedallionCenterY(w, h, horiz);
                 int d = Math.max(1, Math.round(ir * 2f));
                 ImageView iconIv = new ImageView(this);
                 iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -1249,8 +1252,8 @@ public class MainActivity extends Activity {
                 iconIv.setBackground(medBg);
                 iconIv.setClipToOutline(true);
                 FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(d, d);
-                ilp.leftMargin = Math.round(w * 0.5f - ir);
-                ilp.topMargin = Math.round(h * 0.34f - ir);
+                ilp.leftMargin = Math.round(mcx - ir);
+                ilp.topMargin = Math.round(mcy - ir);
                 card.addView(iconIv, ilp);
             }
         } else {

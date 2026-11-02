@@ -6679,21 +6679,48 @@ final class SkyView extends View {
     }
 
     static float getMedallionRadius(int w, int h) {
+        return getMedallionRadius(w, h, false);
+    }
+
+    static float getMedallionRadius(int w, int h, boolean horizontal) {
+        if (horizontal) {
+            return Math.min(h * 0.28f, w * 0.14f);
+        }
         float cs = getCardContentScale(w, h);
         float er = Math.min(24f * cs, h * 0.22f);
         return er * 1.15f;
     }
 
+    static float getMedallionCenterX(int w, int h, boolean horizontal) {
+        if (horizontal) {
+            float cardScale = Math.max(0.35f, w / 324f);
+            float ir = getMedallionRadius(w, h, true);
+            return 27f * cardScale + ir;
+        }
+        return w * 0.5f;
+    }
+
+    static float getMedallionCenterY(int w, int h, boolean horizontal) {
+        return horizontal ? (h * 0.50f) : (h * 0.34f);
+    }
+
     static Drawable createThemeBanner(Resources res, String pkg, String label,
                                       int w, int h, float scale,
                                       Typeface themeFont, Typeface cinzelFont) {
-        return createThemeBanner(res, pkg, label, w, h, scale, themeFont, cinzelFont, 0, null, 0);
+        return createThemeBanner(res, pkg, label, w, h, scale, themeFont, cinzelFont, 0, null, 0, false);
     }
 
     static Drawable createThemeBanner(Resources res, String pkg, String label,
                                       int w, int h, float scale,
                                       Typeface themeFont, Typeface cinzelFont, int theme,
                                       Drawable defaultIcon, int slotIndex) {
+        return createThemeBanner(res, pkg, label, w, h, scale, themeFont, cinzelFont, theme, defaultIcon, slotIndex, false);
+    }
+
+    static Drawable createThemeBanner(Resources res, String pkg, String label,
+                                      int w, int h, float scale,
+                                      Typeface themeFont, Typeface cinzelFont, int theme,
+                                      Drawable defaultIcon, int slotIndex, boolean horizontalLayout) {
         int bw = Math.max(1, w), bh = Math.max(1, h);
         Bitmap bm = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
         if (res != null) bm.setDensity(res.getDisplayMetrics().densityDpi);
@@ -6712,7 +6739,7 @@ final class SkyView extends View {
         else if (k.contains("hotstar") || k.contains("disney")) packSlot = 4;
 
         boolean squareBadge = Math.abs(bw - bh) <= 4;
-        boolean useCustomPackIcon = (packSlot >= 0) && !squareBadge;
+        boolean useCustomPackIcon = (packSlot >= 0) && !squareBadge && !horizontalLayout;
         int styleSlot = (packSlot >= 0) ? packSlot : (Math.abs(slotIndex) % 5);
 
         int topBg, botBg, glowCol, emblemType;
@@ -6868,12 +6895,14 @@ final class SkyView extends View {
             for (float[] cn : corners) c.drawCircle(cn[0], cn[1], 2.2f * cardScale, p);
         }
 
-        float cx = bw * 0.5f, cy = squareBadge ? bh * 0.5f : bh * 0.34f;
-        float er = squareBadge ? (bw * 0.30f) : Math.min(24f * contentScale, bh * 0.22f);
+        float cx = horizontalLayout ? getMedallionCenterX(bw, bh, true) : (bw * 0.5f);
+        float cy = squareBadge ? (bh * 0.5f) : (horizontalLayout ? getMedallionCenterY(bw, bh, true) : (bh * 0.34f));
+        float er = squareBadge ? (bw * 0.30f)
+                : (horizontalLayout ? (getMedallionRadius(bw, bh, true) / 1.15f) : Math.min(24f * contentScale, bh * 0.22f));
 
-        p.setShader(new RadialGradient(cx, cy, er * (squareBadge ? 1.45f : 1.9f),
+        p.setShader(new RadialGradient(cx, cy, er * (squareBadge ? 1.45f : (horizontalLayout ? 1.65f : 1.9f)),
                 new int[] {0x48FFD878, 0x00FFD878}, null, Shader.TileMode.CLAMP));
-        c.drawCircle(cx, cy, er * (squareBadge ? 1.45f : 1.9f), p);
+        c.drawCircle(cx, cy, er * (squareBadge ? 1.45f : (horizontalLayout ? 1.65f : 1.9f)), p);
         p.setShader(null);
 
         p.setStyle(Paint.Style.STROKE);
@@ -7145,35 +7174,69 @@ final class SkyView extends View {
 
         if (!squareBadge) {
             p.setStyle(Paint.Style.FILL);
-            p.setTextAlign(Paint.Align.CENTER);
-            if (themeFont != null) p.setTypeface(themeFont);
-            float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * contentScale;
-            p.setTextSize(titleSize);
-            float maxTextW = bw - 34f * cardScale;
-            if (label != null && maxTextW > 0) {
-                float measured = p.measureText(label);
-                if (measured > maxTextW) p.setTextSize(Math.max(13f * cardScale, titleSize * (maxTextW / measured)));
-            }
-            p.setColor(0xFFFFF4D2);
-            p.setShadowLayer(10f * cardScale, 0, 2f * cardScale, 0xCC000000);
-            c.drawText(label != null ? label : "", cx, bh * 0.74f, p);
+            if (horizontalLayout) {
+                // Clean Horizontal Left-to-Right Layout: Icon on the Left, App Name + Subtitle on the Right
+                float ir = getMedallionRadius(bw, bh, true);
+                float textLeft = cx + ir + Math.max(12f * cardScale, bw * 0.045f);
+                float textRight = bw - 20f * cardScale;
+                float maxTextW = Math.max(40f, textRight - textLeft);
 
-            if (cinzelFont != null) p.setTypeface(cinzelFont);
-            String subText = houseSub;
-            if (bw < 260 && subText != null) {
-                int pipe = subText.indexOf('|');
-                if (pipe > 0) subText = subText.substring(0, pipe).trim();
+                p.setTextAlign(Paint.Align.LEFT);
+                p.setLetterSpacing(0f);
+                if (themeFont != null) p.setTypeface(themeFont);
+                float titleSize = Math.min(bh * 0.30f, (theme == 0 ? 40f : (theme == 2 ? 30f : 26f)) * contentScale);
+                p.setTextSize(titleSize);
+                if (label != null && maxTextW > 0) {
+                    float measured = p.measureText(label);
+                    if (measured > maxTextW) p.setTextSize(Math.max(12f * cardScale, titleSize * (maxTextW / measured)));
+                }
+                p.setColor(0xFFFFF4D2);
+                p.setShadowLayer(10f * cardScale, 0, 2f * cardScale, 0xCC000000);
+                c.drawText(label != null ? label : "", textLeft, bh * 0.50f, p);
+
+                if (cinzelFont != null) p.setTypeface(cinzelFont);
+                String subText = houseSub;
+                float subSize = Math.min(bh * 0.115f, 11f * contentScale);
+                p.setTextSize(subSize);
+                p.setLetterSpacing(0.12f);
+                if (subText != null && maxTextW > 0) {
+                    float subMeasured = p.measureText(subText) * 1.15f;
+                    if (subMeasured > maxTextW) p.setTextSize(Math.max(8.5f * cardScale, subSize * (maxTextW / subMeasured)));
+                }
+                p.setColor(0xB8F5D488);
+                p.setShadowLayer(4f * cardScale, 0, 1f * cardScale, 0xAA000000);
+                c.drawText(subText != null ? subText : "", textLeft, bh * 0.76f, p);
+            } else {
+                p.setTextAlign(Paint.Align.CENTER);
+                if (themeFont != null) p.setTypeface(themeFont);
+                float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * contentScale;
+                p.setTextSize(titleSize);
+                float maxTextW = bw - 34f * cardScale;
+                if (label != null && maxTextW > 0) {
+                    float measured = p.measureText(label);
+                    if (measured > maxTextW) p.setTextSize(Math.max(13f * cardScale, titleSize * (maxTextW / measured)));
+                }
+                p.setColor(0xFFFFF4D2);
+                p.setShadowLayer(10f * cardScale, 0, 2f * cardScale, 0xCC000000);
+                c.drawText(label != null ? label : "", cx, bh * 0.74f, p);
+
+                if (cinzelFont != null) p.setTypeface(cinzelFont);
+                String subText = houseSub;
+                if (bw < 260 && subText != null) {
+                    int pipe = subText.indexOf('|');
+                    if (pipe > 0) subText = subText.substring(0, pipe).trim();
+                }
+                float subSize = 11.5f * contentScale;
+                p.setTextSize(subSize);
+                p.setLetterSpacing(bw < 260 ? 0.10f : 0.18f);
+                if (subText != null && maxTextW > 0) {
+                    float subMeasured = p.measureText(subText) * (bw < 260 ? 1.12f : 1.22f);
+                    if (subMeasured > maxTextW) p.setTextSize(Math.max(9f * cardScale, subSize * (maxTextW / subMeasured)));
+                }
+                p.setColor(0xB8F5D488);
+                p.setShadowLayer(4f * cardScale, 0, 1f * cardScale, 0xAA000000);
+                c.drawText(subText != null ? subText : "", cx, bh * 0.88f, p);
             }
-            float subSize = 11.5f * contentScale;
-            p.setTextSize(subSize);
-            p.setLetterSpacing(bw < 260 ? 0.10f : 0.18f);
-            if (subText != null && maxTextW > 0) {
-                float subMeasured = p.measureText(subText) * (bw < 260 ? 1.12f : 1.22f);
-                if (subMeasured > maxTextW) p.setTextSize(Math.max(9f * cardScale, subSize * (maxTextW / subMeasured)));
-            }
-            p.setColor(0xB8F5D488);
-            p.setShadowLayer(4f * cardScale, 0, 1f * cardScale, 0xAA000000);
-            c.drawText(subText != null ? subText : "", cx, bh * 0.88f, p);
         }
 
         // Keep bm as ARGB_8888 (never copy to Bitmap.Config.HARDWARE) so ImageView renders it on all OEMs (including Samsung One UI).
