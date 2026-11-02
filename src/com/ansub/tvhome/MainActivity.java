@@ -354,8 +354,114 @@ public class MainActivity extends Activity {
     private boolean gestureHandled;
     private boolean gestureLockedHorizontal;
 
+    // v5.0 TV Cinema Story Screensaver Mode (2 minutes of inactivity on TV):
+    // Hides all app tiles, bottom row buttons, and top-right quick icon dock while keeping the
+    // top-left Date, Time & Weather and SkyView, scaling the story stage to the bottom 3/4th of the screen
+    // and randomizing across all 248 stories from all 6 Universe Themes with matching font & sky.
+    private static final long SCREENSAVER_IDLE_MS = 2 * 60 * 1000L;
+    private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private boolean screensaverActive = false;
+    private boolean swallowWakeKeyUp = false;
+    private final Runnable startScreensaverTask = this::enterScreensaver;
+
+    private void resetIdleTimer() {
+        idleHandler.removeCallbacks(startScreensaverTask);
+        if (screensaverActive) {
+            exitScreensaver();
+        }
+        if (isTvDevice() && hasWindowFocus()) {
+            idleHandler.postDelayed(startScreensaverTask, SCREENSAVER_IDLE_MS);
+        }
+    }
+
+    private void enterScreensaver() {
+        if (screensaverActive || !isTvDevice()) return;
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+            activeDialog = null;
+        }
+        screensaverActive = true;
+        for (View t : tiles) {
+            final View target = (t.getParent() instanceof View && t.getParent() != root) ? (View) t.getParent() : t;
+            target.animate().cancel();
+            target.animate().alpha(0f).setDuration(420).withEndAction(() -> {
+                if (screensaverActive) target.setVisibility(View.INVISIBLE);
+            }).start();
+        }
+        for (View c : chrome) {
+            final View target = c;
+            target.animate().cancel();
+            target.animate().alpha(0f).setDuration(420).withEndAction(() -> {
+                if (screensaverActive) target.setVisibility(View.INVISIBLE);
+            }).start();
+        }
+        if (moveHint != null) moveHint.setVisibility(View.GONE);
+        if (skyView != null) {
+            skyView.setScreensaverMode(true, universeTheme());
+        }
+    }
+
+    private void exitScreensaver() {
+        if (!screensaverActive) return;
+        screensaverActive = false;
+        int savedTheme = universeTheme();
+        if (skyView != null) {
+            skyView.setScreensaverMode(false, savedTheme);
+        }
+        applyThemeTypography(savedTheme);
+        if (dirty) {
+            dirty = false;
+            buildTiles();
+            return;
+        }
+        for (View t : tiles) {
+            View target = (t.getParent() instanceof View && t.getParent() != root) ? (View) t.getParent() : t;
+            target.animate().cancel();
+            target.setVisibility(View.VISIBLE);
+            target.animate().alpha(1f).setDuration(300).start();
+        }
+        for (View c : chrome) {
+            c.animate().cancel();
+            c.setVisibility(View.VISIBLE);
+            c.animate().alpha(1f).setDuration(300).start();
+        }
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        if (screensaverActive) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN) {
+                swallowWakeKeyUp = true;
+                resetIdleTimer();
+            }
+            return true;
+        }
+        if (swallowWakeKeyUp) {
+            if (e.getAction() == KeyEvent.ACTION_UP) {
+                swallowWakeKeyUp = false;
+            }
+            resetIdleTimer();
+            return true;
+        }
+        resetIdleTimer();
+        return super.dispatchKeyEvent(e);
+    }
+
+    @Override
+    public boolean dispatchGenericMotionEvent(android.view.MotionEvent ev) {
+        resetIdleTimer();
+        return super.dispatchGenericMotionEvent(ev);
+    }
+
     @Override
     public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (screensaverActive) {
+            if (ev.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
+                resetIdleTimer();
+            }
+            return true;
+        }
+        resetIdleTimer();
         if (!isTvDevice() && (activeDialog == null || !activeDialog.isShowing())) {
             int action = ev.getActionMasked();
             if (action == android.view.MotionEvent.ACTION_DOWN) {
@@ -418,6 +524,9 @@ public class MainActivity extends Activity {
         settingsScale = computeSettingsScale();
         Window win = getWindow();
         win.setBackgroundDrawable(new ColorDrawable(0xFF060916));
+        if (isTvDevice()) {
+            try { win.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); } catch (Throwable ignored) {}
+        }
         if (!isTvDevice()) {
             try {
                 win.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
@@ -443,6 +552,7 @@ public class MainActivity extends Activity {
         FrameLayout viewport = new FrameLayout(this);
         skyView = new SkyView(this, scale, wallpaper(), cinzelFont);
         skyView.setUniverseTheme(universeTheme());
+        skyView.setScreensaverThemeListener(theme -> runOnUiThread(() -> applyThemeTypography(theme)));
         boolean glowOn = prefs().getBoolean("edge_glow", true);
         skyView.setEdgeGlowEnabled(glowOn);
         viewport.addView(skyView, new FrameLayout.LayoutParams(-1, -1));
@@ -563,6 +673,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        idleHandler.removeCallbacks(startScreensaverTask);
         unregisterReceiver(packagesChanged);
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm != null) try { cm.unregisterNetworkCallback(networkChanged); } catch (Exception ignored) {}
@@ -746,6 +857,7 @@ public class MainActivity extends Activity {
         refreshNetwork();
         fetchWeatherAsync();
         if (skyView != null) skyView.setRunning(true);
+        resetIdleTimer();
         View f = getCurrentFocus();
         if (f == null && !tiles.isEmpty()) tiles.get(0).requestFocus();
         HomeButton.onHomeResumed(this); // back on this home screen: Home comes here again
@@ -760,6 +872,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        idleHandler.removeCallbacks(startScreensaverTask);
+        if (screensaverActive) exitScreensaver();
         if (skyView != null) skyView.setRunning(false);
         // Left normally (an app or Settings opened), so it didn't crash.
         getWindow().getDecorView().removeCallbacks(homeOk);
@@ -771,14 +885,19 @@ public class MainActivity extends Activity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (skyView != null) skyView.setRunning(hasFocus);
-        if (hasFocus) refreshApps();
-        else okDownKey = null; // an OK still held finishes in the window that took over
+        if (hasFocus) {
+            refreshApps();
+            resetIdleTimer();
+        } else {
+            idleHandler.removeCallbacks(startScreensaverTask);
+            okDownKey = null; // an OK still held finishes in the window that took over
+        }
     }
 
     // Rebuilds the tiles if apps changed, but only while Home is in front with no menu open and no
     // app being moved; otherwise the next onResume, focus change or end of the move does it.
     private void refreshApps() {
-        if (!dirty || !hasWindowFocus() || movingKey != null) return;
+        if (!dirty || !hasWindowFocus() || movingKey != null || screensaverActive) return;
         dirty = false;
         buildTiles();
     }
@@ -1976,6 +2095,7 @@ public class MainActivity extends Activity {
             }
             list.add("Next Story Scene");
             if (isTvDevice()) {
+                list.add("Start Screensaver");
                 if (!isBox(this)) list.add("Brightness");
                 list.add("TV settings");
             } else {
@@ -1991,6 +2111,8 @@ public class MainActivity extends Activity {
                     showWallpapers();
                 } else if ("Next Story Scene".equals(picked)) {
                     if (skyView != null) skyView.nextStoryScene();
+                } else if ("Start Screensaver".equals(picked)) {
+                    idleHandler.postDelayed(startScreensaverTask, 180);
                 } else if (picked.startsWith("Turn Glow")) {
                     toggleEdgeGlow();
                 } else if ("Brightness".equals(picked)) {

@@ -364,6 +364,25 @@ final class SkyView extends View {
     }
     private HubStatusListener hubListener;
 
+    interface ScreensaverThemeListener {
+        void onScreensaverThemeChanged(int theme);
+    }
+    private ScreensaverThemeListener screensaverThemeListener;
+
+    // v5.0 TV Cinema Story Screensaver Mode (triggered after 2 minutes of inactivity on TV):
+    // - Story animations grow huge and fill up to the bottom 3/4th of the screen.
+    // - Story caption & dots at the bottom keep their standard size.
+    // - All 248 story scenes across all 6 Universe Themes are pooled into a single randomized shuffle,
+    //   updating both SkyView's universe backdrop and the top-left Clock's franchise typography.
+    private boolean screensaverMode = false;
+    private float screensaverZoom = 0f;
+    private int screensaverOverrideScene = -1;
+    private int lastScreensaverSlot = -1;
+    private static final int TOTAL_POOL_SCENES = 68 + 36 * 5; // 248 total story scenes across 6 themes
+    private final int[] shuffledPool = new int[TOTAL_POOL_SCENES];
+    private int poolCursor = TOTAL_POOL_SCENES;
+    private final java.util.Random poolRng = new java.util.Random();
+
     SkyView(Context context, float scale, int paletteIndex, Typeface cinzel) {
         super(context);
         this.scale = scale;
@@ -376,6 +395,97 @@ final class SkyView extends View {
 
     void setHubStatusListener(HubStatusListener l) {
         this.hubListener = l;
+    }
+
+    void setScreensaverThemeListener(ScreensaverThemeListener l) {
+        this.screensaverThemeListener = l;
+    }
+
+    private void reshuffleStoryPool() {
+        int idx = 0;
+        int[] counts = {
+            CHAPTER_TITLES.length,
+            NARUTO_TITLES.length,
+            DEMON_SLAYER_TITLES.length,
+            STAR_WARS_TITLES.length,
+            MCU_TITLES.length,
+            DCU_TITLES.length
+        };
+        for (int th = 0; th < counts.length; th++) {
+            for (int sc = 0; sc < counts[th]; sc++) {
+                if (idx < TOTAL_POOL_SCENES) {
+                    shuffledPool[idx++] = (th << 8) | sc;
+                }
+            }
+        }
+        for (int i = idx - 1; i > 0; i--) {
+            int j = poolRng.nextInt(i + 1);
+            int tmp = shuffledPool[i];
+            shuffledPool[i] = shuffledPool[j];
+            shuffledPool[j] = tmp;
+        }
+        for (int i = 1; i < idx - 1; i++) {
+            int prevTheme = (shuffledPool[i - 1] >>> 8) & 0xFF;
+            int curTheme = (shuffledPool[i] >>> 8) & 0xFF;
+            if (curTheme == prevTheme) {
+                for (int k = i + 1; k < idx; k++) {
+                    if (((shuffledPool[k] >>> 8) & 0xFF) != prevTheme) {
+                        int t = shuffledPool[i];
+                        shuffledPool[i] = shuffledPool[k];
+                        shuffledPool[k] = t;
+                        break;
+                    }
+                }
+            }
+        }
+        poolCursor = 0;
+    }
+
+    private void advanceRandomScreensaverScene(int slot) {
+        lastScreensaverSlot = slot;
+        if (poolCursor >= TOTAL_POOL_SCENES) {
+            reshuffleStoryPool();
+        }
+        int packed = shuffledPool[poolCursor++];
+        int nextTheme = (packed >>> 8) & 0xFF;
+        int nextScene = packed & 0xFF;
+        screensaverOverrideScene = nextScene;
+        if (this.universeTheme != nextTheme) {
+            this.universeTheme = nextTheme;
+            if (baseSky != null && !baseSky.isRecycled()) {
+                baseSky.recycle();
+                baseSky = null;
+            }
+        }
+        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28};
+        int col = themeColors[Math.max(0, Math.min(themeColors.length - 1, nextTheme))];
+        setReactiveColor(col, false);
+        if (screensaverThemeListener != null) {
+            screensaverThemeListener.onScreensaverThemeChanged(nextTheme);
+        }
+    }
+
+    void setScreensaverMode(boolean active, int userSavedTheme) {
+        if (this.screensaverMode == active) return;
+        this.screensaverMode = active;
+        if (active) {
+            lastScreensaverSlot = -1;
+            float rawT = (SystemClock.elapsedRealtime() % 3600000L) / 1000f;
+            int slot = (int) ((rawT * 0.5f) / CHAPTER_SEC);
+            advanceRandomScreensaverScene(slot);
+        } else {
+            screensaverOverrideScene = -1;
+            lastScreensaverSlot = -1;
+            setUniverseTheme(userSavedTheme);
+            if (screensaverThemeListener != null) {
+                screensaverThemeListener.onScreensaverThemeChanged(userSavedTheme);
+            }
+        }
+        invalidate();
+    }
+
+    boolean isScreensaverMode() {
+        return screensaverMode;
     }
 
     void setEdgeGlowEnabled(boolean enabled) {
@@ -453,12 +563,22 @@ final class SkyView extends View {
     }
 
     void nextStoryScene() {
+        if (screensaverMode) {
+            advanceRandomScreensaverScene(lastScreensaverSlot);
+            invalidate();
+            return;
+        }
         int c = activeSceneCount();
         sceneOffset = (sceneOffset + 1) % c;
         invalidate();
     }
 
     void prevStoryScene() {
+        if (screensaverMode) {
+            advanceRandomScreensaverScene(lastScreensaverSlot);
+            invalidate();
+            return;
+        }
         int c = activeSceneCount();
         sceneOffset = (sceneOffset + c - 1) % c;
         invalidate();
@@ -659,11 +779,25 @@ final class SkyView extends View {
         return h * groundFrac + (yFrac - groundFrac) * refH;
     }
 
-    private static float getStageScale(int w, int h) {
+    private float getStageScale(int w, int h) {
         if (h > w) {
             return Math.min(2.10f, Math.max(1.75f, (h / (float) Math.max(1, w)) * 1.12f));
         }
-        return 1.50f;
+        return 1.50f + 0.80f * screensaverZoom;
+    }
+
+    // Scales the bottom story stage. On TV in Screensaver Mode (screensaverZoom -> 1.0f),
+    // stories grow huge (scaleX = 2.30f, scaleY = 2.55f) to take over up to the bottom 3/4th of the screen.
+    private void applyStageTransform(Canvas c, int w, int h, float groundY) {
+        if (h > w) {
+            float stScale = getStageScale(w, h);
+            c.scale(stScale, stScale, w * 0.45f, groundY);
+        } else {
+            float sx = 1.50f + 0.80f * screensaverZoom;
+            float sy = 1.50f + 1.05f * screensaverZoom;
+            float pivotX = w * (0.45f - 0.04f * screensaverZoom);
+            c.scale(sx, sy, pivotX, groundY);
+        }
     }
 
     private void drawStoryCaptionAndDots(Canvas c, int w, int h, String title, int scene, int count,
@@ -1171,6 +1305,17 @@ final class SkyView extends View {
         }
 
         float t = (SystemClock.elapsedRealtime() % 3600000L) / 1000f;
+        float targetZoom = screensaverMode ? 1f : 0f;
+        screensaverZoom += (targetZoom - screensaverZoom) * 0.08f;
+        if (Math.abs(targetZoom - screensaverZoom) < 0.002f) screensaverZoom = targetZoom;
+        if (screensaverMode) {
+            float storyT = t * 0.5f;
+            int slot = (int) (storyT / CHAPTER_SEC);
+            if (slot != lastScreensaverSlot) {
+                advanceRandomScreensaverScene(slot);
+                ensureBaseSky(w, h);
+            }
+        }
 
         if (prismMode) {
             targetR = 155f + 95f * (float) Math.sin(t * 1.4f);
@@ -1416,7 +1561,11 @@ final class SkyView extends View {
             c.drawCircle(sx, sy, px(3.2f * (1f - prog * 0.4f)), paint);
         }
 
-        // 3. Autonomous Companion hovering above the focused tile
+        // 3. Autonomous Companion hovering above the focused tile (or patrolling the upper sky in Screensaver Mode)
+        if (screensaverMode) {
+            snitchTargetX = getWidth() * (0.54f + 0.30f * (float) Math.sin(t * 0.42f));
+            snitchTargetY = getHeight() * (0.18f + 0.06f * (float) Math.cos(t * 0.68f));
+        }
         snitchCurX += (snitchTargetX - snitchCurX) * 0.15f;
         snitchCurY += (snitchTargetY - snitchCurY) * 0.15f;
         float sx = snitchCurX + (float) Math.cos(t * 5.5f) * px(14f);
@@ -1673,7 +1822,9 @@ final class SkyView extends View {
         }
         float totalCycle = CHAPTER_SEC * SCENE_COUNT;
         float cycleTime = t % totalCycle;
-        int scene = ((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % SCENE_COUNT;
+        int scene = (screensaverMode && screensaverOverrideScene >= 0)
+                ? (screensaverOverrideScene % SCENE_COUNT)
+                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % SCENE_COUNT);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC; // 0.0 -> 1.0 progress within current scene
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
@@ -1684,8 +1835,7 @@ final class SkyView extends View {
 
         // Scale the bottom story animations anchored on the stage groundY baseline
         c.save();
-        float stScale = getStageScale(w, h);
-        c.scale(stScale, stScale, w * 0.45f, groundY);
+        applyStageTransform(c, w, h, groundY);
 
         switch (scene) {
             case 0: {
@@ -2720,7 +2870,9 @@ final class SkyView extends View {
         int count = NARUTO_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = ((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count;
+        int scene = (screensaverMode && screensaverOverrideScene >= 0)
+                ? (screensaverOverrideScene % count)
+                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
@@ -2729,8 +2881,7 @@ final class SkyView extends View {
                 0x00FF9848, 0xEEFF6828, 0x42FF9848, px(10.5f));
 
         c.save();
-        float stScale = getStageScale(w, h);
-        c.scale(stScale, stScale, w * 0.45f, groundY);
+        applyStageTransform(c, w, h, groundY);
         switch (scene) {
             case 0: // Naruto on Hokage Rock overlooking Konoha
                 drawNarutoUzumaki(c, w * 0.46f, groundY - px(58f), t, aBase, 0, 1.35f);
@@ -3423,7 +3574,9 @@ final class SkyView extends View {
         int count = DEMON_SLAYER_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = ((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count;
+        int scene = (screensaverMode && screensaverOverrideScene >= 0)
+                ? (screensaverOverrideScene % count)
+                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
@@ -3432,8 +3585,7 @@ final class SkyView extends View {
                 0x00D898FF, 0xEE48E8FF, 0x42D898FF, px(10.5f));
 
         c.save();
-        float stScale = getStageScale(w, h);
-        c.scale(stScale, stScale, w * 0.45f, groundY);
+        applyStageTransform(c, w, h, groundY);
         switch (scene) {
             case 0: // Tanjiro & Nezuko in the Snow
                 for (int sn = 0; sn < 10; sn++) {
@@ -4027,7 +4179,9 @@ final class SkyView extends View {
         int count = STAR_WARS_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = ((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count;
+        int scene = (screensaverMode && screensaverOverrideScene >= 0)
+                ? (screensaverOverrideScene % count)
+                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
@@ -4036,8 +4190,7 @@ final class SkyView extends View {
                 0x0068C8FF, 0xEE38B8FF, 0x4268C8FF, px(10.5f));
 
         c.save();
-        float stScale = getStageScale(w, h);
-        c.scale(stScale, stScale, w * 0.45f, groundY);
+        applyStageTransform(c, w, h, groundY);
         switch (scene) {
             case 0: // Tatooine — Luke Skywalker & Twin Binary Suns
                 paint.setColor((aBase * 3 / 4 << 24) | 0x00FFB838);
@@ -4544,7 +4697,9 @@ final class SkyView extends View {
         int count = MCU_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = ((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count;
+        int scene = (screensaverMode && screensaverOverrideScene >= 0)
+                ? (screensaverOverrideScene % count)
+                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
@@ -4553,8 +4708,7 @@ final class SkyView extends View {
                 0x00C898FF, 0xEE58E8FF, 0x42C898FF, px(10.5f));
 
         c.save();
-        float stScale = getStageScale(w, h);
-        c.scale(stScale, stScale, w * 0.45f, groundY);
+        applyStageTransform(c, w, h, groundY);
         switch (scene) {
             case 0: // Iron Man Mark LXXXV Flight & Repulsor Beam
                 float imX = w * (0.28f + p * 0.26f), imY = h * 0.77f + (float) Math.sin(t * 5f) * px(10f);
@@ -5172,7 +5326,9 @@ final class SkyView extends View {
         int count = DCU_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = ((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count;
+        int scene = (screensaverMode && screensaverOverrideScene >= 0)
+                ? (screensaverOverrideScene % count)
+                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
@@ -5181,8 +5337,7 @@ final class SkyView extends View {
                 0x00FFE082, 0xEEFFE068, 0x4268B8FF, px(10.5f));
 
         c.save();
-        float stScale = getStageScale(w, h);
-        c.scale(stScale, stScale, w * 0.45f, groundY);
+        applyStageTransform(c, w, h, groundY);
         switch (scene) {
             case 0: // Gotham Cathedral — The Dark Knight on Gargoyle + Bat-Signal + Flock of Bats
                 // Glowing Gotham Bat-Signal Spotlight in the Sky

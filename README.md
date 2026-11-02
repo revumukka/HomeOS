@@ -1,15 +1,15 @@
 <div align="center">
 
-# HomeScreen v4.2.0
+# HomeScreen v5.0.0
 
 ### Universal Multi-Universe Animated Home Launcher for Android TV, Google TV, Foldables, Phones & Tablets
 
-[![Version](https://img.shields.io/badge/version-v4.2.0_(Build_42)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v4.2.0_42.apk)
-[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Phones_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.2.0-b42.apk)
+[![Version](https://img.shields.io/badge/version-v5.0.0_(Build_50)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v5.0.0_50.apk)
+[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Phones_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.0.0-b50.apk)
 [![License](https://img.shields.io/badge/license-MIT-black?style=for-the-badge)](LICENSE)
 
-**Download Ready-to-Install Release APKs (`406 KB`):**
-[**⬇ Download `HomeScreen_Release_v4.2.0_42.apk`**](releases/HomeScreen_Release_v4.2.0_42.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.2.0-b42.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.2.0-b42.apk)
+**Download Ready-to-Install Release APKs (`408 KB`):**
+[**⬇ Download `HomeScreen_Release_v5.0.0_50.apk`**](releases/HomeScreen_Release_v5.0.0_50.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.0.0-b50.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.0.0-b50.apk)
 
 <img src="docs/home-screen.png" alt="HomeScreen Multi-Universe Launcher" width="100%">
 
@@ -37,6 +37,14 @@ Switch themes anytime from the top-right **3-Card Theme Swatch** icon or **Setti
    - Avengers Tower skyline, Sanctum Sanctorum window, Cosmic Infinity Nebula, and bespoke renderers for **Iron Man Mark LXXXV** (hot-rod red & gold armor, glowing cyan Arc Reactor, Repulsor beams), **Captain America** (Vibranium star shield & Mjolnir), **Thor Odinson** (Bifrost sky-to-ground forked thunderbolts & Stormbreaker), **Doctor Strange** (Eldritch Tao mandalas), **Spider-Man**, **Black Panther**, and **Thanos** (Infinity Gauntlet).
 6. **🦇 DC Universe (DCU) — `36` Chronological Scenes (`I`–`XXXVI`)**
    - Gotham gothic gargoyles, glowing Bat-Signal in the clouds, Metropolis Daily Planet globe, and bespoke renderers for **Batman (The Dark Knight)** (pointed Bat-cowl, scalloped cape, golden chest Bat-emblem, Tumbler Batmobile), **Superman (Man of Steel)** (sonic boom flight & jagged Heat Vision beam), **Wonder Woman** (Golden Lasso of Truth), **The Flash** (multi-branched Speed Force lightning & afterimages), **Aquaman**, **Green Lantern**, and **Darkseid** (zig-zagging Omega Beams).
+
+---
+
+## 🎬 New in v5.0.0: TV Cinema Story Screensaver & Posture-Aware Foldable Layout
+- **2-Minute TV Inactivity Cinema Story Screensaver**: After 2 minutes of inactivity on Android TV / Google TV (or anytime via **Settings → Start Screensaver**), all app cards, bottom buttons, and the top-right dock smoothly fade away while the top-left **Date, Time & Weather** remains visible.
+- **Expanded 3/4-Screen Story Stage**: During the TV screensaver, the animated story scenes grow huge (`scaleX = 2.30x`, `scaleY = 2.55x`) to take over up to the bottom 3/4th of the screen while keeping the bottom story caption & dots at their standard crisp size.
+- **Unified 248-Story Cross-Universe Random Pool**: Screensaver stories are randomized across all 6 franchises and within each franchise as a single 248-scene pool, dynamically updating both the **SkyView** universe backdrop and the top-left **Clock typography** to match each random story's franchise.
+- **Posture-Aware Paging & Icon-Only Controls (Phones / Foldables)**: Full-sized `54dp` squircle icons in Portrait (`4×4` = 16 apps/page), `4×2` (`8` apps/page) 16:9 Banner Cards in Landscape/Unfolded so the Bottom Story Stage is never covered, sleek icon-only `[ Theme ] [ + ] [ Settings ]` pills, and removal of the redundant `ALL APPS` button.
 
 ---
 
