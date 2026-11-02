@@ -32,3 +32,4 @@ HomeScreen does not knowingly collect any personal information from anyone, incl
 ## 5. Contact
 For privacy inquiries or source code verification, visit the open-source repository:  
 https://github.com/revumukka/HomeOS
+

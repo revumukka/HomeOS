@@ -70,3 +70,4 @@ Before uploading the `.aab` / `.apk` to **Google Play Console**, complete these 
 4. **Intellectual Property / Trademark Policy (Public Play Store vs. Personal GitHub Build)**:
    - Google Play's **Impersonation and Intellectual Property Policy** prohibits third-party apps from using trademarked franchise names (*Harry Potter*, *Naruto*, *Demon Slayer*, *Star Wars*, *Marvel / MCU*, *DC / Batman / Superman*) or proprietary replica fonts in public Play Store listings without a license.
    - **Recommendation for Public Play Store Listing**: Keep the procedural animations, sky palettes, and geometry, but rename the public Play Store build's theme labels to generic archetype titles (e.g., *Wizard Academy*, *Shinobi Village*, *Blade of Wisteria*, *Galactic Empire*, *Cyber Armor*, *Gothic Vigilante*) and use SIL Open Font License (OFL) fonts (`cinzel.ttf`).
+

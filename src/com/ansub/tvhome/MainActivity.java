@@ -196,7 +196,8 @@ public class MainActivity extends Activity {
     private TextView fancySyncView;
     private long lastWeatherFetch = 0L;
     private int tileW, tileH, rowStepPx, gapPx, gridTop, cols = PER_ROW; // app grid geometry, set by buildTiles
-    private static final int MAX_PAGE_APPS = 16; // max 16 apps (4x4) per horizontal page on phones/foldables
+    private static final int MAX_PAGE_APPS = 16; // max 16 apps (4x4) in portrait, 8 apps (4x2) in landscape
+    private int pageSize = MAX_PAGE_APPS;
     private android.widget.HorizontalScrollView appPager;
     private int currentAppPage = 0;
     private final List<View> pageDots = new ArrayList<>();
@@ -981,57 +982,64 @@ public class MainActivity extends Activity {
         boolean store = !apps.contains(PLAY_STORE) && launchIntent(pm, PLAY_STORE) != null;
 
         if (!tvMode) {
-            // Dual-Posture Continuity for Phones, Foldables & Tablets with 16-App Horizontal Paging:
-            // - Up to 16 apps per page (4 columns x 4 rows). Additional apps (>16) scroll horizontally across pages.
+            // Dual-Posture Continuity for Phones, Foldables & Tablets with Posture-Aware Horizontal Paging:
             // - Folded Cover Screen / Vertical Phone (isNarrowVertical):
-            //   Centered Hero Clock + 4-column Native One UI / Pixel Squircle App Icons + crisp single-line labels.
-            // - Unfolded Foldable Inner Screen / Tablet (!isNarrowVertical):
-            //   Signature 16:9 Widescreen Banner Cards (Left Icon Medallion + Right Title/Lore Subtitle).
+            //   Up to 16 apps per page (4 columns x 4 rows) with full-sized 54dp squircle icons.
+            // - Unfolded Foldable Inner Screen / Landscape / Tablet (!isNarrowVertical):
+            //   Up to 8 apps per page (4 columns x 2 rows) of 16:9 Widescreen Banner Cards so the Bottom Story Stage is never covered.
+            pageSize = isNarrowVertical ? 16 : 8;
             for (String pkg : apps) {
                 if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
             }
-            gridTop = isNarrowVertical ? (clockTop + dp(70)) : (clockTop + dp(72));
+            boolean isShortLandscape = !isNarrowVertical && screenH < dp(500);
+            if (isShortLandscape) {
+                clockTop = Math.max(dp(6), topInset - dp(6));
+                if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+                    ((FrameLayout.LayoutParams) clockContainer.getLayoutParams()).topMargin = clockTop;
+                }
+            }
+            gridTop = isNarrowVertical ? (clockTop + dp(68)) : (isShortLandscape ? (clockTop + dp(56)) : (clockTop + dp(68)));
             ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).leftMargin = m;
             ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - dp(22);
 
-            final int totalPages = Math.max(1, (launchable + MAX_PAGE_APPS - 1) / MAX_PAGE_APPS);
-            final int firstPageApps = Math.min(launchable, MAX_PAGE_APPS);
+            final int totalPages = Math.max(1, (launchable + pageSize - 1) / pageSize);
+            final int firstPageApps = Math.min(launchable, pageSize);
             if (want != null && rowApps.contains(want)) {
-                currentAppPage = rowApps.indexOf(want) / MAX_PAGE_APPS;
+                currentAppPage = rowApps.indexOf(want) / pageSize;
             }
             if (currentAppPage >= totalPages) currentAppPage = Math.max(0, totalPages - 1);
 
-            // Reserve the bottom ~38% of the screen completely clear for the animated Story Stage
-            int btnH = dp(24);
-            int chevW = dp(80), chevH = dp(18);
+            // Reserve the bottom Story Stage completely clear while filling the upper grid naturally without wasted space
+            int btnH = dp(30);
             int dotsReserve = totalPages > 1 ? dp(14) : 0;
-            int controlsReserve = dotsReserve + btnH + chevH + dp(14);
-            int stageSafeBottom = Math.round(screenH * (isNarrowVertical ? 0.62f : 0.64f));
-            int maxAvailGridH = Math.max(dp(160), stageSafeBottom - gridTop - controlsReserve);
+            int controlsReserve = dotsReserve + btnH + dp(10);
+            int stageSafeBottom = Math.round(screenH * (isNarrowVertical ? 0.68f : 0.58f));
+            int maxAvailGridH = Math.max(dp(92), stageSafeBottom - gridTop - controlsReserve);
 
             int visibleRows;
-            int iconSize = dp(44);
-            int labelH = dp(15);
+            int iconSize = dp(52);
+            int labelH = dp(18);
             if (isNarrowVertical) {
                 cols = 4;
                 visibleRows = Math.min(4, Math.max(1, (firstPageApps + cols - 1) / cols));
                 int w = (screenW - 2 * m - g * (cols - 1)) / cols;
                 int maxRowStep = maxAvailGridH / visibleRows;
-                int rowGap = visibleRows >= 4 ? dp(5) : (visibleRows == 3 ? dp(7) : dp(9));
-                int targetIcon = visibleRows >= 4 ? dp(42) : (visibleRows == 3 ? dp(46) : dp(50));
-                iconSize = Math.max(dp(34), Math.min(targetIcon, Math.min(Math.round(w * 0.58f), maxRowStep - labelH - rowGap)));
+                int targetIcon = dp(56);
+                iconSize = Math.max(dp(42), Math.min(targetIcon, Math.min(Math.round(w * 0.68f), maxRowStep - labelH - dp(8))));
                 int h = iconSize + labelH;
+                int idealGap = visibleRows >= 4 ? dp(14) : dp(16);
+                int rowGap = Math.max(dp(6), Math.min(idealGap, maxRowStep - h));
                 tileW = w;
                 tileH = h;
                 rowStepPx = h + rowGap;
             } else {
-                cols = firstPageApps <= 6 ? Math.min(3, Math.max(1, firstPageApps)) : 4;
-                visibleRows = Math.min(4, Math.max(1, (firstPageApps + cols - 1) / cols));
+                cols = firstPageApps <= 3 ? Math.max(1, firstPageApps) : 4;
+                visibleRows = Math.min(2, Math.max(1, (firstPageApps + cols - 1) / cols));
                 int w = (screenW - 2 * m - g * (cols - 1)) / cols;
                 int h = w * 9 / 16;
                 int maxRowH = (maxAvailGridH - (visibleRows - 1) * g) / visibleRows;
                 if (h > maxRowH) {
-                    h = Math.max(dp(54), maxRowH);
+                    h = Math.max(dp(38), maxRowH);
                 }
                 tileW = w;
                 tileH = h;
@@ -1151,18 +1159,15 @@ public class MainActivity extends Activity {
 
             int bottomTop = afterGridY + dp(4);
 
-            // Compact 3-Button Control Row: [ Theme ]  [ + Add app ]  [ Settings ] + compact All Apps Handle below
-            int pillGap = dp(6);
-            int maxDockW = Math.min(screenW - 2 * m, dp(264));
-            int btnW = (maxDockW - 2 * pillGap) / 3;
+            // Sleek Icon-Only 3-Button Control Row: [ Theme ]  [ + ]  [ Settings ] (No All Apps button; swipe-up opens drawer)
+            int pillGap = dp(10);
+            int btnW = dp(44);
             int dockStartX = (screenW - (3 * btnW + 2 * pillGap)) / 2;
 
-            addTile(root, THEME_PICK, "Theme", null, LineIcon.THEMES, null, dockStartX, bottomTop, btnW, btnH);
-            addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, dockStartX + btnW + pillGap, bottomTop, btnW, btnH);
-            addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null,
+            addTile(root, THEME_PICK, null, null, LineIcon.THEMES, null, dockStartX, bottomTop, btnW, btnH);
+            addTile(root, ADD, null, null, LineIcon.PLUS, null, dockStartX + btnW + pillGap, bottomTop, btnW, btnH);
+            addTile(root, SETTINGS, null, null, LineIcon.SETTINGS, null,
                     dockStartX + 2 * (btnW + pillGap), bottomTop, btnW, btnH);
-
-            addWhisperChevron(root, (screenW - chevW) / 2, bottomTop + btnH + dp(4), chevW, chevH);
 
             // Never exceed screenH so the home screen never scrolls vertically on phones/foldables
             root.setMinimumHeight(0);
@@ -1476,16 +1481,19 @@ public class MainActivity extends Activity {
             }
         } else {
             // Compact dark-gold capsule pill for bottom utility tiles, scaled with native dp/sp on phones/foldables.
+            // Supports both icon-only mode (label == null || label.isEmpty()) and icon + label pill mode.
             boolean mobilePill = !isTvDevice();
-            bg.setColor(mobilePill ? 0x3812101C : 0x28181210);
+            boolean iconOnly = label == null || label.isEmpty();
+            bg.setColor(mobilePill ? 0x3C12101C : 0x28181210);
             LinearLayout inner = new LinearLayout(this);
             boolean pill = lineIcon != null;
             inner.setOrientation(pill ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
             inner.setGravity(Gravity.CENTER);
-            int padX = pill ? (mobilePill ? dp(6) : Math.max(px(8), Math.round(h * 0.20f))) : px(14);
+            int padX = iconOnly ? 0 : (pill ? (mobilePill ? dp(6) : Math.max(px(8), Math.round(h * 0.20f))) : px(14));
             inner.setPadding(padX, 0, padX, 0);
             ImageView iv = new ImageView(this);
-            int size = pill ? (mobilePill ? dp(12) : Math.max(px(16), Math.round(h * 0.42f))) : px(64);
+            int size = iconOnly ? (mobilePill ? dp(16) : Math.max(px(18), Math.round(h * 0.52f)))
+                    : (pill ? (mobilePill ? dp(12) : Math.max(px(16), Math.round(h * 0.42f))) : px(64));
             if (lineIcon != null) {
                 LineIcon li = new LineIcon(lineIcon);
                 li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
@@ -1495,24 +1503,28 @@ public class MainActivity extends Activity {
                 iv.setImageDrawable(appIcon);
             }
             inner.addView(iv, new LinearLayout.LayoutParams(size, size));
-            int gapX = pill ? (mobilePill ? dp(4) : Math.max(px(5), Math.round(h * 0.14f))) : 0;
-            int textPx = pill ? (mobilePill ? sp(10f) : Math.max(px(12), Math.round(h * 0.30f))) : px(15);
-            TextView t = text(textPx, 0xF5FFF4D2, mobilePill ? semibold : (cinzelFont != null ? cinzelFont : semibold));
-            t.setText(label);
-            if (pill && label != null) {
-                float availW = w - 2 * padX - size - gapX - (mobilePill ? dp(2) : px(4));
-                float measured = t.getPaint().measureText(label);
-                if (availW > 0 && measured > availW) {
-                    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(mobilePill ? sp(8.5f) : px(10), textPx * (availW / measured)));
+            if (!iconOnly) {
+                int gapX = pill ? (mobilePill ? dp(4) : Math.max(px(5), Math.round(h * 0.14f))) : 0;
+                int textPx = pill ? (mobilePill ? sp(10f) : Math.max(px(12), Math.round(h * 0.30f))) : px(15);
+                TextView t = text(textPx, 0xF5FFF4D2, mobilePill ? semibold : (cinzelFont != null ? cinzelFont : semibold));
+                t.setText(label);
+                if (pill) {
+                    float availW = w - 2 * padX - size - gapX - (mobilePill ? dp(2) : px(4));
+                    float measured = t.getPaint().measureText(label);
+                    if (availW > 0 && measured > availW) {
+                        t.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(mobilePill ? sp(8.5f) : px(10), textPx * (availW / measured)));
+                    }
                 }
+                t.setSingleLine(true);
+                t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                t.setGravity(Gravity.CENTER);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
+                if (pill) lp.leftMargin = gapX;
+                else lp.topMargin = px(10);
+                inner.addView(t, lp);
+            } else {
+                card.setContentDescription(THEME_PICK.equals(key) ? "Theme" : (ADD.equals(key) ? "Add app" : "Settings"));
             }
-            t.setSingleLine(true);
-            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            t.setGravity(Gravity.CENTER);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-            if (pill) lp.leftMargin = gapX;
-            else lp.topMargin = px(10);
-            inner.addView(t, lp);
             card.addView(inner, new FrameLayout.LayoutParams(-1, -1));
         }
         card.setBackground(bg);
@@ -2925,17 +2937,18 @@ public class MainActivity extends Activity {
         getSharedPreferences(PREFS, 0).edit().putString("apps", android.text.TextUtils.join(",", rowApps)).apply();
     }
 
-    // Where app number i sits in the grid (each row is horizontally centered; on phones/foldables, paged by 16 apps).
+    // Where app number i sits in the grid (each row is horizontally centered; on phones/foldables, paged by pageSize).
     private int gridX(int i) {
         int screenW = getResources().getDisplayMetrics().widthPixels;
         int g = gapPx > 0 ? gapPx : px(GAP);
         if (!isTvDevice()) {
-            int page = i / MAX_PAGE_APPS;
-            int idxInPage = i % MAX_PAGE_APPS;
+            int ps = Math.max(1, pageSize);
+            int page = i / ps;
+            int idxInPage = i % ps;
             int row = idxInPage / cols;
             int col = idxInPage % cols;
-            int pageStart = page * MAX_PAGE_APPS;
-            int pageCount = Math.min(MAX_PAGE_APPS, Math.max(1, rowApps.size() - pageStart));
+            int pageStart = page * ps;
+            int pageCount = Math.min(ps, Math.max(1, rowApps.size() - pageStart));
             int rowStart = row * cols;
             int countInRow = Math.min(cols, Math.max(1, pageCount - rowStart));
             int rowW = countInRow * tileW + (countInRow - 1) * g;
@@ -2954,7 +2967,8 @@ public class MainActivity extends Activity {
     private int gridY(int i) {
         int step = rowStepPx > 0 ? rowStepPx : px(ROW_STEP);
         if (!isTvDevice()) {
-            int idxInPage = i % MAX_PAGE_APPS;
+            int ps = Math.max(1, pageSize);
+            int idxInPage = i % ps;
             return (idxInPage / cols) * step;
         }
         return gridTop + (i / cols) * step;
@@ -2994,7 +3008,7 @@ public class MainActivity extends Activity {
                     wrap.setLayoutParams(lp);
                 }
                 if (!isTvDevice() && appPager != null) {
-                    int newPage = to / MAX_PAGE_APPS;
+                    int newPage = to / Math.max(1, pageSize);
                     if (newPage != currentAppPage) {
                         currentAppPage = newPage;
                         updatePageDots(newPage);

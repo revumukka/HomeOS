@@ -692,13 +692,21 @@ final class SkyView extends View {
             paint.setTextSize(textSize);
             paint.setLetterSpacing(0.08f);
             String raw = title != null ? title : "";
-            int dash = raw.indexOf(" \u2014 ");
-            if (dash < 0) dash = raw.indexOf(" - ");
+            int splitIdx = raw.indexOf(" \u2014 ");
+            int delimLen = 3;
+            if (splitIdx < 0) {
+                splitIdx = raw.indexOf(" - ");
+                delimLen = 3;
+            }
+            if (splitIdx < 0) {
+                splitIdx = raw.lastIndexOf('|');
+                delimLen = 1;
+            }
             float maxLineW = w * 0.88f;
-            if (dash > 0) {
-                String line1 = raw.substring(0, dash).trim();
-                String line2 = raw.substring(dash + 3).trim();
-                float m2 = paint.measureText(line2) * 1.10f;
+            if (splitIdx > 0) {
+                String line1 = raw.substring(0, splitIdx).trim();
+                String line2 = raw.substring(splitIdx + delimLen).trim();
+                float m2 = Math.max(paint.measureText(line1), paint.measureText(line2)) * 1.10f;
                 if (m2 > maxLineW && m2 > 0) {
                     paint.setTextSize(Math.max(w * 0.019f, textSize * (maxLineW / m2)));
                 }
