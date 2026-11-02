@@ -2917,12 +2917,8 @@ final class SkyView extends View {
                 drawSasukeUchiha(c, w * 0.58f, groundY - px(56f), t, aBase, true, 1.28f);
                 break;
             case 4: // Naruto Summons Chief Toad Gamabunta
-                paint.setColor((aBase << 24) | 0x00B84028);
-                c.drawOval(w * 0.42f, groundY - px(115f), w * 0.64f, groundY, paint);
-                paint.setColor((aBase << 24) | 0x00FFE898);
-                c.drawCircle(w * 0.47f, groundY - px(102f), px(8f), paint);
-                c.drawCircle(w * 0.57f, groundY - px(102f), px(8f), paint);
-                drawNarutoUzumaki(c, w * 0.52f, groundY - px(138f), t, aBase, 0, 1.08f);
+                drawGamabuntaToad(c, w * 0.50f, groundY, t, aBase, 1.28f);
+                drawNarutoUzumaki(c, w * 0.50f, groundY - px(136f), t, aBase, 0, 1.06f);
                 break;
             case 5: // Itachi Uchiha in Akatsuki Cloak under Crimson Moon + Flock of Crows
                 drawAkatsukiMember(c, w * 0.48f, groundY - px(58f), t, aBase, true, 1.38f);
@@ -3010,12 +3006,13 @@ final class SkyView extends View {
                 c.drawCircle(rNx + px(28f), groundY - px(66f), px(22f + 5f * (float) Math.sin(t * 20f)), paint);
                 drawNinjaSilhouette(c, w * 0.56f, groundY - px(58f), t + 0.6f, aBase, 0xFF483868, 0xFF68FF98, true, false, false, 0xFF68FF98, 1.32f);
                 break;
-            case 16: // Three-Way Deadlock — Gamabunta Toad, Manda Snake & Katsuyu Slug
-                paint.setColor((aBase << 24) | 0x00B84028);
-                c.drawOval(w * 0.26f, groundY - px(88f), w * 0.40f, groundY, paint);
-                paint.setColor((aBase << 24) | 0x00D8F0FF);
-                c.drawOval(w * 0.42f, groundY - px(84f), w * 0.54f, groundY, paint);
-                drawSerpent(c, w * 0.62f, groundY, t, aBase, 0xFF7838A8, 0xFFFFE048, 1.25f, true);
+            case 16: // Three-Way Deadlock — Gamabunta Toad (Jiraiya), Katsuyu Slug (Tsunade) & Manda Snake (Orochimaru)
+                drawGamabuntaToad(c, w * 0.29f, groundY, t, aBase, 1.15f);
+                drawNinjaSilhouette(c, w * 0.29f, groundY - px(120f), t, aBase, 0xFFD82828, 0xFFF4F4F8, true, true, false, 0, 0.92f);
+                drawKatsuyuSlug(c, w * 0.46f, groundY, t, aBase, 1.15f);
+                drawNinjaSilhouette(c, w * 0.46f, groundY - px(116f), t + 0.6f, aBase, 0xFF388848, 0xFFFFE078, false, false, false, 0xFF58F8D8, 0.90f);
+                drawSerpent(c, w * 0.63f, groundY, t, aBase, 0xFF7838A8, 0xFFFFE048, 1.25f, true);
+                drawNinjaSilhouette(c, w * 0.64f, groundY - px(128f), t + 1.2f, aBase, 0xFFE8E4F0, 0xFF8848B8, false, true, false, 0, 0.90f);
                 break;
             case 17: // Sasuke Recovery — Shikamaru Shadow Possession Jutsu
                 drawNinjaSilhouette(c, w * 0.34f, groundY - px(58f), t, aBase, 0xFF385838, 0xFF181820, true, false, false, 0, 1.34f);
@@ -3472,6 +3469,212 @@ final class SkyView extends View {
         c.drawCircle(x - px(56f * s), groundY - px(58f * s), px(14f * s), paint);
         paint.setColor((alpha * 3 / 4 << 24) | 0x00FF3868);
         c.drawCircle(x - px(56f * s), groundY - px(58f * s), px(7f * s), paint);
+    }
+
+    /**
+     * Show-accurate Chief Toad Gamabunta (Mount Myoboku):
+     * - Crouching muscular crimson-rust amphibian body with bent hind legs & webbed feet
+     * - Inflating cream vocal sac & belly with crimson shoulder markings
+     * - Signature blue happi coat vest with white collar trim
+     * - Giant steel Dosu tanto blade held at his side
+     * - Protruding golden amphibian slit eyes, left-eye battle scar, and smoking Kiseru pipe with animated smoke rings
+     */
+    private void drawGamabuntaToad(Canvas c, float x, float groundY, float t, int alpha, float s) {
+        float breathe = (float) Math.sin(t * 3.8f) * px(3.5f * s);
+        float sac = Math.max(0f, (float) Math.sin(t * 3.8f)) * px(4.5f * s);
+
+        // 1. Giant Dosu Tanto Sword projecting diagonally behind right shoulder
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(5.2f * s));
+        paint.setColor((alpha << 24) | 0x00DCE8F4);
+        c.drawLine(x + px(18f * s), groundY - px(44f * s) + breathe, x + px(54f * s), groundY - px(106f * s) + breathe, paint);
+        paint.setStrokeWidth(px(6.5f * s));
+        paint.setColor((alpha << 24) | 0x00281C2C);
+        c.drawLine(x + px(8f * s), groundY - px(26f * s) + breathe, x + px(20f * s), groundY - px(47f * s) + breathe, paint);
+        paint.setStrokeWidth(px(2.4f * s));
+        paint.setColor((alpha << 24) | 0x00FFD54F);
+        c.drawCircle(x + px(19f * s), groundY - px(46f * s) + breathe, px(4.5f * s), paint);
+
+        // 2. Muscular crouching hind legs & webbed feet on groundY
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x009E321E);
+        c.drawOval(x - px(48f * s), groundY - px(38f * s) + breathe * 0.5f, x - px(18f * s), groundY, paint);
+        c.drawOval(x + px(18f * s), groundY - px(38f * s) + breathe * 0.5f, x + px(48f * s), groundY, paint);
+        // Webbed toes
+        c.drawOval(x - px(52f * s), groundY - px(9f * s), x - px(20f * s), groundY + px(2f * s), paint);
+        c.drawOval(x + px(20f * s), groundY - px(9f * s), x + px(52f * s), groundY + px(2f * s), paint);
+
+        // 3. Broad Crimson-Rust Amphibian Torso & Head Dome
+        paint.setColor((alpha << 24) | 0x00B84028);
+        c.drawOval(x - px(38f * s), groundY - px(84f * s) + breathe, x + px(38f * s), groundY - px(2f * s), paint);
+        c.drawOval(x - px(32f * s), groundY - px(96f * s) + breathe, x + px(32f * s), groundY - px(54f * s) + breathe, paint);
+
+        // 4. Cream-White Belly & Inflating Vocal Throat Sac with Crimson Markings
+        paint.setColor((alpha << 24) | 0x00F2E4C8);
+        c.drawOval(x - px(24f * s) - sac * 0.4f, groundY - px(68f * s) + breathe,
+                x + px(24f * s) + sac * 0.4f, groundY - px(6f * s), paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(2.2f * s));
+        paint.setColor((alpha * 4 / 5 << 24) | 0x00781C14);
+        c.drawArc(new RectF(x - px(20f * s), groundY - px(56f * s) + breathe, x - px(4f * s), groundY - px(36f * s) + breathe), 200, 140, false, paint);
+        c.drawArc(new RectF(x + px(4f * s), groundY - px(56f * s) + breathe, x + px(20f * s), groundY - px(36f * s) + breathe), 200, 140, false, paint);
+
+        // 5. Blue Happi Coat Vest draped over left & right shoulders
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00244684);
+        actorPath.reset();
+        actorPath.moveTo(x - px(36f * s), groundY - px(18f * s));
+        actorPath.lineTo(x - px(38f * s), groundY - px(66f * s) + breathe);
+        actorPath.lineTo(x - px(16f * s), groundY - px(74f * s) + breathe);
+        actorPath.lineTo(x - px(18f * s), groundY - px(16f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+
+        actorPath.reset();
+        actorPath.moveTo(x + px(36f * s), groundY - px(18f * s));
+        actorPath.lineTo(x + px(38f * s), groundY - px(66f * s) + breathe);
+        actorPath.lineTo(x + px(16f * s), groundY - px(74f * s) + breathe);
+        actorPath.lineTo(x + px(18f * s), groundY - px(16f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+
+        // White Happi Lapel Trim & Front Toad Forelimbs
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(2.0f * s));
+        paint.setColor((alpha << 24) | 0x00E8F0F8);
+        c.drawLine(x - px(16f * s), groundY - px(74f * s) + breathe, x - px(18f * s), groundY - px(16f * s), paint);
+        c.drawLine(x + px(16f * s), groundY - px(74f * s) + breathe, x + px(18f * s), groundY - px(16f * s), paint);
+
+        // 6. Protruding Golden Amphibian Eyes, Horizontal Slit Pupils & Left-Eye Battle Scar
+        float eyeY = groundY - px(88f * s) + breathe;
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00B84028);
+        c.drawCircle(x - px(16f * s), eyeY, px(9.5f * s), paint);
+        c.drawCircle(x + px(16f * s), eyeY, px(9.5f * s), paint);
+        paint.setColor((alpha << 24) | 0x00FFE048);
+        c.drawCircle(x - px(16f * s), eyeY, px(6.5f * s), paint);
+        c.drawCircle(x + px(16f * s), eyeY, px(6.5f * s), paint);
+        paint.setColor((alpha << 24) | 0x00140806);
+        c.drawRect(x - px(20f * s), eyeY - px(1.2f * s), x - px(12f * s), eyeY + px(1.2f * s), paint);
+        c.drawRect(x + px(12f * s), eyeY - px(1.2f * s), x + px(20f * s), eyeY + px(1.2f * s), paint);
+        // Left-eye scar
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(1.8f * s));
+        paint.setColor((alpha << 24) | 0x0058140E);
+        c.drawLine(x + px(14f * s), eyeY - px(10f * s), x + px(18f * s), eyeY + px(8f * s), paint);
+
+        // 7. Wide Toad Mouth & Smoking Kiseru Pipe with Animated Rising Smoke Puffs
+        float mouthY = groundY - px(72f * s) + breathe;
+        paint.setStrokeWidth(px(2.4f * s));
+        paint.setColor((alpha << 24) | 0x0038100A);
+        c.drawLine(x - px(20f * s), mouthY, x + px(20f * s), mouthY, paint);
+        // Brass & Bamboo Kiseru Pipe
+        paint.setStrokeWidth(px(3.0f * s));
+        paint.setColor((alpha << 24) | 0x00D8B058);
+        float pipeTipX = x + px(42f * s), pipeTipY = mouthY - px(10f * s);
+        c.drawLine(x + px(12f * s), mouthY, pipeTipX, pipeTipY, paint);
+        paint.setStyle(Paint.Style.FILL);
+        c.drawCircle(pipeTipX, pipeTipY - px(2f * s), px(3.8f * s), paint);
+        // Animated rising smoke rings from Gamabunta's pipe
+        for (int sm = 0; sm < 3; sm++) {
+            float sp = ((t * 0.9f + sm * 0.33f) % 1.0f);
+            float sx = pipeTipX + px(6f * s) + (float) Math.sin(t * 3f + sm) * px(5f * s) + sp * px(10f * s);
+            float sy = pipeTipY - px(8f * s) - sp * px(34f * s);
+            int sa = Math.max(0, Math.round(alpha * (1f - sp) * 0.65f));
+            paint.setColor((sa << 24) | 0x00DCE6F0);
+            c.drawCircle(sx, sy, px((3.5f + sp * 5.5f) * s), paint);
+        }
+    }
+
+    /**
+     * Show-accurate Lady Katsuyu (Giant Slug of Shikkotsu Forest):
+     * - Undulating pearlescent ivory-white segmented body with ruffled mantle base
+     * - Signature cobalt-blue dorsal & lateral stripes
+     * - Animated swaying upper optical eyestalk tentacles & lower sensory feelers
+     * - Rising cyan-emerald healing chakra motes
+     */
+    private void drawKatsuyuSlug(Canvas c, float x, float groundY, float t, int alpha, float s) {
+        float sway = (float) Math.sin(t * 4.0f) * px(5.5f * s);
+        float bob = (float) Math.cos(t * 3.2f) * px(3.0f * s);
+
+        // 1. Wide Ruffled Slug Foot Base & Undulating Rearing Body Column
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00DCEEFF);
+        c.drawOval(x - px(36f * s), groundY - px(22f * s), x + px(36f * s), groundY + px(2f * s), paint);
+
+        paint.setColor((alpha << 24) | 0x00F2F9FF);
+        actorPath.reset();
+        actorPath.moveTo(x - px(32f * s), groundY - px(4f * s));
+        actorPath.cubicTo(
+                x - px(28f * s) - sway * 0.4f, groundY - px(36f * s),
+                x - px(22f * s) + sway * 0.6f, groundY - px(64f * s),
+                x - px(14f * s) + sway, groundY - px(84f * s) + bob);
+        actorPath.quadTo(x + sway, groundY - px(94f * s) + bob, x + px(14f * s) + sway, groundY - px(84f * s) + bob);
+        actorPath.cubicTo(
+                x + px(22f * s) + sway * 0.6f, groundY - px(64f * s),
+                x + px(28f * s) - sway * 0.4f, groundY - px(36f * s),
+                x + px(32f * s), groundY - px(4f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+
+        // 2. Signature Cobalt-Blue Dorsal & Lateral Stripes (Anime-Accurate Katsuyu Markings)
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(px(3.2f * s));
+        paint.setColor((alpha * 4 / 5 << 24) | 0x002888E8);
+        for (int st = -1; st <= 1; st++) {
+            actorPath.reset();
+            actorPath.moveTo(x + st * px(18f * s), groundY - px(8f * s));
+            actorPath.cubicTo(
+                    x + st * px(15f * s) - sway * 0.3f, groundY - px(36f * s),
+                    x + st * px(12f * s) + sway * 0.5f, groundY - px(62f * s),
+                    x + st * px(8f * s) + sway, groundY - px(82f * s) + bob);
+            c.drawPath(actorPath, paint);
+        }
+
+        // Soft segmented body rings
+        paint.setStrokeWidth(px(1.5f * s));
+        paint.setColor((alpha / 2 << 24) | 0x0098C8F0);
+        for (int rg = 1; rg <= 3; rg++) {
+            float ry = groundY - px(rg * 20f * s) + bob * 0.4f;
+            float rw = px((28f - rg * 3.5f) * s);
+            c.drawArc(new RectF(x - rw + sway * 0.3f * rg, ry - px(5f * s), x + rw + sway * 0.3f * rg, ry + px(5f * s)), 15, 150, false, paint);
+        }
+
+        // 3. Animated Swaying Upper Optical Tentacles (Eyestalks) & Lower Feelers
+        float headX = x + sway, headY = groundY - px(84f * s) + bob;
+        float feelerSwayL = (float) Math.sin(t * 5.2f) * px(5f * s);
+        float feelerSwayR = (float) Math.cos(t * 5.2f + 0.8f) * px(5f * s);
+        paint.setStrokeWidth(px(3.0f * s));
+        paint.setColor((alpha << 24) | 0x00F2F9FF);
+        // Upper optical tentacles
+        float tipLX = headX - px(16f * s) + feelerSwayL, tipLY = headY - px(22f * s);
+        float tipRX = headX + px(16f * s) + feelerSwayR, tipRY = headY - px(22f * s);
+        c.drawLine(headX - px(8f * s), headY - px(2f * s), tipLX, tipLY, paint);
+        c.drawLine(headX + px(8f * s), headY - px(2f * s), tipRX, tipRY, paint);
+        // Lower sensory feelers
+        paint.setStrokeWidth(px(2.0f * s));
+        c.drawLine(headX - px(10f * s), headY + px(4f * s), headX - px(20f * s) - feelerSwayL * 0.5f, headY - px(4f * s), paint);
+        c.drawLine(headX + px(10f * s), headY + px(4f * s), headX + px(20f * s) - feelerSwayR * 0.5f, headY - px(4f * s), paint);
+
+        // Rounded optical bulbs at the tips of the upper tentacles
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00F2F9FF);
+        c.drawCircle(tipLX, tipLY, px(4.0f * s), paint);
+        c.drawCircle(tipRX, tipRY, px(4.0f * s), paint);
+        paint.setColor((alpha << 24) | 0x002888E8);
+        c.drawCircle(tipLX, tipLY, px(2.0f * s), paint);
+        c.drawCircle(tipRX, tipRY, px(2.0f * s), paint);
+
+        // 4. Shikkotsu Healing Chakra Motes rising around Katsuyu
+        for (int m = 0; m < 4; m++) {
+            float mp = ((t * 0.8f + m * 0.25f) % 1.0f);
+            float mx = x + (m % 2 == 0 ? -1 : 1) * px((18f + m * 6f) * s) + (float) Math.sin(t * 3f + m) * px(4f * s);
+            float my = groundY - px(16f * s) - mp * px(72f * s);
+            int ma = Math.max(0, Math.round(alpha * (1f - mp) * 0.75f));
+            paint.setColor((ma << 24) | 0x0058F8D8);
+            c.drawCircle(mx, my, px(2.8f * s), paint);
+        }
     }
 
     /**
