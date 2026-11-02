@@ -2844,15 +2844,10 @@ public class MainActivity extends Activity {
         sheetBg.setStroke(Math.max(1, dp(1)), 0x44F5D078);
         sheet.setBackground(sheetBg);
 
-        // Top drag handle pill
-        View handle = new View(this);
-        GradientDrawable hBg = new GradientDrawable();
-        hBg.setCornerRadius(dp(3));
-        hBg.setColor(0x66FFE8B0);
-        handle.setBackground(hBg);
-        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(dp(42), dp(5));
-        hlp.gravity = Gravity.CENTER_HORIZONTAL;
-        hlp.bottomMargin = dp(14);
+        // Top drag handle pill (with 24dp touch target box for effortless swipe/tap to Full Screen or Dismiss)
+        FrameLayout handle = createDragHandleBox();
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(22));
+        hlp.bottomMargin = dp(6);
         sheet.addView(handle, hlp);
 
         // Header row: Title + App Count + One-Tap "★ Edit Home" / "✓ Done" toggle pill
@@ -3107,19 +3102,31 @@ public class MainActivity extends Activity {
         });
 
         sheet.addView(list, new LinearLayout.LayoutParams(-1, 0, 1f));
-        d.setContentView(sheet);
 
         int sheetW = !isTvDevice() ? Math.min(screenW, dp(620)) : screenW;
         int sheetH = Math.round(screenH * 0.88f);
+        if (!isTvDevice()) {
+            View host = wrapInInteractiveBottomSheet(
+                    d, sheet, sheetBg, handle,
+                    sheetW, sheetH, screenH,
+                    dp(20), dp(14), dp(20),
+                    dp(148), false,
+                    () -> isListViewAtTop(list));
+            d.setContentView(host);
+        } else {
+            d.setContentView(sheet);
+        }
+
         Window win = d.getWindow();
         win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         win.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         win.setDimAmount(0.62f);
         win.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
                 | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        win.setLayout(sheetW, sheetH);
+        int winH = !isTvDevice() ? screenH : sheetH;
+        win.setLayout(sheetW, winH);
         d.show();
-        win.setLayout(sheetW, sheetH);
+        win.setLayout(sheetW, winH);
     }
 
     private void openAppInfo(String pkg) {
@@ -3169,15 +3176,11 @@ public class MainActivity extends Activity {
         sheetBg.setStroke(Math.max(1, dp(1)), 0x48F5D078);
         sheet.setBackground(sheetBg);
 
+        FrameLayout handle = null;
         if (!tvMode) {
-            View handle = new View(this);
-            GradientDrawable hBg = new GradientDrawable();
-            hBg.setCornerRadius(dp(3));
-            hBg.setColor(0x66FFE8B0);
-            handle.setBackground(hBg);
-            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(dp(42), dp(5));
-            hlp.gravity = Gravity.CENTER_HORIZONTAL;
-            hlp.bottomMargin = dp(12);
+            handle = createDragHandleBox();
+            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(22));
+            hlp.bottomMargin = dp(4);
             sheet.addView(handle, hlp);
         }
 
@@ -3230,7 +3233,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v6.5.1  \u00B7  Build 66");
+        appTitleTv.setText("HomeScreen v6.5.2  \u00B7  Build 67");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
@@ -3419,17 +3422,266 @@ public class MainActivity extends Activity {
         content.addView(backupCard, createCardMarginParams());
 
         sheet.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
-        d.setContentView(sheet);
 
         int sheetW = tvMode ? Math.min(screenW - dp(48), dp(680)) : Math.min(screenW, dp(640));
         int sheetH = tvMode ? Math.round(screenH * 0.86f) : Math.round(screenH * 0.84f);
+        if (!tvMode) {
+            View host = wrapInInteractiveBottomSheet(
+                    d, sheet, sheetBg, handle,
+                    sheetW, sheetH, screenH,
+                    dp(20), dp(14), dp(18),
+                    dp(96), true,
+                    () -> scroll.getScrollY() <= 2);
+            d.setContentView(host);
+        } else {
+            d.setContentView(sheet);
+        }
+
         Window win = d.getWindow();
         win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         win.setGravity(tvMode ? Gravity.CENTER : (Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
         win.setDimAmount(0.62f);
-        win.setLayout(sheetW, sheetH);
+        int winH = tvMode ? sheetH : screenH;
+        win.setLayout(sheetW, winH);
         d.show();
-        win.setLayout(sheetW, sheetH);
+        win.setLayout(sheetW, winH);
+    }
+
+    private interface SheetTopCheck {
+        boolean isAtTop();
+    }
+
+    private static boolean isListViewAtTop(ListView list) {
+        if (list == null || list.getChildCount() == 0) return true;
+        return list.getFirstVisiblePosition() == 0 && list.getChildAt(0).getTop() >= list.getPaddingTop() - 2;
+    }
+
+    private int getStatusBarHeight() {
+        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        int h = resId > 0 ? getResources().getDimensionPixelSize(resId) : 0;
+        return Math.max(dp(24), h);
+    }
+
+    private FrameLayout createDragHandleBox() {
+        FrameLayout box = new FrameLayout(this);
+        View pill = new View(this);
+        GradientDrawable hBg = new GradientDrawable();
+        hBg.setCornerRadius(dp(3));
+        hBg.setColor(0x78FFE8B0);
+        pill.setBackground(hBg);
+        box.addView(pill, new FrameLayout.LayoutParams(dp(44), dp(5), Gravity.CENTER));
+        return box;
+    }
+
+    // Wraps a bottom-sheet LinearLayout inside a full-screen interactive gesture container:
+    // - Drag UP on the top bar/sheet (or tap the top handle bar) to smoothly expand to 100% Full Screen.
+    // - Drag DOWN on the top bar or when the inner ListView/ScrollView is at the top to slide down & dismiss.
+    // - Tap the dimmed area above the sheet to dismiss.
+    private View wrapInInteractiveBottomSheet(
+            final Dialog d,
+            final LinearLayout sheet,
+            final GradientDrawable sheetBg,
+            final View handleView,
+            final int sheetW,
+            final int initialH,
+            final int screenH,
+            final int sidePad,
+            final int baseTopPad,
+            final int bottomPad,
+            final int topZoneHeight,
+            final boolean expandOnAnyUpSwipe,
+            final SheetTopCheck topCheck) {
+
+        final boolean[] isExpanded = {false};
+        final int expandedTopPad = getStatusBarHeight() + dp(10);
+        final float baseCornerRadius = dp(28);
+        final int touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+        final FrameLayout.LayoutParams sheetLp = new FrameLayout.LayoutParams(
+                sheetW, initialH, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        final ValueAnimator[] activeAnim = {null};
+
+        final FrameLayout host = new FrameLayout(this) {
+            private float downRawX, downRawY;
+            private boolean inTopZone;
+            private boolean dragging;
+            private int dragStartHeight;
+
+            private void updateSheetExpansion(int targetH) {
+                int clampedH = Math.max(initialH, Math.min(screenH, targetH));
+                float frac = (screenH > initialH)
+                        ? (float) (clampedH - initialH) / (float) (screenH - initialH)
+                        : 1f;
+                sheetLp.height = clampedH;
+                sheet.setLayoutParams(sheetLp);
+                float r = baseCornerRadius * (1f - frac);
+                sheetBg.setCornerRadii(new float[] {r, r, r, r, 0, 0, 0, 0});
+                int tPad = Math.round(baseTopPad + (expandedTopPad - baseTopPad) * frac);
+                sheet.setPadding(sidePad, tPad, sidePad, bottomPad);
+            }
+
+            private void animateSheetState(final boolean expandToFull, final boolean dismissSheet) {
+                if (activeAnim[0] != null && activeAnim[0].isRunning()) {
+                    activeAnim[0].cancel();
+                }
+                if (dismissSheet) {
+                    float startTrans = sheet.getTranslationY();
+                    float endTrans = Math.max(sheet.getHeight(), initialH);
+                    ValueAnimator va = ValueAnimator.ofFloat(startTrans, endTrans);
+                    va.setDuration(180);
+                    va.setInterpolator(new DecelerateInterpolator());
+                    va.addUpdateListener(a -> sheet.setTranslationY((Float) a.getAnimatedValue()));
+                    va.addListener(new AnimatorListenerAdapter() {
+                        @Override public void onAnimationEnd(Animator animation) {
+                            if (d.isShowing()) {
+                                try { d.dismiss(); } catch (Exception ignored) {}
+                            }
+                        }
+                    });
+                    activeAnim[0] = va;
+                    va.start();
+                    return;
+                }
+
+                isExpanded[0] = expandToFull;
+                final int startH = sheetLp.height;
+                final int endH = expandToFull ? screenH : initialH;
+                final float startTrans = sheet.getTranslationY();
+                ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
+                va.setDuration(220);
+                va.setInterpolator(new DecelerateInterpolator());
+                va.addUpdateListener(a -> {
+                    float f = (Float) a.getAnimatedValue();
+                    sheet.setTranslationY(startTrans * (1f - f));
+                    int curH = Math.round(startH + (endH - startH) * f);
+                    updateSheetExpansion(curH);
+                });
+                activeAnim[0] = va;
+                va.start();
+            }
+
+            @Override
+            public boolean onInterceptTouchEvent(android.view.MotionEvent ev) {
+                int act = ev.getActionMasked();
+                if (act == android.view.MotionEvent.ACTION_DOWN) {
+                    if (activeAnim[0] != null && activeAnim[0].isRunning()) {
+                        activeAnim[0].cancel();
+                    }
+                    downRawX = ev.getRawX();
+                    downRawY = ev.getRawY();
+                    float yInSheet = ev.getY() - (sheet.getTop() + sheet.getTranslationY());
+                    inTopZone = yInSheet >= -dp(16) && yInSheet <= topZoneHeight;
+                    dragging = false;
+                    dragStartHeight = sheetLp.height;
+                    if (ev.getY() < sheet.getTop() + sheet.getTranslationY()) {
+                        return true;
+                    }
+                    return false;
+                }
+                if (act == android.view.MotionEvent.ACTION_MOVE) {
+                    boolean atTop = topCheck == null || topCheck.isAtTop();
+                    // If inner list/scroll is not at top yet, keep updating baseline Y so scrolling up
+                    // to the top and continuing to pull down seamlessly transitions into dismissing!
+                    if (!inTopZone && !atTop && (isExpanded[0] || !expandOnAnyUpSwipe)) {
+                        downRawX = ev.getRawX();
+                        downRawY = ev.getRawY();
+                        return false;
+                    }
+                    float dy = ev.getRawY() - downRawY;
+                    float dx = ev.getRawX() - downRawX;
+                    if (Math.abs(dy) > touchSlop && Math.abs(dy) > Math.abs(dx) * 1.12f) {
+                        if (dy > 0 && (inTopZone || atTop)) {
+                            dragging = true;
+                            dragStartHeight = sheetLp.height;
+                            return true;
+                        }
+                        if (dy < 0 && !isExpanded[0] && (inTopZone || expandOnAnyUpSwipe)) {
+                            dragging = true;
+                            dragStartHeight = sheetLp.height;
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onTouchEvent(android.view.MotionEvent ev) {
+                int act = ev.getActionMasked();
+                if (act == android.view.MotionEvent.ACTION_DOWN) {
+                    return true;
+                }
+                if (act == android.view.MotionEvent.ACTION_MOVE) {
+                    float dy = ev.getRawY() - downRawY;
+                    if (!dragging && Math.abs(dy) > touchSlop) {
+                        dragging = true;
+                        dragStartHeight = sheetLp.height;
+                    }
+                    if (dragging) {
+                        if (dy < 0 && !isExpanded[0]) {
+                            sheet.setTranslationY(0f);
+                            updateSheetExpansion(dragStartHeight + Math.round(-dy));
+                        } else if (dy > 0) {
+                            sheet.setTranslationY(dy);
+                        }
+                    }
+                    return true;
+                }
+                if (act == android.view.MotionEvent.ACTION_UP || act == android.view.MotionEvent.ACTION_CANCEL) {
+                    float dy = ev.getRawY() - downRawY;
+                    if (!dragging && ev.getY() < sheet.getTop() + sheet.getTranslationY()) {
+                        animateSheetState(isExpanded[0], true);
+                        return true;
+                    }
+                    if (dragging) {
+                        dragging = false;
+                        if (dy < -dp(24) && !isExpanded[0]) {
+                            animateSheetState(true, false);
+                        } else if (dy > dp(56)) {
+                            try {
+                                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                                if (imm != null) imm.hideSoftInputFromWindow(sheet.getWindowToken(), 0);
+                            } catch (Exception ignored) {}
+                            animateSheetState(false, true);
+                        } else {
+                            animateSheetState(isExpanded[0], false);
+                        }
+                        return true;
+                    }
+                }
+                return super.onTouchEvent(ev);
+            }
+        };
+
+        if (handleView != null) {
+            handleView.setClickable(true);
+            handleView.setOnClickListener(v -> {
+                isExpanded[0] = !isExpanded[0];
+                final int startH = sheetLp.height;
+                final int endH = isExpanded[0] ? screenH : initialH;
+                ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
+                va.setDuration(220);
+                va.setInterpolator(new DecelerateInterpolator());
+                va.addUpdateListener(a -> {
+                    float f = (Float) a.getAnimatedValue();
+                    int curH = Math.round(startH + (endH - startH) * f);
+                    int clampedH = Math.max(initialH, Math.min(screenH, curH));
+                    float frac = (screenH > initialH)
+                            ? (float) (clampedH - initialH) / (float) (screenH - initialH)
+                            : 1f;
+                    sheetLp.height = clampedH;
+                    sheet.setLayoutParams(sheetLp);
+                    float r = baseCornerRadius * (1f - frac);
+                    sheetBg.setCornerRadii(new float[] {r, r, r, r, 0, 0, 0, 0});
+                    int tPad = Math.round(baseTopPad + (expandedTopPad - baseTopPad) * frac);
+                    sheet.setPadding(sidePad, tPad, sidePad, bottomPad);
+                });
+                va.start();
+            });
+        }
+
+        sheet.setClickable(true);
+        host.addView(sheet, sheetLp);
+        return host;
     }
 
     private LinearLayout createSettingsSectionCard() {
@@ -3672,7 +3924,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v6.5.1 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v6.5.2 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -3683,7 +3935,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.1 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.2 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -3695,7 +3947,7 @@ public class MainActivity extends Activity {
 
     // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
     private void showInstallOnTvDialog() {
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.1_66.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.2_67.apk";
         List<String> options = Arrays.asList(
             "1. Share Download Link to TV (Quick Share / LocalSend)",
             "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",
