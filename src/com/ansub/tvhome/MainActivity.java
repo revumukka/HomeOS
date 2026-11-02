@@ -7,6 +7,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -63,6 +65,7 @@ import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextClock;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -133,6 +136,15 @@ public class MainActivity extends Activity {
     // and the clock override ("12" or "24"; absent follows the TV).
     private static final String PREF_INPUT_NAMES = "inputnames", PREF_HIDDEN_INPUTS = "hiddeninputs";
     private static final String PREF_CLOCK = "clock", PREF_FAKE_INPUTS = "fakeinputs";
+    private static final String PREF_COLS_PORTRAIT = "grid_cols_portrait";
+    private static final String PREF_ROWS_PORTRAIT = "grid_rows_portrait";
+    private static final String PREF_COLS_LANDSCAPE = "grid_cols_landscape";
+    private static final String PREF_ROWS_LANDSCAPE = "grid_rows_landscape";
+    private static final String PREF_COLS_TV = "grid_cols_tv";
+    private static final String PREF_ROWS_TV = "grid_rows_tv";
+    private static final String PREF_SAVED_LAYOUT = "saved_layout_v1";
+    private static final String PREF_SAVED_LAYOUT_META = "saved_layout_meta";
+    private static final String GITHUB_RELEASE_URL = "https://github.com/revumukka/HomeOS/releases/latest";
     // The throwaway input install.sh adds with FAKE_INPUT=1. It has no HDMI port behind it; it is
     // there so an emulator, which has no inputs of its own, still has a tile to test with.
     private static final String FAKE_INPUT_PKG = "com.ansub.fakeinput";
@@ -1119,6 +1131,28 @@ public class MainActivity extends Activity {
         return g;
     }
 
+    private int getDefaultGridCols(boolean tvMode, boolean isNarrowVertical) {
+        return tvMode ? PER_ROW : 4;
+    }
+
+    private int getDefaultGridRows(boolean tvMode, boolean isNarrowVertical) {
+        return tvMode ? 2 : (isNarrowVertical ? 4 : 2);
+    }
+
+    private int getCustomGridCols(boolean tvMode, boolean isNarrowVertical) {
+        String key = tvMode ? PREF_COLS_TV : (isNarrowVertical ? PREF_COLS_PORTRAIT : PREF_COLS_LANDSCAPE);
+        int def = getDefaultGridCols(tvMode, isNarrowVertical);
+        int max = tvMode ? 8 : 6;
+        return Math.max(2, Math.min(max, prefs().getInt(key, def)));
+    }
+
+    private int getCustomGridRows(boolean tvMode, boolean isNarrowVertical) {
+        String key = tvMode ? PREF_ROWS_TV : (isNarrowVertical ? PREF_ROWS_PORTRAIT : PREF_ROWS_LANDSCAPE);
+        int def = getDefaultGridRows(tvMode, isNarrowVertical);
+        int max = tvMode ? 5 : (isNarrowVertical ? 6 : 5);
+        return Math.max(1, Math.min(max, prefs().getInt(key, def)));
+    }
+
     private void buildTiles() {
         // While tiles are swapped out, removing the focused one would hand focus down the row (and
         // overwrite focusedKey), so hold focus off until the new tiles are in.
@@ -1180,10 +1214,12 @@ public class MainActivity extends Activity {
         if (!tvMode) {
             // Dual-Posture Continuity for Phones, Foldables & Tablets with Posture-Aware Horizontal Paging:
             // - Folded Cover Screen / Vertical Phone (isNarrowVertical):
-            //   Up to 16 apps per page (4 columns x 4 rows) with full-sized 54dp squircle icons.
+            //   Defaults to 16 apps per page (4 columns x 4 rows) with squircle icons (customizable in App Settings).
             // - Unfolded Foldable Inner Screen / Landscape / Tablet (!isNarrowVertical):
-            //   Up to 8 apps per page (4 columns x 2 rows) of 16:9 Widescreen Banner Cards so the Bottom Story Stage is never covered.
-            pageSize = isNarrowVertical ? 16 : 8;
+            //   Defaults to 8 apps per page (4 columns x 2 rows) of 16:9 Widescreen Banner Cards so the Bottom Story Stage is never covered.
+            final int customCols = getCustomGridCols(false, isNarrowVertical);
+            final int customRows = getCustomGridRows(false, isNarrowVertical);
+            pageSize = Math.max(1, customCols * customRows);
             for (String pkg : apps) {
                 if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
             }
@@ -1216,26 +1252,26 @@ public class MainActivity extends Activity {
             int iconSize = dp(52);
             int labelH = dp(18);
             if (isNarrowVertical) {
-                cols = 4;
-                visibleRows = Math.min(4, Math.max(1, (firstPageApps + cols - 1) / cols));
+                cols = customCols;
+                visibleRows = Math.min(customRows, Math.max(1, (firstPageApps + cols - 1) / cols));
                 int w = (screenW - 2 * m - g * (cols - 1)) / cols;
                 int maxRowStep = maxAvailGridH / visibleRows;
-                int targetIcon = dp(56);
-                iconSize = Math.max(dp(42), Math.min(targetIcon, Math.min(Math.round(w * 0.68f), maxRowStep - labelH - dp(8))));
+                int targetIcon = dp(cols >= 5 ? 48 : 56);
+                iconSize = Math.max(dp(34), Math.min(targetIcon, Math.min(Math.round(w * 0.72f), maxRowStep - labelH - dp(6))));
                 int h = iconSize + labelH;
                 int idealGap = visibleRows >= 4 ? dp(14) : dp(16);
-                int rowGap = Math.max(dp(6), Math.min(idealGap, maxRowStep - h));
+                int rowGap = Math.max(dp(4), Math.min(idealGap, maxRowStep - h));
                 tileW = w;
                 tileH = h;
                 rowStepPx = h + rowGap;
             } else {
-                cols = firstPageApps <= 3 ? Math.max(1, firstPageApps) : 4;
-                visibleRows = Math.min(2, Math.max(1, (firstPageApps + cols - 1) / cols));
+                cols = firstPageApps < customCols ? Math.max(1, firstPageApps) : customCols;
+                visibleRows = Math.min(customRows, Math.max(1, (firstPageApps + cols - 1) / cols));
                 int w = (screenW - 2 * m - g * (cols - 1)) / cols;
                 int h = w * 9 / 16;
                 int maxRowH = (maxAvailGridH - (visibleRows - 1) * g) / visibleRows;
                 if (h > maxRowH) {
-                    h = Math.max(dp(38), maxRowH);
+                    h = Math.max(dp(34), maxRowH);
                 }
                 tileW = w;
                 tileH = h;
@@ -1370,12 +1406,14 @@ public class MainActivity extends Activity {
             netIcon = null;
             glowIconView = null;
         } else {
-            int topCols = launchable <= PER_ROW ? Math.max(1, launchable) : PER_ROW;
+            int customCols = getCustomGridCols(true, false);
+            int customRows = getCustomGridRows(true, false);
+            int topCols = launchable <= customCols ? Math.max(1, launchable) : customCols;
             List<TvInputInfo> inputs = hdmiInputs();
             int room = Math.max(1, topCols - 2 - (store ? 1 : 0));
             if (inputs.size() > room) inputs = inputs.subList(0, room);
             int bottomCount = (store ? 1 : 0) + inputs.size() + 2;
-            cols = Math.max(5, Math.min(PER_ROW, Math.max(topCols, bottomCount)));
+            cols = Math.max(3, Math.min(8, Math.max(topCols, bottomCount)));
 
             int w = (screenW - 2 * m - g * (cols - 1)) / cols;
             int h = w * 9 / 16;
@@ -1399,7 +1437,8 @@ public class MainActivity extends Activity {
             int iconY = dockY + dockPad;
 
             int rows = Math.max(1, (launchable + cols - 1) / cols);
-            gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * rowStepPx);
+            int visibleRows = Math.min(rows, customRows);
+            gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (visibleRows - 1) * rowStepPx);
             int bottomTop = gridTop + rows * rowStepPx + px(6);
             ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(42);
             root.setMinimumHeight(bottomTop + bottomH + m);
@@ -2159,49 +2198,7 @@ public class MainActivity extends Activity {
             showAddMenu(-1);
             return;
         } else if (SETTINGS.equals(key)) {
-            // Deduplicated Settings menu tailored to device class:
-            // Theme has its own dedicated button; on TV, Glow also has its own dock button.
-            List<String> list = new ArrayList<>();
-            if (!isTvDevice()) {
-                list.add("Pin / Manage Apps");
-            }
-            list.add("Sky Palette");
-            if (!isTvDevice()) {
-                boolean glowOn = skyView == null || skyView.isEdgeGlowEnabled();
-                list.add(glowOn ? "Turn Glow Off" : "Turn Glow On");
-            }
-            list.add("Next Story Scene");
-            if (isScreensaverEligiblePosture()) {
-                list.add("Start Screensaver");
-            }
-            if (isTvDevice()) {
-                if (!isBox(this)) list.add("Brightness");
-                list.add("TV settings");
-            } else {
-                list.add("System Settings");
-            }
-            list.add("Privacy & Safety");
-            final String[] items = list.toArray(new String[0]);
-            dropdown(tile(SETTINGS), items, which -> {
-                String picked = items[which];
-                if ("Pin / Manage Apps".equals(picked)) {
-                    showAllAppsDrawer(true);
-                } else if ("Sky Palette".equals(picked) || "Wallpaper".equals(picked)) {
-                    showWallpapers();
-                } else if ("Next Story Scene".equals(picked)) {
-                    if (skyView != null) skyView.nextStoryScene();
-                } else if ("Start Screensaver".equals(picked)) {
-                    idleHandler.postDelayed(startScreensaverTask, 180);
-                } else if (picked.startsWith("Turn Glow")) {
-                    toggleEdgeGlow();
-                } else if ("Brightness".equals(picked)) {
-                    openBrightness();
-                } else if ("Privacy & Safety".equals(picked)) {
-                    showPrivacySafetyDialog();
-                } else {
-                    openTvSettings();
-                }
-            });
+            showAppSettingsDialog();
             return;
         } else if (isInput(key)) {
             openInput(key);
@@ -3112,6 +3109,724 @@ public class MainActivity extends Activity {
             startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception ignored) {}
+    }
+
+    // Dedicated App Settings Page (v6.5.0):
+    // 1. Small About Section at the top + Invite Friends & Install on TV actions
+    // 2. Grid Layout Controls: Apps in a Row (Columns) & Apps in a Column (Rows before overflow)
+    // 3. Save & Restore Layout (SharedPreferences + portable clipboard string)
+    // 4. Launcher & Display Quick Actions
+    private void showAppSettingsDialog() {
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+        }
+        final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        activeDialog = d;
+
+        final boolean tvMode = isTvDevice();
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        int screenW = dm.widthPixels;
+        int screenH = dm.heightPixels;
+        final boolean isNarrowVertical = !tvMode && (screenH > screenW * 1.15f);
+
+        final String colsPrefKey = tvMode ? PREF_COLS_TV : (isNarrowVertical ? PREF_COLS_PORTRAIT : PREF_COLS_LANDSCAPE);
+        final String rowsPrefKey = tvMode ? PREF_ROWS_TV : (isNarrowVertical ? PREF_ROWS_PORTRAIT : PREF_ROWS_LANDSCAPE);
+        final int minCols = 2;
+        final int maxCols = tvMode ? 8 : 6;
+        final int minRows = 1;
+        final int maxRows = tvMode ? 5 : (isNarrowVertical ? 6 : 5);
+        final String postureLabel = tvMode ? "Android TV Grid" : (isNarrowVertical ? "Portrait Grid" : "Landscape / Unfolded Grid");
+
+        LinearLayout sheet = new LinearLayout(this);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(dp(20), dp(14), dp(20), dp(18));
+        GradientDrawable sheetBg = new GradientDrawable();
+        float topRad = dp(28);
+        if (tvMode) {
+            sheetBg.setCornerRadius(dp(24));
+        } else {
+            sheetBg.setCornerRadii(new float[] {topRad, topRad, topRad, topRad, 0, 0, 0, 0});
+        }
+        sheetBg.setColor(0xF70B0E1A);
+        sheetBg.setStroke(Math.max(1, dp(1)), 0x48F5D078);
+        sheet.setBackground(sheetBg);
+
+        if (!tvMode) {
+            View handle = new View(this);
+            GradientDrawable hBg = new GradientDrawable();
+            hBg.setCornerRadius(dp(3));
+            hBg.setColor(0x66FFE8B0);
+            handle.setBackground(hBg);
+            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(dp(42), dp(5));
+            hlp.gravity = Gravity.CENTER_HORIZONTAL;
+            hlp.bottomMargin = dp(12);
+            sheet.addView(handle, hlp);
+        }
+
+        // Top Title Bar
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView headTitle = text(sp(20f), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        headTitle.setText("App Settings");
+        headTitle.setLetterSpacing(0.05f);
+        headerRow.addView(headTitle, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView closeBtn = createSettingsPillButton("\u2713 Done", true, v -> d.dismiss());
+        headerRow.addView(closeBtn, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout.LayoutParams hrlp = new LinearLayout.LayoutParams(-1, -2);
+        hrlp.bottomMargin = dp(12);
+        sheet.addView(headerRow, hrlp);
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setVerticalScrollBarEnabled(false);
+        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
+
+        // -----------------------------------------------------------------
+        // 1. SMALL ABOUT SECTION AT THE TOP + INVITE FRIENDS + INSTALL ON TV
+        // -----------------------------------------------------------------
+        LinearLayout aboutCard = createSettingsSectionCard();
+        LinearLayout aboutTopRow = new LinearLayout(this);
+        aboutTopRow.setOrientation(LinearLayout.HORIZONTAL);
+        aboutTopRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        ImageView appIconView = new ImageView(this);
+        try {
+            appIconView.setImageDrawable(getApplicationInfo().loadIcon(getPackageManager()));
+        } catch (Exception ignored) {}
+        FrameLayout iconBox = new FrameLayout(this);
+        GradientDrawable ibBg = new GradientDrawable();
+        ibBg.setCornerRadius(dp(12));
+        ibBg.setColor(0x28000000);
+        ibBg.setStroke(Math.max(1, dp(1)), 0x44FFD54F);
+        iconBox.setBackground(ibBg);
+        iconBox.setPadding(dp(4), dp(4), dp(4), dp(4));
+        iconBox.addView(appIconView, new FrameLayout.LayoutParams(dp(42), dp(42), Gravity.CENTER));
+        aboutTopRow.addView(iconBox, new LinearLayout.LayoutParams(dp(50), dp(50)));
+
+        LinearLayout aboutTextCol = new LinearLayout(this);
+        aboutTextCol.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
+        atcLp.leftMargin = dp(14);
+        TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
+        appTitleTv.setText("HomeScreen v6.5.0  \u00B7  Build 65");
+        aboutTextCol.addView(appTitleTv);
+
+        TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
+        appSubTv.setText("6 Universes \u00B7 300 Live Story Scenes \u00B7 Dynamic 120 FPS \u00B7 Zero Ads");
+        LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
+        subLp.topMargin = dp(2);
+        aboutTextCol.addView(appSubTv, subLp);
+
+        TextView authorTv = text(sp(11.5f), 0x99FFE082, regular);
+        authorTv.setText("Created by Revanth Mukka (@revumukka) \u00B7 Vibe-coded with Gemini Antigravity");
+        LinearLayout.LayoutParams authLp = new LinearLayout.LayoutParams(-1, -2);
+        authLp.topMargin = dp(2);
+        aboutTextCol.addView(authorTv, authLp);
+
+        aboutTopRow.addView(aboutTextCol, atcLp);
+        aboutCard.addView(aboutTopRow, new LinearLayout.LayoutParams(-1, -2));
+
+        // Invite Friends + Install on TV button row inside About card
+        LinearLayout shareRow = new LinearLayout(this);
+        shareRow.setOrientation(LinearLayout.HORIZONTAL);
+        shareRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams srlp = new LinearLayout.LayoutParams(-1, -2);
+        srlp.topMargin = dp(12);
+
+        TextView inviteBtn = createSettingsPillButton("\u2728 Invite Friends", false, v -> inviteFriends());
+        LinearLayout.LayoutParams ibLp = new LinearLayout.LayoutParams(0, -2, 1f);
+        ibLp.rightMargin = dp(6);
+        shareRow.addView(inviteBtn, ibLp);
+
+        TextView installTvBtn = createSettingsPillButton("\uD83D\uDCFA Install on TV", false, v -> showInstallOnTvDialog());
+        LinearLayout.LayoutParams tvbLp = new LinearLayout.LayoutParams(0, -2, 1f);
+        tvbLp.leftMargin = dp(6);
+        shareRow.addView(installTvBtn, tvbLp);
+
+        aboutCard.addView(shareRow, srlp);
+        content.addView(aboutCard, createCardMarginParams());
+
+        // -----------------------------------------------------------------
+        // 2. HOME GRID LAYOUT: APPS IN A ROW (COLS) & APPS IN A COLUMN (ROWS)
+        // -----------------------------------------------------------------
+        LinearLayout gridCard = createSettingsSectionCard();
+
+        LinearLayout gridHeadRow = new LinearLayout(this);
+        gridHeadRow.setOrientation(LinearLayout.HORIZONTAL);
+        gridHeadRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView gridHeadTv = text(sp(15f), 0xFFFFE8A8, semibold);
+        gridHeadTv.setText("Home Grid Layout  \u00B7  " + postureLabel);
+        gridHeadRow.addView(gridHeadTv, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        final TextView overflowBadgeTv = text(sp(12f), 0xFFFFD54F, semibold);
+        gridHeadRow.addView(overflowBadgeTv, new LinearLayout.LayoutParams(-2, -2));
+        gridCard.addView(gridHeadRow, new LinearLayout.LayoutParams(-1, -2));
+
+        final TextView colsValTv = text(sp(16f), 0xFFFFFFFF, semibold);
+        final TextView rowsValTv = text(sp(16f), 0xFFFFFFFF, semibold);
+
+        final Runnable refreshGridLabels = () -> {
+            int c = getCustomGridCols(tvMode, isNarrowVertical);
+            int r = getCustomGridRows(tvMode, isNarrowVertical);
+            colsValTv.setText(String.valueOf(c));
+            rowsValTv.setText(String.valueOf(r));
+            overflowBadgeTv.setText(c + " \u00D7 " + r + " = " + (c * r) + " / page");
+        };
+        refreshGridLabels.run();
+
+        // Row 1: Apps in a Row (Columns)
+        LinearLayout colsControlRow = createStepperRow(
+                "Apps in a Row (Columns)",
+                "Horizontal app slots per row (" + minCols + "\u2013" + maxCols + ")",
+                colsValTv,
+                v -> {
+                    int cur = getCustomGridCols(tvMode, isNarrowVertical);
+                    if (cur > minCols) {
+                        prefs().edit().putInt(colsPrefKey, cur - 1).apply();
+                        refreshGridLabels.run();
+                        buildTiles();
+                    }
+                },
+                v -> {
+                    int cur = getCustomGridCols(tvMode, isNarrowVertical);
+                    if (cur < maxCols) {
+                        prefs().edit().putInt(colsPrefKey, cur + 1).apply();
+                        refreshGridLabels.run();
+                        buildTiles();
+                    }
+                }
+        );
+        LinearLayout.LayoutParams ccrLp = new LinearLayout.LayoutParams(-1, -2);
+        ccrLp.topMargin = dp(10);
+        gridCard.addView(colsControlRow, ccrLp);
+
+        // Row 2: Apps in a Column (Rows before overflow)
+        LinearLayout rowsControlRow = createStepperRow(
+                "Apps in a Column (Rows)",
+                "Vertical rows before page overflow (" + minRows + "\u2013" + maxRows + ")",
+                rowsValTv,
+                v -> {
+                    int cur = getCustomGridRows(tvMode, isNarrowVertical);
+                    if (cur > minRows) {
+                        prefs().edit().putInt(rowsPrefKey, cur - 1).apply();
+                        refreshGridLabels.run();
+                        buildTiles();
+                    }
+                },
+                v -> {
+                    int cur = getCustomGridRows(tvMode, isNarrowVertical);
+                    if (cur < maxRows) {
+                        prefs().edit().putInt(rowsPrefKey, cur + 1).apply();
+                        refreshGridLabels.run();
+                        buildTiles();
+                    }
+                }
+        );
+        LinearLayout.LayoutParams rcrLp = new LinearLayout.LayoutParams(-1, -2);
+        rcrLp.topMargin = dp(8);
+        gridCard.addView(rowsControlRow, rcrLp);
+
+        // Reset Grid button row
+        LinearLayout resetGridRow = new LinearLayout(this);
+        resetGridRow.setOrientation(LinearLayout.HORIZONTAL);
+        resetGridRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams rgrLp = new LinearLayout.LayoutParams(-1, -2);
+        rgrLp.topMargin = dp(10);
+        TextView gridHintTv = text(sp(11.5f), 0x99FFE8B0, regular);
+        gridHintTv.setText("Extra pinned apps automatically flow onto swipeable pages.");
+        resetGridRow.addView(gridHintTv, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView resetGridBtn = createSettingsPillButton("Reset Grid", false, v -> {
+            prefs().edit().remove(colsPrefKey).remove(rowsPrefKey).apply();
+            refreshGridLabels.run();
+            buildTiles();
+            Toast.makeText(this, "Grid reset to default (" + getDefaultGridCols(tvMode, isNarrowVertical)
+                    + "\u00D7" + getDefaultGridRows(tvMode, isNarrowVertical) + ")", Toast.LENGTH_SHORT).show();
+        });
+        resetGridRow.addView(resetGridBtn, new LinearLayout.LayoutParams(-2, -2));
+        gridCard.addView(resetGridRow, rgrLp);
+        content.addView(gridCard, createCardMarginParams());
+
+        // -----------------------------------------------------------------
+        // 3. SAVE & RESTORE LAYOUT CARD
+        // -----------------------------------------------------------------
+        LinearLayout backupCard = createSettingsSectionCard();
+        TextView backupHeadTv = text(sp(15f), 0xFFFFE8A8, semibold);
+        backupHeadTv.setText("Save & Restore Layout");
+        backupCard.addView(backupHeadTv, new LinearLayout.LayoutParams(-1, -2));
+
+        final TextView backupMetaTv = text(sp(12f), 0xCCFFE8B0, regular);
+        final Runnable updateBackupMeta = () -> {
+            String meta = prefs().getString(PREF_SAVED_LAYOUT_META, null);
+            if (meta != null && !meta.isEmpty()) {
+                backupMetaTv.setText("Saved backup: " + meta);
+            } else {
+                backupMetaTv.setText("Saves pinned apps, row/column grid counts, universe theme & sky palette.");
+            }
+        };
+        updateBackupMeta.run();
+        LinearLayout.LayoutParams bmLp = new LinearLayout.LayoutParams(-1, -2);
+        bmLp.topMargin = dp(4);
+        backupCard.addView(backupMetaTv, bmLp);
+
+        LinearLayout backupBtnRow = new LinearLayout(this);
+        backupBtnRow.setOrientation(LinearLayout.HORIZONTAL);
+        backupBtnRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams bbrLp = new LinearLayout.LayoutParams(-1, -2);
+        bbrLp.topMargin = dp(10);
+
+        TextView saveLayoutBtn = createSettingsPillButton("\uD83D\uDCBE Save Layout", false, v -> {
+            saveLayoutBackup();
+            updateBackupMeta.run();
+        });
+        LinearLayout.LayoutParams slLp = new LinearLayout.LayoutParams(0, -2, 1f);
+        slLp.rightMargin = dp(6);
+        backupBtnRow.addView(saveLayoutBtn, slLp);
+
+        TextView restoreLayoutBtn = createSettingsPillButton("\u21BA Restore Layout", false, v -> {
+            if (restoreLayoutBackup()) {
+                refreshGridLabels.run();
+                updateBackupMeta.run();
+            }
+        });
+        LinearLayout.LayoutParams rlLp = new LinearLayout.LayoutParams(0, -2, 1f);
+        rlLp.leftMargin = dp(6);
+        backupBtnRow.addView(restoreLayoutBtn, rlLp);
+
+        backupCard.addView(backupBtnRow, bbrLp);
+        content.addView(backupCard, createCardMarginParams());
+
+        // -----------------------------------------------------------------
+        // 4. LAUNCHER & DISPLAY QUICK ACTIONS CARD
+        // -----------------------------------------------------------------
+        LinearLayout actionsCard = createSettingsSectionCard();
+        TextView actionsHeadTv = text(sp(15f), 0xFFFFE8A8, semibold);
+        actionsHeadTv.setText("Launcher & Display");
+        LinearLayout.LayoutParams ahLp = new LinearLayout.LayoutParams(-1, -2);
+        ahLp.bottomMargin = dp(6);
+        actionsCard.addView(actionsHeadTv, ahLp);
+
+        actionsCard.addView(createSettingsActionRow(
+                tvMode ? "Add App to Home Grid" : "Pin / Manage Home Apps",
+                rowApps.size() + " apps pinned",
+                v -> {
+                    d.dismiss();
+                    if (tvMode) showAddMenu(-1);
+                    else showAllAppsDrawer(true);
+                }
+        ));
+
+        int curTheme = universeTheme();
+        actionsCard.addView(createSettingsActionRow(
+                "Universe Theme",
+                UNIVERSE_THEMES[curTheme],
+                v -> {
+                    d.dismiss();
+                    showThemePicker();
+                }
+        ));
+
+        actionsCard.addView(createSettingsActionRow(
+                "Sky Palette",
+                WALLPAPER_NAMES[wallpaper()],
+                v -> {
+                    d.dismiss();
+                    showWallpapers();
+                }
+        ));
+
+        final TextView[] glowValueHolder = new TextView[1];
+        boolean glowNow = skyView == null || skyView.isEdgeGlowEnabled();
+        actionsCard.addView(createSettingsActionRow(
+                "Ambient Edge Glow",
+                glowNow ? "On" : "Off",
+                glowValueHolder,
+                v -> {
+                    toggleEdgeGlow();
+                    boolean on = skyView == null || skyView.isEdgeGlowEnabled();
+                    if (glowValueHolder[0] != null) glowValueHolder[0].setText(on ? "On" : "Off");
+                }
+        ));
+
+        actionsCard.addView(createSettingsActionRow(
+                "Next Story Scene",
+                "Skip to next animation",
+                v -> {
+                    if (skyView != null) skyView.nextStoryScene();
+                    Toast.makeText(this, "Switched to next story scene", Toast.LENGTH_SHORT).show();
+                }
+        ));
+
+        if (isScreensaverEligiblePosture()) {
+            actionsCard.addView(createSettingsActionRow(
+                    "Start Cinema Screensaver",
+                    "Full-bleed randomized stories",
+                    v -> {
+                        d.dismiss();
+                        idleHandler.postDelayed(startScreensaverTask, 180);
+                    }
+            ));
+        }
+
+        if (tvMode && !isBox(this)) {
+            actionsCard.addView(createSettingsActionRow(
+                    "TV Picture & Brightness",
+                    "Display panel",
+                    v -> {
+                        d.dismiss();
+                        openBrightness();
+                    }
+            ));
+        }
+
+        actionsCard.addView(createSettingsActionRow(
+                tvMode ? "TV System Settings" : "Android System Settings",
+                "Open device settings",
+                v -> {
+                    d.dismiss();
+                    openTvSettings();
+                }
+        ));
+
+        actionsCard.addView(createSettingsActionRow(
+                "Privacy & Data Safety",
+                "Zero telemetry \u00B7 Local only",
+                v -> {
+                    d.dismiss();
+                    showPrivacySafetyDialog();
+                }
+        ));
+
+        content.addView(actionsCard, createCardMarginParams());
+
+        sheet.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
+        d.setContentView(sheet);
+
+        int sheetW = tvMode ? Math.min(screenW - dp(48), dp(680)) : Math.min(screenW, dp(640));
+        int sheetH = tvMode ? Math.round(screenH * 0.90f) : Math.round(screenH * 0.90f);
+        Window win = d.getWindow();
+        win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        win.setGravity(tvMode ? Gravity.CENTER : (Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        win.setDimAmount(0.62f);
+        win.setLayout(sheetW, sheetH);
+        d.show();
+        win.setLayout(sheetW, sheetH);
+    }
+
+    private LinearLayout createSettingsSectionCard() {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(16), dp(14), dp(16), dp(14));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(20));
+        bg.setColor(0x16FFFFFF);
+        bg.setStroke(Math.max(1, dp(1)), 0x32F5D078);
+        card.setBackground(bg);
+        return card;
+    }
+
+    private LinearLayout.LayoutParams createCardMarginParams() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.bottomMargin = dp(12);
+        return lp;
+    }
+
+    private TextView createSettingsPillButton(String label, boolean goldAccent, View.OnClickListener onClick) {
+        final TextView btn = text(sp(13f), goldAccent ? 0xFF100D18 : 0xFFFFF4D2, semibold);
+        btn.setText(label);
+        btn.setGravity(Gravity.CENTER);
+        btn.setSingleLine(true);
+        btn.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        btn.setPadding(dp(14), dp(9), dp(14), dp(9));
+        final GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(16));
+        final int normalBg = goldAccent ? 0xFFFFD54F : 0x24FFFFFF;
+        final int focusBg = goldAccent ? 0xFFFFE57F : 0x44FFE8B0;
+        final int normalStroke = goldAccent ? 0xFFFFF4D2 : 0x48F5D078;
+        bg.setColor(normalBg);
+        bg.setStroke(Math.max(1, dp(1)), normalStroke);
+        btn.setBackground(bg);
+        btn.setFocusable(true);
+        btn.setOnFocusChangeListener((v, has) -> {
+            bg.setColor(has ? focusBg : normalBg);
+            bg.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? 0xFFFFF4D2 : normalStroke);
+        });
+        btn.setOnClickListener(onClick);
+        return btn;
+    }
+
+    private LinearLayout createStepperRow(String title, String subtitle, TextView valueTv,
+                                          View.OnClickListener onMinus, View.OnClickListener onPlus) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(12), dp(10), dp(12), dp(10));
+        GradientDrawable rBg = new GradientDrawable();
+        rBg.setCornerRadius(dp(14));
+        rBg.setColor(0x14000000);
+        rBg.setStroke(Math.max(1, dp(1)), 0x22FFFFFF);
+        row.setBackground(rBg);
+
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        TextView tTv = text(sp(14f), 0xFFFFF8E8, semibold);
+        tTv.setText(title);
+        textCol.addView(tTv);
+        TextView sTv = text(sp(11.5f), 0x99FFE8B0, regular);
+        sTv.setText(subtitle);
+        textCol.addView(sTv);
+        row.addView(textCol, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView minusBtn = createSettingsPillButton("\u2212", false, onMinus);
+        minusBtn.setMinimumWidth(dp(40));
+        row.addView(minusBtn, new LinearLayout.LayoutParams(dp(40), dp(38)));
+
+        valueTv.setGravity(Gravity.CENTER);
+        valueTv.setMinimumWidth(dp(38));
+        row.addView(valueTv, new LinearLayout.LayoutParams(dp(42), -2));
+
+        TextView plusBtn = createSettingsPillButton("+", false, onPlus);
+        plusBtn.setMinimumWidth(dp(40));
+        row.addView(plusBtn, new LinearLayout.LayoutParams(dp(40), dp(38)));
+
+        return row;
+    }
+
+    private View createSettingsActionRow(String title, String rightLabel, View.OnClickListener onClick) {
+        return createSettingsActionRow(title, rightLabel, null, onClick);
+    }
+
+    private View createSettingsActionRow(String title, String rightLabel, TextView[] rightHolder, View.OnClickListener onClick) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(dp(48));
+        row.setPadding(dp(12), dp(8), dp(12), dp(8));
+
+        final GradientDrawable rBg = new GradientDrawable();
+        rBg.setCornerRadius(dp(14));
+        rBg.setColor(0x12FFFFFF);
+        rBg.setStroke(Math.max(1, dp(1)), 0x20FFFFFF);
+        row.setBackground(rBg);
+        row.setFocusable(true);
+        row.setOnFocusChangeListener((v, has) -> {
+            rBg.setColor(has ? 0x34FFE8B0 : 0x12FFFFFF);
+            rBg.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? 0xCCFFD54F : 0x20FFFFFF);
+        });
+        row.setOnClickListener(onClick);
+
+        TextView leftTv = text(sp(14f), 0xFFFFF8E8, semibold);
+        leftTv.setText(title);
+        leftTv.setSingleLine(true);
+        leftTv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        row.addView(leftTv, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView rightTv = text(sp(12.5f), 0xCCFFE082, regular);
+        rightTv.setText(rightLabel + "  \u203A");
+        rightTv.setSingleLine(true);
+        if (rightHolder != null && rightHolder.length > 0) rightHolder[0] = rightTv;
+        row.addView(rightTv, new LinearLayout.LayoutParams(-2, -2));
+
+        LinearLayout wrap = new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(-1, -2);
+        rlp.topMargin = dp(6);
+        wrap.addView(row, rlp);
+        return wrap;
+    }
+
+    // Saves a complete layout snapshot (pinned apps, row/col counts for all postures, theme, sky palette,
+    // edge glow, clock format, and custom HDMI input names) to SharedPreferences + clipboard.
+    private void saveLayoutBackup() {
+        SharedPreferences p = prefs();
+        String appsCsv = android.text.TextUtils.join(",", rowApps);
+        int cp = p.getInt(PREF_COLS_PORTRAIT, getDefaultGridCols(false, true));
+        int rp = p.getInt(PREF_ROWS_PORTRAIT, getDefaultGridRows(false, true));
+        int cl = p.getInt(PREF_COLS_LANDSCAPE, getDefaultGridCols(false, false));
+        int rl = p.getInt(PREF_ROWS_LANDSCAPE, getDefaultGridRows(false, false));
+        int ct = p.getInt(PREF_COLS_TV, getDefaultGridCols(true, false));
+        int rt = p.getInt(PREF_ROWS_TV, getDefaultGridRows(true, false));
+        int th = universeTheme();
+        String wp = WALLPAPER_NAMES[wallpaper()];
+        boolean glow = skyView == null || skyView.isEdgeGlowEnabled();
+        String clk = p.getString(PREF_CLOCK, "auto");
+        String inNames = p.getString(PREF_INPUT_NAMES, "").replace("\n", ";;");
+
+        String payload = "HOMESCREEN_LAYOUT_V1"
+                + "|apps=" + appsCsv
+                + "|cp=" + cp + "|rp=" + rp
+                + "|cl=" + cl + "|rl=" + rl
+                + "|ct=" + ct + "|rt=" + rt
+                + "|theme=" + th
+                + "|wp=" + wp
+                + "|glow=" + (glow ? "1" : "0")
+                + "|clock=" + clk
+                + "|inputs=" + inNames;
+
+        String timeStr = new java.text.SimpleDateFormat("MMM d, h:mm a", java.util.Locale.US)
+                .format(new java.util.Date());
+        String meta = rowApps.size() + " apps \u00B7 "
+                + (isTvDevice() ? (ct + "\u00D7" + rt + " TV") : (cp + "\u00D7" + rp + " P / " + cl + "\u00D7" + rl + " L"))
+                + " \u00B7 " + UNIVERSE_THEMES[th] + " (" + timeStr + ")";
+
+        p.edit()
+                .putString(PREF_SAVED_LAYOUT, payload)
+                .putString(PREF_SAVED_LAYOUT_META, meta)
+                .apply();
+
+        try {
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null) {
+                cm.setPrimaryClip(ClipData.newPlainText("HomeScreen Layout Backup", payload));
+            }
+        } catch (Exception ignored) {}
+
+        Toast.makeText(this, "Layout saved (" + rowApps.size() + " apps) & copied to clipboard!", Toast.LENGTH_SHORT).show();
+    }
+
+    // Restores layout from saved SharedPreferences backup (or from clipboard if a HOMESCREEN_LAYOUT_V1
+    // string is currently copied).
+    private boolean restoreLayoutBackup() {
+        SharedPreferences p = prefs();
+        String payload = p.getString(PREF_SAVED_LAYOUT, null);
+
+        // Also check clipboard if user copied a portable backup string from another device
+        if (payload == null || !payload.startsWith("HOMESCREEN_LAYOUT_V1|")) {
+            try {
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0) {
+                    CharSequence clipText = cm.getPrimaryClip().getItemAt(0).getText();
+                    if (clipText != null && clipText.toString().trim().startsWith("HOMESCREEN_LAYOUT_V1|")) {
+                        payload = clipText.toString().trim();
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (payload == null || !payload.startsWith("HOMESCREEN_LAYOUT_V1|")) {
+            Toast.makeText(this, "No saved layout found yet. Tap 'Save Layout' first!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        SharedPreferences.Editor e = p.edit();
+        String[] parts = payload.split("\\|");
+        int restoredTheme = universeTheme();
+        String restoredWp = WALLPAPER_NAMES[wallpaper()];
+        boolean restoredGlow = skyView == null || skyView.isEdgeGlowEnabled();
+
+        for (String part : parts) {
+            int eq = part.indexOf('=');
+            if (eq <= 0) continue;
+            String k = part.substring(0, eq).trim();
+            String v = part.substring(eq + 1).trim();
+            try {
+                if ("apps".equals(k) && !v.isEmpty()) {
+                    e.putString("apps", v);
+                } else if ("cp".equals(k)) {
+                    e.putInt(PREF_COLS_PORTRAIT, Math.max(2, Math.min(6, Integer.parseInt(v))));
+                } else if ("rp".equals(k)) {
+                    e.putInt(PREF_ROWS_PORTRAIT, Math.max(1, Math.min(6, Integer.parseInt(v))));
+                } else if ("cl".equals(k)) {
+                    e.putInt(PREF_COLS_LANDSCAPE, Math.max(2, Math.min(6, Integer.parseInt(v))));
+                } else if ("rl".equals(k)) {
+                    e.putInt(PREF_ROWS_LANDSCAPE, Math.max(1, Math.min(5, Integer.parseInt(v))));
+                } else if ("ct".equals(k)) {
+                    e.putInt(PREF_COLS_TV, Math.max(2, Math.min(8, Integer.parseInt(v))));
+                } else if ("rt".equals(k)) {
+                    e.putInt(PREF_ROWS_TV, Math.max(1, Math.min(5, Integer.parseInt(v))));
+                } else if ("theme".equals(k)) {
+                    restoredTheme = Math.max(0, Math.min(UNIVERSE_THEMES.length - 1, Integer.parseInt(v)));
+                    e.putInt(PREF_THEME, restoredTheme);
+                } else if ("wp".equals(k) && Arrays.asList(WALLPAPER_NAMES).contains(v)) {
+                    restoredWp = v;
+                    e.putString("wallpaper", v);
+                } else if ("glow".equals(k)) {
+                    restoredGlow = "1".equals(v);
+                    e.putBoolean("edge_glow", restoredGlow);
+                } else if ("clock".equals(k) && !v.isEmpty()) {
+                    if ("auto".equals(v)) e.remove(PREF_CLOCK);
+                    else e.putString(PREF_CLOCK, v);
+                } else if ("inputs".equals(k)) {
+                    e.putString(PREF_INPUT_NAMES, v.replace(";;", "\n"));
+                }
+            } catch (Exception ignored) {}
+        }
+        e.putString(PREF_SAVED_LAYOUT, payload);
+        e.apply();
+
+        if (skyView != null) {
+            skyView.setUniverseTheme(restoredTheme);
+            skyView.setPalette( Math.max(0, Arrays.asList(WALLPAPER_NAMES).indexOf(restoredWp)) );
+            skyView.setEdgeGlowEnabled(restoredGlow);
+        }
+        applyThemeTypography(restoredTheme);
+        buildTiles();
+        Toast.makeText(this, "Layout restored (" + rowApps.size() + " apps, " + UNIVERSE_THEMES[restoredTheme] + ")!", Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
+    private void inviteFriends() {
+        String shareText = "Check out HomeScreen v6.5.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
+                + GITHUB_RELEASE_URL;
+        try {
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null) {
+                cm.setPrimaryClip(ClipData.newPlainText("HomeScreen Download Link", GITHUB_RELEASE_URL));
+            }
+        } catch (Exception ignored) {}
+        try {
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("text/plain");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.0 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_TEXT, shareText);
+            Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(chooser);
+        } catch (Exception e) {
+            Toast.makeText(this, "Invite link copied to clipboard: " + GITHUB_RELEASE_URL, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
+    private void showInstallOnTvDialog() {
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.0_65.apk";
+        List<String> options = Arrays.asList(
+            "1. Share Download Link to TV (Quick Share / LocalSend)",
+            "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",
+            "3. Copy Wireless ADB Command (sh install.sh <TV_IP>)",
+            "4. Enable Default TV Home Override (Accessibility)",
+            "Back to App Settings"
+        );
+        panel("Install on Android TV / Google TV", options, which -> {
+            if (which == 0) {
+                inviteFriends();
+            } else if (which == 1) {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("HomeScreen TV URL", GITHUB_RELEASE_URL));
+                } catch (Exception ignored) {}
+                Toast.makeText(this, "Copied TV Download URL: " + GITHUB_RELEASE_URL, Toast.LENGTH_LONG).show();
+            } else if (which == 2) {
+                try {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("HomeScreen Wireless ADB", adbCmd));
+                } catch (Exception ignored) {}
+                Toast.makeText(this, "Copied ADB Command: " + adbCmd, Toast.LENGTH_LONG).show();
+            } else if (which == 3) {
+                try {
+                    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                } catch (Exception e) {
+                    openTvSettings();
+                }
+            } else {
+                showAppSettingsDialog();
+            }
+        });
     }
 
     // In-App Privacy Policy, Data Safety & OWASP MASVS Compliance Disclosure (Play Store Requirement)

@@ -4,13 +4,13 @@
 
 **Universal Multi-Universe Animated Home Launcher & Cinema Story Screensaver for Android TV, Google TV, Foldables, Phones & Tablets**
 
-[![Version](https://img.shields.io/badge/version-6.0.0-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
+[![Version](https://img.shields.io/badge/version-6.5.0-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Refresh Rate](https://img.shields.io/badge/Refresh_Rate-Dynamic_Up_to_120_FPS-00d2d3.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
-[![Size](https://img.shields.io/badge/APK_Size-414_KB-2ecc71.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
+[![Size](https://img.shields.io/badge/APK_Size-420_KB-2ecc71.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Platform](https://img.shields.io/badge/Android-5.0%2B_(TV_%7C_Foldable_%7C_Phone_%7C_Tablet)-3ddc84.svg?style=flat-square)](https://github.com/revumukka/HomeOS)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-*Six iconic cinematic universes. 300 live procedural up-to-120 FPS story scenes. Zero ads. Zero bloat. ~414 KB.*  
+*Six iconic cinematic universes. 300 live procedural up-to-120 FPS story scenes. Zero ads. Zero bloat. ~420 KB.*  
 *Created by [Revanth Mukka](https://github.com/revumukka) — vibe-coded from scratch with **Google Gemini Antigravity**.*
 
 </div>
@@ -19,7 +19,7 @@
 
 ## Overview
 
-**HomeScreen (`v6.0.0`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~414 KB` total APK size, zero external dependencies, zero trackers).
+**HomeScreen (`v6.5.0`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~420 KB` total APK size, zero external dependencies, zero trackers).
 
 Every element—from twinkling sky constellations and floating candles to custom crest banners, vector icons, and the **300-scene animated saga stage** along the bottom horizon—is drawn procedurally in real time on Android's hardware-accelerated `Canvas` with **sub-microsecond `elapsedRealtimeNanos()` timing**, **frame-rate-independent exponential damping**, and **zero per-frame heap allocations**.
 
@@ -42,6 +42,11 @@ Switch seamlessly at any time via the bottom **Theme** icon button:
 
 ## Key Features
 
+- **v6.5 Dedicated App Settings Page, Custom Grid Sizing & Layout Backup/Restore**:
+  - **Small About Section at the Top**: Displays app version (`HomeScreen v6.5.0 · Build 65`), creator credit, and quick **Invite Friends** + **Install on TV** action buttons.
+  - **Custom Apps in a Row (Columns) & Apps in a Column (Rows Before Overflow)**: Interactive `[ − ]  Value  [ + ]` steppers let you customize columns per row (`2–6` on Phones/Foldables/Tablets, `2–8` on TV) and vertical rows per page before overflow (`1–6` in Portrait, `1–5` in Landscape/Unfolded & TV) with live real-time layout updates and a one-tap **Reset Grid** button.
+  - **Save & Restore Layout**: One-tap **Save Layout** snapshots your pinned apps, posture row/column counts, active Universe Theme, Sky Palette, Edge Glow, Clock format, and HDMI input names to local storage *and* copies a portable `HOMESCREEN_LAYOUT_V1|...` backup string to the clipboard so you can restore or transfer your setup across devices with **Restore Layout**.
+  - **Invite Friends & Install on TV Guide**: Share a pre-formatted invitation link via Android's native share sheet or open the interactive **Install on Android TV / Google TV** modal (Quick Share / LocalSend to TV, direct TV browser release URL, and wireless ADB command copy).
 - **v6.0 Dynamic 120 FPS Cinematic Engine**:
   - **Adaptive High-Refresh-Rate Negotiation**: Automatically negotiates the highest supported display refresh rate (**120Hz**, **90Hz**, or **60Hz**) via `Display.Mode` and Android 11+ `Surface.setFrameRate` APIs.
   - **Sub-Microsecond Nanosecond Clock (`SystemClock.elapsedRealtimeNanos()`)**: Eliminates integer millisecond quantization jitter so 120Hz frames advance at a silky `8.33ms` cadence.
@@ -68,11 +73,11 @@ Switch seamlessly at any time via the bottom **Theme** icon button:
 
 ### Download Prebuilt APK
 Grab the latest signed universal APK from the [**Releases**](https://github.com/revumukka/HomeOS/releases) page:
-- `HomeScreen_Release_v6.0.0_60.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
+- `HomeScreen_Release_v6.5.0_65.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
 
 ### Install via ADB
 ```sh
-adb install -r out/HomeScreen_Release_v6.0.0_60.apk
+adb install -r out/HomeScreen_Release_v6.5.0_65.apk
 ```
 
 ---
@@ -86,8 +91,8 @@ sh build.sh
 ```
 
 Output APKs are generated in `out/`:
-- `out/HomeScreen_Release_v6.0.0_60.apk`
-- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v6.0.0-b60.apk`
+- `out/HomeScreen_Release_v6.5.0_65.apk`
+- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v6.5.0-b65.apk`
 - `out/HomeScreen.apk`
 
 ---
