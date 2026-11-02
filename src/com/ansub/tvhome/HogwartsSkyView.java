@@ -6830,46 +6830,56 @@ final class HogwartsSkyView extends View {
             emblemType = 5;
         }
 
-        p.setShader(new LinearGradient(0, 0, 0, h, topBg, botBg, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, w, h, p);
+        boolean squareBadge = Math.abs(bw - bh) <= 4;
+        p.setShader(new LinearGradient(0, 0, 0, bh, topBg, botBg, Shader.TileMode.CLAMP));
+        c.drawRect(0, 0, bw, bh, p);
 
-        p.setShader(new RadialGradient(w * 0.5f, h * 0.36f, w * 0.62f,
+        p.setShader(new RadialGradient(bw * 0.5f, squareBadge ? bh * 0.5f : bh * 0.36f, bw * 0.62f,
                 new int[] {glowCol, glowCol & 0x00FFFFFF}, null, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, w, h, p);
+        c.drawRect(0, 0, bw, bh, p);
         p.setShader(null);
 
-        float pad = 11f * cardScale;
-        float r = 18f * cardScale;
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(1.4f * cardScale);
-        p.setColor(0x52F5D078);
-        c.drawRoundRect(new RectF(pad, pad, w - pad, h - pad), r, r, p);
+        if (squareBadge) {
+            float pad = Math.max(3f, bw * 0.055f);
+            float r = bw * 0.24f;
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(Math.max(1.5f, bw * 0.018f));
+            p.setColor(0x66F5D078);
+            c.drawRoundRect(new RectF(pad, pad, bw - pad, bh - pad), r, r, p);
+        } else {
+            float pad = 11f * cardScale;
+            float r = 18f * cardScale;
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(1.4f * cardScale);
+            p.setColor(0x52F5D078);
+            c.drawRoundRect(new RectF(pad, pad, bw - pad, bh - pad), r, r, p);
 
-        float pad2 = 15f * cardScale;
-        p.setStrokeWidth(0.8f * cardScale);
-        p.setColor(0x2CF5D078);
-        c.drawRoundRect(new RectF(pad2, pad2, w - pad2, h - pad2), r * 0.8f, r * 0.8f, p);
+            float pad2 = 15f * cardScale;
+            p.setStrokeWidth(0.8f * cardScale);
+            p.setColor(0x2CF5D078);
+            c.drawRoundRect(new RectF(pad2, pad2, bw - pad2, bh - pad2), r * 0.8f, r * 0.8f, p);
 
-        p.setStyle(Paint.Style.FILL);
-        p.setColor(0x88FFE082);
-        float[][] corners = {
-            {pad + 6f * cardScale, pad + 6f * cardScale},
-            {w - pad - 6f * cardScale, pad + 6f * cardScale},
-            {pad + 6f * cardScale, h - pad - 6f * cardScale},
-            {w - pad - 6f * cardScale, h - pad - 6f * cardScale}
-        };
-        for (float[] cn : corners) c.drawCircle(cn[0], cn[1], 2.2f * cardScale, p);
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0x88FFE082);
+            float[][] corners = {
+                {pad + 6f * cardScale, pad + 6f * cardScale},
+                {bw - pad - 6f * cardScale, pad + 6f * cardScale},
+                {pad + 6f * cardScale, bh - pad - 6f * cardScale},
+                {bw - pad - 6f * cardScale, bh - pad - 6f * cardScale}
+            };
+            for (float[] cn : corners) c.drawCircle(cn[0], cn[1], 2.2f * cardScale, p);
+        }
 
-        float cx = bw * 0.5f, cy = bh * 0.34f;
-        float er = Math.min(24f * contentScale, bh * 0.22f);
+        float cx = bw * 0.5f, cy = squareBadge ? bh * 0.5f : bh * 0.34f;
+        float er = squareBadge ? (bw * 0.30f) : Math.min(24f * contentScale, bh * 0.22f);
 
-        p.setShader(new RadialGradient(cx, cy, er * 1.9f,
+        p.setShader(new RadialGradient(cx, cy, er * (squareBadge ? 1.45f : 1.9f),
                 new int[] {0x48FFD878, 0x00FFD878}, null, Shader.TileMode.CLAMP));
-        c.drawCircle(cx, cy, er * 1.9f, p);
+        c.drawCircle(cx, cy, er * (squareBadge ? 1.45f : 1.9f), p);
         p.setShader(null);
 
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(2.2f * contentScale);
+        p.setStrokeWidth(squareBadge ? Math.max(2f, bw * 0.024f) : (2.2f * contentScale));
         p.setColor(0xFFFFE498);
 
         if (!useCustomPackIcon && defaultIcon != null) {
@@ -7135,36 +7145,38 @@ final class HogwartsSkyView extends View {
             c.drawPath(wR, p);
         }
 
-        p.setStyle(Paint.Style.FILL);
-        p.setTextAlign(Paint.Align.CENTER);
-        if (harryFont != null) p.setTypeface(harryFont);
-        float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * contentScale;
-        p.setTextSize(titleSize);
-        float maxTextW = bw - 34f * cardScale;
-        if (label != null && maxTextW > 0) {
-            float measured = p.measureText(label);
-            if (measured > maxTextW) p.setTextSize(Math.max(13f * cardScale, titleSize * (maxTextW / measured)));
-        }
-        p.setColor(0xFFFFF4D2);
-        p.setShadowLayer(10f * cardScale, 0, 2f * cardScale, 0xCC000000);
-        c.drawText(label != null ? label : "", cx, bh * 0.74f, p);
+        if (!squareBadge) {
+            p.setStyle(Paint.Style.FILL);
+            p.setTextAlign(Paint.Align.CENTER);
+            if (harryFont != null) p.setTypeface(harryFont);
+            float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * contentScale;
+            p.setTextSize(titleSize);
+            float maxTextW = bw - 34f * cardScale;
+            if (label != null && maxTextW > 0) {
+                float measured = p.measureText(label);
+                if (measured > maxTextW) p.setTextSize(Math.max(13f * cardScale, titleSize * (maxTextW / measured)));
+            }
+            p.setColor(0xFFFFF4D2);
+            p.setShadowLayer(10f * cardScale, 0, 2f * cardScale, 0xCC000000);
+            c.drawText(label != null ? label : "", cx, bh * 0.74f, p);
 
-        if (cinzelFont != null) p.setTypeface(cinzelFont);
-        String subText = houseSub;
-        if (bw < 260 && subText != null) {
-            int pipe = subText.indexOf('|');
-            if (pipe > 0) subText = subText.substring(0, pipe).trim();
+            if (cinzelFont != null) p.setTypeface(cinzelFont);
+            String subText = houseSub;
+            if (bw < 260 && subText != null) {
+                int pipe = subText.indexOf('|');
+                if (pipe > 0) subText = subText.substring(0, pipe).trim();
+            }
+            float subSize = 11.5f * contentScale;
+            p.setTextSize(subSize);
+            p.setLetterSpacing(bw < 260 ? 0.10f : 0.18f);
+            if (subText != null && maxTextW > 0) {
+                float subMeasured = p.measureText(subText) * (bw < 260 ? 1.12f : 1.22f);
+                if (subMeasured > maxTextW) p.setTextSize(Math.max(9f * cardScale, subSize * (maxTextW / subMeasured)));
+            }
+            p.setColor(0xB8F5D488);
+            p.setShadowLayer(4f * cardScale, 0, 1f * cardScale, 0xAA000000);
+            c.drawText(subText != null ? subText : "", cx, bh * 0.88f, p);
         }
-        float subSize = 11.5f * contentScale;
-        p.setTextSize(subSize);
-        p.setLetterSpacing(bw < 260 ? 0.10f : 0.18f);
-        if (subText != null && maxTextW > 0) {
-            float subMeasured = p.measureText(subText) * (bw < 260 ? 1.12f : 1.22f);
-            if (subMeasured > maxTextW) p.setTextSize(Math.max(9f * cardScale, subSize * (maxTextW / subMeasured)));
-        }
-        p.setColor(0xB8F5D488);
-        p.setShadowLayer(4f * cardScale, 0, 1f * cardScale, 0xAA000000);
-        c.drawText(subText != null ? subText : "", cx, bh * 0.88f, p);
 
         // Keep bm as ARGB_8888 (never copy to Bitmap.Config.HARDWARE) so ImageView renders it on all OEMs (including Samsung One UI).
         return new BitmapDrawable(res, bm);

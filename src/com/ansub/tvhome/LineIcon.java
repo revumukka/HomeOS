@@ -42,6 +42,18 @@ final class LineIcon extends Drawable {
             0, 114, 56, 1, 168, 74, 1, 132, 198, 1, 96, 198,
             0, 152, 88, 1, 204, 118, 1, 154, 198, 1, 118, 198
     };
+    // 2x2 App Drawer Grid Icon
+    static final int[] APPS_GRID = {
+            0, 42, 42, 1, 102, 42, 1, 102, 102, 1, 42, 102, 2,
+            0, 138, 42, 1, 198, 42, 1, 198, 102, 1, 138, 102, 2,
+            0, 42, 138, 1, 102, 138, 1, 102, 198, 1, 42, 198, 2,
+            0, 138, 138, 1, 198, 138, 1, 198, 198, 1, 138, 198, 2
+    };
+    // Search Magnifying Glass Icon
+    static final int[] SEARCH = {
+            3, 105, 105, 55,
+            0, 146, 146, 1, 200, 200
+    };
 
     private final int[] ops;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);

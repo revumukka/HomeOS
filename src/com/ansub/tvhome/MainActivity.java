@@ -105,6 +105,7 @@ public class MainActivity extends Activity {
     private static final String QUICK = "quick:";
     private static final String GLOW_TOGGLE = "glow_toggle";
     private static final String THEME_PICK = "theme_pick";
+    private static final String ALL_APPS = "all_apps";
     private static final String PREF_THEME = "universe_theme";
     private static final String[] UNIVERSE_THEMES = {
         "Harry Potter",
@@ -271,6 +272,83 @@ public class MainActivity extends Activity {
 
     private int spx(int v) {
         return Math.round(v * settingsScale);
+    }
+
+    private boolean isTvDevice() {
+        try {
+            android.app.UiModeManager um = (android.app.UiModeManager) getSystemService(Context.UI_MODE_SERVICE);
+            if (um != null && um.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION) {
+                return true;
+            }
+        } catch (Throwable ignored) {}
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    // Expands Android's native Notification Center & Quick Settings shade on Swipe-Down gesture
+    @SuppressWarnings("WrongConstant")
+    private void expandNotifications() {
+        try {
+            Object sbService = getSystemService("statusbar");
+            if (sbService != null) {
+                java.lang.reflect.Method expand = sbService.getClass().getMethod("expandNotificationsPanel");
+                expand.invoke(sbService);
+                return;
+            }
+        } catch (Throwable ignored) {}
+        try {
+            Object sbService = getSystemService("statusbar");
+            if (sbService != null) {
+                java.lang.reflect.Method expand = sbService.getClass().getMethod("expand");
+                expand.invoke(sbService);
+                return;
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private float gestureDownX, gestureDownY;
+    private boolean gestureHandled;
+
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (!isTvDevice() && (activeDialog == null || !activeDialog.isShowing())) {
+            int action = ev.getActionMasked();
+            if (action == android.view.MotionEvent.ACTION_DOWN) {
+                gestureDownX = ev.getRawX();
+                gestureDownY = ev.getRawY();
+                gestureHandled = false;
+            } else if (action == android.view.MotionEvent.ACTION_MOVE && !gestureHandled) {
+                float dx = ev.getRawX() - gestureDownX;
+                float dy = ev.getRawY() - gestureDownY;
+                float slop = Math.max(upx(42), ViewConfiguration.get(this).getScaledTouchSlop() * 2.2f);
+                if (Math.abs(dy) > slop && Math.abs(dy) > Math.abs(dx) * 1.25f) {
+                    gestureHandled = true;
+                    android.view.MotionEvent cancel = android.view.MotionEvent.obtain(ev);
+                    cancel.setAction(android.view.MotionEvent.ACTION_CANCEL);
+                    super.dispatchTouchEvent(cancel);
+                    cancel.recycle();
+                    if (dy < 0) {
+                        showAllAppsDrawer();
+                    } else {
+                        expandNotifications();
+                    }
+                    return true;
+                } else if (gestureDownY >= getResources().getDisplayMetrics().heightPixels * 0.62f
+                        && Math.abs(dx) > slop && Math.abs(dx) > Math.abs(dy) * 1.25f && skyView != null) {
+                    gestureHandled = true;
+                    android.view.MotionEvent cancel = android.view.MotionEvent.obtain(ev);
+                    cancel.setAction(android.view.MotionEvent.ACTION_CANCEL);
+                    super.dispatchTouchEvent(cancel);
+                    cancel.recycle();
+                    if (dx < 0) skyView.nextStoryScene();
+                    else skyView.prevStoryScene();
+                    return true;
+                }
+            } else if (action == android.view.MotionEvent.ACTION_UP && gestureHandled) {
+                gestureHandled = false;
+                return true;
+            }
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     @Override
@@ -803,100 +881,153 @@ public class MainActivity extends Activity {
         for (String pkg : apps) if (launchIntent(pm, pkg) != null) launchable++;
 
         boolean store = !apps.contains(PLAY_STORE) && launchIntent(pm, PLAY_STORE) != null;
-        int topCols = launchable <= PER_ROW ? Math.max(1, launchable) : PER_ROW;
-        List<TvInputInfo> inputs = hdmiInputs();
-        int room = Math.max(1, topCols - 2 - (store ? 1 : 0));
-        if (inputs.size() > room) inputs = inputs.subList(0, room);
-        int bottomCount = (store ? 1 : 0) + inputs.size() + 2;
+        boolean tvMode = isTvDevice();
 
-        // On Portrait / Foldable Outer & Inner screens, use a 3-column grid (3 large cards + 2 centered large cards)
-        // so cards are ~1.7x bigger instead of a shrunk 5-column TV strip. On Landscape TVs, keep 5 columns.
-        if (isPortrait) {
-            cols = Math.min(3, Math.max(1, launchable));
+        if (!tvMode) {
+            // Award-Winning Phone / Foldable / Tablet Home Screen UX:
+            // 1. No hard-to-reach top-right TV dock — clean Clock + Weather header at top-left.
+            // 2. Pinned Home Screen apps rendered as sleek squircle medallion icons + single-line labels underneath
+            //    with open sky around them (4 columns on cover screen, 5 columns on unfolded inner screen / tablet).
+            // 3. Ergonomic thumb-zone 4-button glass control dock below the apps: All Apps, Theme, Pin, Settings.
+            // 4. Swipe Up anywhere -> All Apps Drawer with search; Swipe Down anywhere -> Android Notification Shade.
+            cols = (screenW < screenH * 0.65f) ? 4 : 5;
+            cols = Math.min(cols, Math.max(4, launchable));
+            int w = (screenW - 2 * m - g * (cols - 1)) / cols;
+            int iconSize = Math.min(Math.round(w * 0.68f), upx(132));
+            int labelH = upx(38);
+            int h = iconSize + labelH;
+            tileW = w;
+            tileH = h;
+            rowStepPx = h + Math.max(upx(14), g / 2);
+
+            int rows = Math.max(1, (launchable + cols - 1) / cols);
+            gridTop = clockTop + upx(152);
+            int bottomTop = gridTop + rows * rowStepPx + upx(18);
+            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(40);
+
+            for (String pkg : apps) {
+                if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
+            }
+            for (int i = 0; i < rowApps.size(); i++) {
+                String pkg = rowApps.get(i);
+                String label = pkg;
+                Drawable defaultIcon = null;
+                try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
+                try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
+                Drawable badge = HogwartsSkyView.createHogwartsBanner(
+                        getResources(), pkg, label, iconSize, iconSize, uiScale,
+                        themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
+                addMobileAppTile(root, pkg, label, badge, defaultIcon, gridX(i), gridY(i), w, h, iconSize);
+            }
+
+            // Thumb-zone 4-button ergonomic dock: All Apps, Theme, Pin App, Settings
+            int dockCount = 4;
+            int dockGap = Math.max(upx(10), g / 2);
+            int maxDockW = Math.min(screenW - 2 * m, upx(920));
+            int dockBtnW = (maxDockW - dockGap * (dockCount - 1)) / dockCount;
+            int dockBtnH = upx(58);
+            int dockStartX = (screenW - (dockCount * dockBtnW + (dockCount - 1) * dockGap)) / 2;
+
+            addTile(root, ALL_APPS, "Apps", null, LineIcon.APPS_GRID, null, dockStartX, bottomTop, dockBtnW, dockBtnH);
+            addTile(root, THEME_PICK, "Theme", null, LineIcon.THEMES, null, dockStartX + (dockBtnW + dockGap), bottomTop, dockBtnW, dockBtnH);
+            addTile(root, ADD, "Pin", null, LineIcon.PLUS, null, dockStartX + 2 * (dockBtnW + dockGap), bottomTop, dockBtnW, dockBtnH);
+            addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, dockStartX + 3 * (dockBtnW + dockGap), bottomTop, dockBtnW, dockBtnH);
+
+            // Subtle gesture hint pill underneath the control dock
+            TextView gestureHint = text(upx(16), 0x88FFE8B0, cinzelFont != null ? cinzelFont : regular);
+            gestureHint.setText("\u2303 Swipe up for All Apps   \u00B7   \u2304 Swipe down for Notifications");
+            gestureHint.setLetterSpacing(0.06f);
+            gestureHint.setGravity(Gravity.CENTER);
+            gestureHint.setShadowLayer(px(6), 0, px(2), 0xAA000000);
+            root.addView(gestureHint, at(m, bottomTop + dockBtnH + upx(12), screenW - 2 * m, -2));
+            chrome.add(gestureHint);
+
+            root.setMinimumHeight(bottomTop + dockBtnH + upx(48) + m);
+            netIcon = null;
+            glowIconView = null;
         } else {
+            int topCols = launchable <= PER_ROW ? Math.max(1, launchable) : PER_ROW;
+            List<TvInputInfo> inputs = hdmiInputs();
+            int room = Math.max(1, topCols - 2 - (store ? 1 : 0));
+            if (inputs.size() > room) inputs = inputs.subList(0, room);
+            int bottomCount = (store ? 1 : 0) + inputs.size() + 2;
             cols = Math.max(5, Math.min(PER_ROW, Math.max(topCols, bottomCount)));
-        }
 
-        int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-        int h = isPortrait ? Math.round(w * 0.58f) : (w * 9 / 16);
-        int bottomCols = isPortrait ? Math.max(cols, bottomCount) : cols;
-        int bottomW = isPortrait ? ((screenW - 2 * m - g * (bottomCols - 1)) / bottomCols) : w;
-        int bottomH = isPortrait ? Math.max(upx(52), Math.round(h * 0.30f)) : px(52);
-        tileW = w;
-        tileH = h;
-        rowStepPx = isPortrait ? (h + g) : Math.max(px(ROW_STEP), h + px(22));
+            int w = (screenW - 2 * m - g * (cols - 1)) / cols;
+            int h = w * 9 / 16;
+            int bottomW = w;
+            int bottomH = px(52);
+            tileW = w;
+            tileH = h;
+            rowStepPx = Math.max(px(ROW_STEP), h + px(22));
 
-        // Top-right quick toggles dock (icon-only): Glow On/Off, Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
-        List<Integer> quick = quickList();
-        int totalTopItems = quick.size() + 3; // Glow toggle + Theme picker + quick items + Wi-Fi
-        float dockScale = isPortrait ? (uiScale * 0.92f) : scale;
-        int itemW = Math.round((isPortrait ? 54 : 56) * dockScale);
-        int itemH = Math.round((isPortrait ? 48 : 50) * dockScale);
-        int ig = Math.round(6 * dockScale), dockPad = Math.round(8 * dockScale);
-        int gridRight = (screenW + (cols * w + (cols - 1) * g)) / 2;
-        int dockW = totalTopItems * itemW + (totalTopItems - 1) * ig + 2 * dockPad;
-        int dockH = itemH + 2 * dockPad;
-        int dockX = Math.max(m, gridRight - dockW);
-        int dockY = isPortrait ? (clockTop + upx(44)) : Math.max(px(20), px(58) - dockPad);
-        int iconY = dockY + dockPad;
+            // Top-right quick toggles dock (icon-only): Glow On/Off, Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
+            List<Integer> quick = quickList();
+            int totalTopItems = quick.size() + 3; // Glow toggle + Theme picker + quick items + Wi-Fi
+            int itemW = Math.round(56 * scale);
+            int itemH = Math.round(50 * scale);
+            int ig = Math.round(6 * scale), dockPad = Math.round(8 * scale);
+            int gridRight = (screenW + (cols * w + (cols - 1) * g)) / 2;
+            int dockW = totalTopItems * itemW + (totalTopItems - 1) * ig + 2 * dockPad;
+            int dockH = itemH + 2 * dockPad;
+            int dockX = Math.max(m, gridRight - dockW);
+            int dockY = Math.max(px(20), px(58) - dockPad);
+            int iconY = dockY + dockPad;
 
-        int rows = Math.max(1, (launchable + cols - 1) / cols);
-        if (isPortrait) {
-            gridTop = Math.max(clockTop + upx(156), dockY + dockH + upx(24));
-        } else {
+            int rows = Math.max(1, (launchable + cols - 1) / cols);
             gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * rowStepPx);
-        }
-        int bottomTop = gridTop + rows * rowStepPx + (isPortrait ? Math.max(upx(6), g / 3) : px(6));
-        ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(42);
-        root.setMinimumHeight(bottomTop + bottomH + m);
+            int bottomTop = gridTop + rows * rowStepPx + px(6);
+            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(42);
+            root.setMinimumHeight(bottomTop + bottomH + m);
 
-        for (String pkg : apps) {
-            if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
-        }
-        for (int i = 0; i < rowApps.size(); i++) {
-            String pkg = rowApps.get(i);
-            String label = pkg;
-            Drawable defaultIcon = null;
-            try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
-            try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
-            Drawable banner = HogwartsSkyView.createHogwartsBanner(
-                    getResources(), pkg, label, w, h, scale, themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
-            addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
-        }
+            for (String pkg : apps) {
+                if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
+            }
+            for (int i = 0; i < rowApps.size(); i++) {
+                String pkg = rowApps.get(i);
+                String label = pkg;
+                Drawable defaultIcon = null;
+                try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
+                try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
+                Drawable banner = HogwartsSkyView.createHogwartsBanner(
+                        getResources(), pkg, label, w, h, scale, themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
+                addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
+            }
 
-        // Compact bottom row: aligned column-for-column with the app card columns above.
-        int col = 0;
-        int bottomRowW = bottomCount * bottomW + (bottomCount - 1) * g;
-        int bottomStartX = (screenW - bottomRowW) / 2;
-        if (store)
-            addTile(root, PLAY_STORE, "Play Store", null, LineIcon.PLAY, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
-        for (TvInputInfo in : inputs)
-            addTile(root, in.getId(), inputLabel(in), null, LineIcon.HDMI, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
-        addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
-        addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, bottomStartX + col * (bottomW + g), bottomTop, bottomW, bottomH);
+            // Compact bottom row: aligned column-for-column with the app card columns above.
+            int col = 0;
+            int bottomRowW = bottomCount * bottomW + (bottomCount - 1) * g;
+            int bottomStartX = (screenW - bottomRowW) / 2;
+            if (store)
+                addTile(root, PLAY_STORE, "Play Store", null, LineIcon.PLAY, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
+            for (TvInputInfo in : inputs)
+                addTile(root, in.getId(), inputLabel(in), null, LineIcon.HDMI, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
+            addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
+            addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, bottomStartX + col * (bottomW + g), bottomTop, bottomW, bottomH);
 
-        View dock = new View(this);
-        GradientDrawable dockBg = new GradientDrawable();
-        dockBg.setCornerRadius(dockH / 2f);
-        dockBg.setColor(0x22181210);
-        dockBg.setStroke(Math.max(1, px(1)), 0x38F5D078);
-        dock.setBackground(dockBg);
-        root.addView(dock, at(dockX, dockY, dockW, dockH));
-        chrome.add(dock);
+            View dock = new View(this);
+            GradientDrawable dockBg = new GradientDrawable();
+            dockBg.setCornerRadius(dockH / 2f);
+            dockBg.setColor(0x22181210);
+            dockBg.setStroke(Math.max(1, px(1)), 0x38F5D078);
+            dock.setBackground(dockBg);
+            root.addView(dock, at(dockX, dockY, dockW, dockH));
+            chrome.add(dock);
 
-        int qx = dockX + dockPad;
-        boolean glowEnabled = skyView == null || skyView.isEdgeGlowEnabled();
-        glowIconView = addIcon(GLOW_TOGGLE, glowEnabled ? "Glow On" : "Glow Off", createGlowDrawable(glowEnabled), qx, iconY, itemW, itemH);
-        qx += itemW + ig;
-        addIcon(THEME_PICK, "Theme", createThemeDrawable(universeTheme()), qx, iconY, itemW, itemH);
-        qx += itemW + ig;
-        for (int q : quick) {
-            addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), qx, iconY, itemW, itemH);
+            int qx = dockX + dockPad;
+            boolean glowEnabled = skyView == null || skyView.isEdgeGlowEnabled();
+            glowIconView = addIcon(GLOW_TOGGLE, glowEnabled ? "Glow On" : "Glow Off", createGlowDrawable(glowEnabled), qx, iconY, itemW, itemH);
             qx += itemW + ig;
+            addIcon(THEME_PICK, "Theme", createThemeDrawable(universeTheme()), qx, iconY, itemW, itemH);
+            qx += itemW + ig;
+            for (int q : quick) {
+                addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), qx, iconY, itemW, itemH);
+                qx += itemW + ig;
+            }
+            netIcon = addIcon(NETWORK, "Wi-Fi", null, qx, iconY, itemW, itemH);
+            netState = -1;
+            refreshNetwork();
         }
-        netIcon = addIcon(NETWORK, "Wi-Fi", null, qx, iconY, itemW, itemH);
-        netState = -1;
-        refreshNetwork();
 
         root.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
         // An app that was uninstalled hands focus to the one now in its place, as Remove does.
@@ -905,6 +1036,119 @@ public class MainActivity extends Activity {
         View restore = null;
         for (View t : tiles) if (t.getTag().equals(want)) restore = t;
         if (restore != null) restore.requestFocus();
+    }
+
+    // Sleek Phone / Foldable / Tablet Home Screen App Icon Tile:
+    // Squircle medallion icon badge + crisp single-line app name label underneath with open transparent sky around it.
+    private void addMobileAppTile(ViewGroup parent, final String key, String label, Drawable badge, Drawable appIcon,
+                                  int x, int y, int w, int h, int iconSize) {
+        LinearLayout cell = new LinearLayout(this);
+        cell.setOrientation(LinearLayout.VERTICAL);
+        cell.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
+        cell.setClipChildren(false);
+        cell.setFocusable(true);
+        cell.setTag(key);
+
+        final int badgeRadius = Math.round(iconSize * 0.26f);
+        final FrameLayout iconBox = new FrameLayout(this);
+        final GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(badgeRadius);
+        bg.setColor(0xFF18141E);
+        iconBox.setBackground(bg);
+        iconBox.setClipToOutline(true);
+
+        if (badge != null) {
+            ImageView iv = new ImageView(this);
+            iv.setScaleType(ImageView.ScaleType.FIT_XY);
+            iv.setImageDrawable(badge);
+            iconBox.addView(iv, new FrameLayout.LayoutParams(-1, -1));
+        }
+        if (appIcon != null && !HogwartsSkyView.isCustomIconPackApp(key)) {
+            int d = Math.max(1, Math.round(iconSize * 0.62f));
+            ImageView iconIv = new ImageView(this);
+            iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            iconIv.setImageDrawable(appIcon);
+            GradientDrawable medBg = new GradientDrawable();
+            medBg.setShape(GradientDrawable.OVAL);
+            medBg.setColor(0xFF0C0914);
+            iconIv.setBackground(medBg);
+            iconIv.setClipToOutline(true);
+            FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(d, d);
+            ilp.gravity = Gravity.CENTER;
+            iconBox.addView(iconIv, ilp);
+        }
+
+        final GradientDrawable border = new GradientDrawable();
+        border.setCornerRadius(badgeRadius);
+        border.setColor(Color.TRANSPARENT);
+        border.setStroke(Math.max(1, upx(2)), 0x55F5D078);
+        iconBox.setForeground(border);
+        cell.addView(iconBox, new LinearLayout.LayoutParams(iconSize, iconSize));
+
+        final TextView titleView = text(upx(20), 0xF5FFF4D2, themeFontFor(universeTheme()));
+        titleView.setText(label);
+        titleView.setSingleLine(true);
+        titleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        titleView.setGravity(Gravity.CENTER_HORIZONTAL);
+        titleView.setShadowLayer(px(8), 0, px(2), 0xDD000000);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(w, -2);
+        tlp.topMargin = upx(6);
+        cell.addView(titleView, tlp);
+
+        final int houseCol = HogwartsSkyView.houseColorFor(key);
+        final int focusBorderCol = blend(0xFFFFE082, (0xFF << 24) | (houseCol & 0xFFFFFF), 0.45f);
+        cell.setOnFocusChangeListener((v, has) -> {
+            if (has) {
+                focusedKey = key;
+                if (skyView != null) {
+                    skyView.setReactiveColor(houseCol, false);
+                    skyView.onTileFocused(x + w * 0.5f, y + iconSize * 0.5f, y, houseCol);
+                }
+            }
+            iconBox.animate().cancel();
+            iconBox.animate().scaleX(has ? 1.08f : 1f).scaleY(has ? 1.08f : 1f)
+                    .translationY(has ? -upx(4) : 0)
+                    .setDuration(FOCUS_MS).setInterpolator(FOCUS_EASE).withLayer().start();
+            if (!key.equals(movingKey)) {
+                border.setStroke(Math.max(1, upx(has ? 3 : 2)), has ? focusBorderCol : 0x55F5D078);
+            }
+            titleView.setTextColor(has ? 0xFFFFF8E4 : 0xF5FFF4D2);
+        });
+
+        cell.setOnClickListener(v -> open(key));
+        cell.setOnLongClickListener(v -> { showEditMenu(key); return true; });
+        cell.setOnKeyListener((v, code, ev) -> {
+            boolean ok = code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
+                    || code == KeyEvent.KEYCODE_NUMPAD_ENTER;
+            boolean down = ev.getAction() == KeyEvent.ACTION_DOWN;
+            if (key.equals(movingKey)) return moveKey(key, code, ok, down);
+            if (code == KeyEvent.KEYCODE_MENU) {
+                if (!down) showEditMenu(key);
+                return true;
+            }
+            if (!ok) return false;
+            if (down) {
+                if (ev.getRepeatCount() == 0) {
+                    longPressed = false;
+                    okDownKey = key;
+                } else if (!longPressed && (ev.isLongPress()
+                        || ev.getEventTime() - ev.getDownTime() >= ViewConfiguration.getLongPressTimeout())) {
+                    longPressed = true;
+                    showEditMenu(key);
+                }
+            } else {
+                boolean pressed = key.equals(okDownKey) && !ev.isCanceled();
+                okDownKey = null;
+                if (pressed && !longPressed) open(key);
+            }
+            return true;
+        });
+
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.setClipChildren(false);
+        wrap.addView(cell, new FrameLayout.LayoutParams(w, h));
+        parent.addView(wrap, at(x, y, w, h));
+        tiles.add(cell);
     }
 
     private void addTile(ViewGroup parent, final String key, String label, Drawable banner, int[] lineIcon, Drawable appIcon,
@@ -1399,29 +1643,42 @@ public class MainActivity extends Activity {
         } else if (THEME_PICK.equals(key)) {
             showThemePicker();
             return;
+        } else if (ALL_APPS.equals(key)) {
+            showAllAppsDrawer();
+            return;
         } else if (ADD.equals(key)) {
             showAddMenu(-1);
             return;
         } else if (SETTINGS.equals(key)) {
-            // A box has no screen of its own to dim: its picture is the TV's, on the TV's remote. On NVIDIA
-            // Shield, Brightness also fell back to a Display & Sound page that's listed but missing there.
+            // Deduplicated Settings menu tailored to device class:
+            // Theme has its own dedicated button; on TV, Glow also has its own dock button.
             List<String> list = new ArrayList<>();
-            list.add("Universe Theme");
+            list.add("Sky Palette");
+            if (!isTvDevice()) {
+                boolean glowOn = skyView == null || skyView.isEdgeGlowEnabled();
+                list.add(glowOn ? "Turn Glow Off" : "Turn Glow On");
+            }
             list.add("Next Story Scene");
-            boolean glowOn = skyView == null || skyView.isEdgeGlowEnabled();
-            list.add(glowOn ? "Turn Glow Off" : "Turn Glow On");
-            list.addAll(Arrays.asList(SETTINGS_ITEMS));
-            if (isBox(this)) list.remove("Brightness");
+            if (isTvDevice()) {
+                if (!isBox(this)) list.add("Brightness");
+                list.add("TV settings");
+            } else {
+                list.add("System Settings");
+            }
             final String[] items = list.toArray(new String[0]);
             dropdown(tile(SETTINGS), items, which -> {
-                if ("Universe Theme".equals(items[which])) {
-                    showThemePicker();
-                } else if ("Next Story Scene".equals(items[which])) {
+                String picked = items[which];
+                if ("Sky Palette".equals(picked) || "Wallpaper".equals(picked)) {
+                    showWallpapers();
+                } else if ("Next Story Scene".equals(picked)) {
                     if (skyView != null) skyView.nextStoryScene();
-                } else if (items[which].startsWith("Turn Glow")) toggleEdgeGlow();
-                else if ("Wallpaper".equals(items[which])) showWallpapers();
-                else if ("Brightness".equals(items[which])) openBrightness();
-                else openTvSettings();
+                } else if (picked.startsWith("Turn Glow")) {
+                    toggleEdgeGlow();
+                } else if ("Brightness".equals(picked)) {
+                    openBrightness();
+                } else {
+                    openTvSettings();
+                }
             });
             return;
         } else if (isInput(key)) {
@@ -2001,6 +2258,262 @@ public class MainActivity extends Activity {
             focusedKey = pkgs.get(which);
             buildTiles();
         });
+    }
+
+    // Full-screen / Bottom-Sheet Searchable All Apps Drawer triggered by Swipe-Up or the "Apps" dock button.
+    // Displays every launchable app installed on the device in a 4/5-column grid with instant search,
+    // tap-to-launch, and long-press to Pin/Unpin, App Info, or Uninstall.
+    private void showAllAppsDrawer() {
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+        }
+        final PackageManager pm = getPackageManager();
+        TreeMap<String, String> byLabel = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (String category : new String[] {Intent.CATEGORY_LAUNCHER, Intent.CATEGORY_LEANBACK_LAUNCHER}) {
+            Intent q = new Intent(Intent.ACTION_MAIN).addCategory(category);
+            for (ResolveInfo ri : pm.queryIntentActivities(q, 0)) {
+                String p = ri.activityInfo.packageName;
+                if (byLabel.containsValue(p) || p.equals(getPackageName())) continue;
+                String label = labelOf(p);
+                String key = label;
+                int dup = 2;
+                while (byLabel.containsKey(key)) key = label + " (" + (dup++) + ")";
+                byLabel.put(key, p);
+            }
+        }
+        final List<String> allLabels = new ArrayList<>(byLabel.keySet());
+        final List<String> allPkgs = new ArrayList<>(byLabel.values());
+        final List<String> filteredLabels = new ArrayList<>(allLabels);
+        final List<String> filteredPkgs = new ArrayList<>(allPkgs);
+        final Map<String, Drawable> iconCache = new HashMap<>();
+
+        final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        activeDialog = d;
+
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        int drawerCols = (screenW < screenH * 0.65f) ? 4 : 5;
+
+        LinearLayout sheet = new LinearLayout(this);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(spx(28), spx(18), spx(28), spx(24));
+        GradientDrawable sheetBg = new GradientDrawable();
+        float topRad = spx(36);
+        sheetBg.setCornerRadii(new float[] {topRad, topRad, topRad, topRad, 0, 0, 0, 0});
+        sheetBg.setColor(0xF4100D18);
+        sheetBg.setStroke(Math.max(1, spx(2)), 0x55F5D078);
+        sheet.setBackground(sheetBg);
+
+        // Top drag handle pill
+        View handle = new View(this);
+        GradientDrawable hBg = new GradientDrawable();
+        hBg.setCornerRadius(spx(4));
+        hBg.setColor(0x66FFE8B0);
+        handle.setBackground(hBg);
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(spx(64), spx(6));
+        hlp.gravity = Gravity.CENTER_HORIZONTAL;
+        hlp.bottomMargin = spx(14);
+        sheet.addView(handle, hlp);
+
+        // Header row: "ALL APPS" + count badge
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView headTitle = text(spx(26), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        headTitle.setText("ALL APPS");
+        headTitle.setLetterSpacing(0.10f);
+        headerRow.addView(headTitle, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        final TextView countBadge = text(spx(16), 0xAAFFE8B0, cinzelFont != null ? cinzelFont : regular);
+        countBadge.setText(allPkgs.size() + " APPS");
+        countBadge.setLetterSpacing(0.08f);
+        headerRow.addView(countBadge, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout.LayoutParams hrlp = new LinearLayout.LayoutParams(-1, -2);
+        hrlp.bottomMargin = spx(14);
+        sheet.addView(headerRow, hrlp);
+
+        // Search bar with LineIcon.SEARCH
+        LinearLayout searchBox = new LinearLayout(this);
+        searchBox.setOrientation(LinearLayout.HORIZONTAL);
+        searchBox.setGravity(Gravity.CENTER_VERTICAL);
+        searchBox.setPadding(spx(18), spx(8), spx(18), spx(8));
+        GradientDrawable sBg = new GradientDrawable();
+        sBg.setCornerRadius(spx(28));
+        sBg.setColor(0x28FFFFFF);
+        sBg.setStroke(Math.max(1, spx(1)), 0x44F5D078);
+        searchBox.setBackground(sBg);
+
+        ImageView sIcon = new ImageView(this);
+        LineIcon searchLi = new LineIcon(LineIcon.SEARCH);
+        searchLi.setColorFilter(0xCCFFE8B0, android.graphics.PorterDuff.Mode.SRC_IN);
+        sIcon.setImageDrawable(searchLi);
+        searchBox.addView(sIcon, new LinearLayout.LayoutParams(spx(24), spx(24)));
+
+        final EditText searchInput = new EditText(this);
+        searchInput.setHint("Search installed apps\u2026");
+        searchInput.setHintTextColor(0x77FFE8B0);
+        searchInput.setTextColor(0xFFFFF4D2);
+        searchInput.setTextSize(TypedValue.COMPLEX_UNIT_PX, spx(20));
+        searchInput.setSingleLine(true);
+        searchInput.setBackground( null);
+        searchInput.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        searchInput.setPadding(spx(14), spx(6), spx(10), spx(6));
+        searchBox.addView(searchInput, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        LinearLayout.LayoutParams sblp = new LinearLayout.LayoutParams(-1, -2);
+        sblp.bottomMargin = spx(18);
+        sheet.addView(searchBox, sblp);
+
+        // Responsive GridView of all installed apps
+        final android.widget.GridView grid = new android.widget.GridView(this);
+        grid.setNumColumns(drawerCols);
+        grid.setVerticalSpacing(spx(18));
+        grid.setHorizontalSpacing(spx(12));
+        grid.setStretchMode(android.widget.GridView.STRETCH_COLUMN_WIDTH);
+        grid.setVerticalScrollBarEnabled(false);
+        grid.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        GradientDrawable gridSel = new GradientDrawable();
+        gridSel.setCornerRadius(spx(20));
+        gridSel.setColor(0x28FFE8B0);
+        grid.setSelector(gridSel);
+
+        final int cellIconSize = spx(76);
+        final BaseAdapter adapter = new BaseAdapter() {
+            @Override public int getCount() { return filteredPkgs.size(); }
+            @Override public Object getItem(int pos) { return filteredPkgs.get(pos); }
+            @Override public long getItemId(int pos) { return pos; }
+            @Override public View getView(int pos, View convert, ViewGroup parent) {
+                LinearLayout cell;
+                ImageView iconIv;
+                TextView nameTv;
+                if (convert instanceof LinearLayout) {
+                    cell = (LinearLayout) convert;
+                    FrameLayout box = (FrameLayout) cell.getChildAt(0);
+                    iconIv = (ImageView) box.getChildAt(0);
+                    nameTv = (TextView) cell.getChildAt(1);
+                } else {
+                    cell = new LinearLayout(MainActivity.this);
+                    cell.setOrientation(LinearLayout.VERTICAL);
+                    cell.setGravity(Gravity.CENTER_HORIZONTAL);
+                    cell.setPadding(spx(4), spx(8), spx(4), spx(8));
+
+                    FrameLayout box = new FrameLayout(MainActivity.this);
+                    GradientDrawable bBg = new GradientDrawable();
+                    bBg.setCornerRadius(Math.round(cellIconSize * 0.26f));
+                    bBg.setColor(0xFF181422);
+                    bBg.setStroke(Math.max(1, spx(1)), 0x44F5D078);
+                    box.setBackground(bBg);
+
+                    iconIv = new ImageView(MainActivity.this);
+                    iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    int pad = Math.round(cellIconSize * 0.14f);
+                    iconIv.setPadding(pad, pad, pad, pad);
+                    box.addView(iconIv, new FrameLayout.LayoutParams(cellIconSize, cellIconSize));
+                    cell.addView(box, new LinearLayout.LayoutParams(cellIconSize, cellIconSize));
+
+                    nameTv = text(spx(16), 0xEEFFF4D2, regular);
+                    nameTv.setSingleLine(true);
+                    nameTv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    nameTv.setGravity(Gravity.CENTER_HORIZONTAL);
+                    LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(-1, -2);
+                    nlp.topMargin = spx(6);
+                    cell.addView(nameTv, nlp);
+                }
+                String pkg = filteredPkgs.get(pos);
+                String lbl = filteredLabels.get(pos);
+                boolean pinned = rowApps.contains(pkg);
+                nameTv.setText(pinned ? ("\u2605 " + lbl) : lbl);
+                nameTv.setTextColor(pinned ? 0xFFFFE082 : 0xEEFFF4D2);
+
+                Drawable ic = iconCache.get(pkg);
+                if (ic == null) {
+                    try {
+                        ic = pm.getApplicationIcon(pkg);
+                        iconCache.put(pkg, ic);
+                    } catch (Exception ignored) {}
+                }
+                iconIv.setImageDrawable(ic);
+                return cell;
+            }
+        };
+        grid.setAdapter(adapter);
+
+        grid.setOnItemClickListener((parent, v, pos, id) -> {
+            if (pos >= 0 && pos < filteredPkgs.size()) {
+                String pkg = filteredPkgs.get(pos);
+                d.dismiss();
+                open(pkg);
+            }
+        });
+
+        grid.setOnItemLongClickListener((parent, v, pos, id) -> {
+            if (pos < 0 || pos >= filteredPkgs.size()) return false;
+            final String pkg = filteredPkgs.get(pos);
+            final boolean pinned = rowApps.contains(pkg);
+            final boolean user = userInstalled(pkg);
+            final String[] actions = user
+                    ? new String[] {pinned ? "Remove from Home" : "Pin to Home", "App info", "Uninstall"}
+                    : new String[] {pinned ? "Remove from Home" : "Pin to Home", "App info"};
+            dropdown(v, actions, which -> {
+                if (which == 0) {
+                    if (pinned) rowApps.remove(pkg);
+                    else rowApps.add(pkg);
+                    saveRow();
+                    buildTiles();
+                    adapter.notifyDataSetChanged();
+                } else if (which == 1) {
+                    d.dismiss();
+                    openAppInfo(pkg);
+                } else if (which == 2) {
+                    d.dismiss();
+                    try { startActivity(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + pkg))); }
+                    catch (Exception ignored) {}
+                }
+            });
+            return true;
+        });
+
+        searchInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String q = s == null ? "" : s.toString().trim().toLowerCase(java.util.Locale.ROOT);
+                filteredLabels.clear();
+                filteredPkgs.clear();
+                for (int i = 0; i < allLabels.size(); i++) {
+                    String lbl = allLabels.get(i);
+                    String pk = allPkgs.get(i);
+                    if (q.isEmpty() || lbl.toLowerCase(java.util.Locale.ROOT).contains(q)
+                            || pk.toLowerCase(java.util.Locale.ROOT).contains(q)) {
+                        filteredLabels.add(lbl);
+                        filteredPkgs.add(pk);
+                    }
+                }
+                countBadge.setText(filteredPkgs.size() + " APPS");
+                adapter.notifyDataSetChanged();
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        sheet.addView(grid, new LinearLayout.LayoutParams(-1, 0, 1f));
+        d.setContentView(sheet);
+
+        int sheetH = Math.round(screenH * 0.86f);
+        Window win = d.getWindow();
+        win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        win.setGravity(Gravity.BOTTOM);
+        win.setDimAmount(0.58f);
+        win.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
+                | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        win.setLayout(screenW, sheetH);
+        d.show();
+        win.setLayout(screenW, sheetH);
+    }
+
+    private void openAppInfo(String pkg) {
+        try {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Exception ignored) {}
     }
 
     private String labelOf(String pkg) {
