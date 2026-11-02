@@ -42,7 +42,7 @@ APK=out/tvhome.apk
 if [ ! -f "$APK" ]; then
   APK=$(mktemp -d)/tvhome.apk
   echo "Downloading the home screen…"
-  curl -fsSL -o "$APK" https://github.com/revumukka/HomeOS/releases/latest/download/HomeScreen_Release_v5.1.0_51.apk
+  curl -fsSL -o "$APK" https://github.com/revumukka/HomeOS/releases/latest/download/HomeScreen_Release_v5.1.1_52.apk
 fi
 
 echo "Installing… If your TV shows a Google Play Protect message, follow it on the TV to allow the install."

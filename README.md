@@ -4,7 +4,7 @@
 
 **Universal Multi-Universe Animated Home Launcher & Cinema Story Screensaver for Android TV, Google TV, Foldables, Phones & Tablets**
 
-[![Version](https://img.shields.io/badge/version-5.1.0-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
+[![Version](https://img.shields.io/badge/version-5.1.1-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Size](https://img.shields.io/badge/APK_Size-409_KB-2ecc71.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Platform](https://img.shields.io/badge/Android-5.0%2B_(TV_%7C_Foldable_%7C_Phone_%7C_Tablet)-3ddc84.svg?style=flat-square)](https://github.com/revumukka/HomeOS)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
@@ -62,11 +62,11 @@ Switch seamlessly at any time via the bottom **Theme** icon button:
 
 ### Download Prebuilt APK
 Grab the latest signed universal APK from the [**Releases**](https://github.com/revumukka/HomeOS/releases) page:
-- `HomeScreen_Release_v5.1.0_51.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
+- `HomeScreen_Release_v5.1.1_52.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
 
 ### Install via ADB
 ```sh
-adb install -r out/HomeScreen_Release_v5.1.0_51.apk
+adb install -r out/HomeScreen_Release_v5.1.1_52.apk
 ```
 
 ---
@@ -80,8 +80,8 @@ sh build.sh
 ```
 
 Output APKs are generated in `out/`:
-- `out/HomeScreen_Release_v5.1.0_51.apk`
-- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.1.0-b51.apk`
+- `out/HomeScreen_Release_v5.1.1_52.apk`
+- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.1.1-b52.apk`
 - `out/HomeScreen.apk`
 
 ---

@@ -1,6 +1,6 @@
 # HomeScreen — Multi-Universe Animated Home Launcher Guide
 
-**HomeScreen (`v5.1.0`)** is an ultra-lightweight (`409 KB`), zero-dependency Android launcher for **Android TV**, **Google TV**, **Foldables**, **Phones**, and **Tablets** featuring **6 interactive universe themes** and **248 live procedural 60 FPS story scenes**. Created by **Revanth Mukka** (`@revumukka`), vibe-coded from scratch with **Google Gemini Antigravity**.
+**HomeScreen (`v5.1.1`)** is an ultra-lightweight (`409 KB`), zero-dependency Android launcher for **Android TV**, **Google TV**, **Foldables**, **Phones**, and **Tablets** featuring **6 interactive universe themes** and **248 live procedural 60 FPS story scenes**. Created by **Revanth Mukka** (`@revumukka`), vibe-coded from scratch with **Google Gemini Antigravity**.
 
 ---
 
@@ -34,7 +34,7 @@ Requires **Java 17** and the **Android SDK** (`platforms;android-34` and `build-
 sh build.sh
 ```
 
-Output APKs are written to `out/HomeScreen_Release_v5.1.0_51.apk` and copied to `~/Documents/HomeScreen App/`.
+Output APKs are written to `out/HomeScreen_Release_v5.1.1_52.apk` and copied to `~/Documents/HomeScreen App/`.
 
 ---
 
@@ -43,7 +43,7 @@ Output APKs are written to `out/HomeScreen_Release_v5.1.0_51.apk` and copied to 
 1. Enable **Developer Options** and **USB / Wireless Debugging** on your Android TV, phone, foldable, or tablet.
 2. Connect via ADB and install:
    ```sh
-   adb install -r out/HomeScreen_Release_v5.1.0_51.apk
+   adb install -r out/HomeScreen_Release_v5.1.1_52.apk
    ```
 3. Press the **Home** button on your device or remote and select **HomeScreen** as your default launcher.
    - *Note for Google TV devices*: If Google TV locks the default launcher role, open **Settings > Accessibility > Home button** and enable the optional Home button service so pressing Home opens **HomeScreen**.
