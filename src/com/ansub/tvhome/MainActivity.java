@@ -178,6 +178,7 @@ public class MainActivity extends Activity {
         {0xFFB07624, 0xFF86401E, 0xFF2A1410, 0x90FFD060, 0x70FF5040},
     };
     private float scale = 1f;
+    private float uiScale = 1f;
     private float settingsScale = 1f;
     private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27};
 
@@ -241,6 +242,20 @@ public class MainActivity extends Activity {
         return Math.max(0.42f, Math.min(sw, sh * 1.18f));
     }
 
+    // Portrait/Outer-screen aware UI scale for Clock, Top-Right Quick Icons, and Utility Buttons
+    // so portrait foldable screens scale to a 1080p phone width instead of a shrunk 1920p TV width.
+    private float computeUiScale() {
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        if (dm.heightPixels > dm.widthPixels) {
+            return Math.max(scale * 1.48f, Math.min(dm.widthPixels / 1080f, dm.heightPixels / 1680f));
+        }
+        return scale;
+    }
+
+    private int upx(int v) {
+        return Math.round(v * uiScale);
+    }
+
     // Orientation-invariant, uniform scale for Settings UI (buttons, quick dock, dropdowns, and panels)
     // across Foldable cover screens, inner unfolded screens, Tablets, and TVs without changing skyView animation sizes.
     private float computeSettingsScale() {
@@ -249,9 +264,9 @@ public class MainActivity extends Activity {
         float shortSide = Math.min(dm.widthPixels, dm.heightPixels) / 1080f;
         float base = Math.min(longSide, shortSide);
         if (dm.heightPixels > dm.widthPixels) {
-            base = Math.min(base, dm.widthPixels / 1380f);
+            base = Math.min(base, dm.widthPixels / 1280f);
         }
-        return Math.max(0.58f, base);
+        return Math.max(0.65f, base);
     }
 
     private int spx(int v) {
@@ -264,6 +279,7 @@ public class MainActivity extends Activity {
         saveConfig(getIntent());
         loadFonts(this);
         scale = computeAdaptiveScale();
+        uiScale = computeUiScale();
         settingsScale = computeSettingsScale();
         getWindow().setBackgroundDrawable(new ColorDrawable(0xFF060916));
 
@@ -328,17 +344,17 @@ public class MainActivity extends Activity {
         weatherView.setLetterSpacing(0.05f);
         weatherView.setShadowLayer(px(8), 0, px(2), 0xAA000000);
         LinearLayout.LayoutParams wp = new LinearLayout.LayoutParams(-2, -2);
-        wp.leftMargin = px(18);
+        wp.leftMargin = upx(16);
         dateRow.addView(weatherView, wp);
         setWeatherText(prefs().getString("weather_text", "66°F Cloudy"));
 
-        fancySyncView = text(px(16), 0xEEFFE082, cinzelFont);
+        fancySyncView = text(upx(16), 0xEEFFE082, cinzelFont);
         fancySyncView.setLetterSpacing(0.14f);
         fancySyncView.setText("|   FANCYLEDS SYNC");
         fancySyncView.setShadowLayer(px(8), 0, px(2), 0xAA000000);
         fancySyncView.setVisibility(glowOn ? View.VISIBLE : View.GONE);
         LinearLayout.LayoutParams fp = new LinearLayout.LayoutParams(-2, -2);
-        fp.leftMargin = px(18);
+        fp.leftMargin = upx(16);
         dateRow.addView(fancySyncView, fp);
         skyView.setHubStatusListener((online, ip) -> {
             if (fancySyncView != null) {
@@ -350,21 +366,21 @@ public class MainActivity extends Activity {
         // The clock follows the TV unless --es clock 12 or 24 says otherwise.
         String clockPref = prefs().getString(PREF_CLOCK, null);
         TextClock time = clock("24".equals(clockPref) ? "H:mm" : "h:mm", "12".equals(clockPref) ? "h:mm" : "H:mm",
-                px(144), 0xFFFFF4D2, themeFontFor(universeTheme()));
+                upx(144), 0xFFFFF4D2, themeFontFor(universeTheme()));
         timeClockView = time;
         time.setLetterSpacing(0.04f);
         time.setIncludeFontPadding(false);
-        time.setPadding(px(4), px(2), px(14), px(12));
+        time.setPadding(upx(4), upx(2), upx(14), upx(12));
         time.setShadowLayer(px(16), 0, px(4), 0x80D4942A);
         // Wrap, not the default match_parent: the column must be as wide as the date, not just the time,
         // or "0:00" to "9:59" (one digit less) cuts a long date off.
         clock.addView(dateRow, new LinearLayout.LayoutParams(-2, -2));
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-2, -2);
-        tp.topMargin = px(-14); // snug under the date + weather line
+        tp.topMargin = upx(-12); // snug under the date + weather line
         clock.addView(time, tp);
         root.addView(clock, at(px(MARGIN), px(38), -2, -2));
 
-        moveHint = text(px(28), 0xFFE6FFE8, themeFontFor(universeTheme()));
+        moveHint = text(upx(26), 0xFFE6FFE8, themeFontFor(universeTheme()));
         moveHint.setText(Strings.t("Use the arrows to move it, then press OK"));
         moveHint.setVisibility(View.GONE);
         root.addView(moveHint, at(px(MARGIN), px(ROW1_TOP - 64), -2, -2));
@@ -610,6 +626,7 @@ public class MainActivity extends Activity {
             activeDialog = null;
         }
         scale = computeAdaptiveScale();
+        uiScale = computeUiScale();
         settingsScale = computeSettingsScale();
         if (skyView != null) skyView.setScale(scale);
         if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
@@ -619,22 +636,22 @@ public class MainActivity extends Activity {
             clockContainer.setLayoutParams(clp);
         }
         if (weatherView != null && weatherView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-            ((LinearLayout.LayoutParams) weatherView.getLayoutParams()).leftMargin = px(18);
+            ((LinearLayout.LayoutParams) weatherView.getLayoutParams()).leftMargin = upx(16);
         }
         if (fancySyncView != null) {
-            fancySyncView.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(16));
+            fancySyncView.setTextSize(TypedValue.COMPLEX_UNIT_PX, upx(16));
             if (fancySyncView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-                ((LinearLayout.LayoutParams) fancySyncView.getLayoutParams()).leftMargin = px(18);
+                ((LinearLayout.LayoutParams) fancySyncView.getLayoutParams()).leftMargin = upx(16);
             }
         }
         if (timeClockView != null) {
-            timeClockView.setPadding(px(4), px(2), px(14), px(12));
+            timeClockView.setPadding(upx(4), upx(2), upx(14), upx(12));
             if (timeClockView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-                ((LinearLayout.LayoutParams) timeClockView.getLayoutParams()).topMargin = px(-14);
+                ((LinearLayout.LayoutParams) timeClockView.getLayoutParams()).topMargin = upx(-12);
             }
         }
         if (moveHint != null) {
-            moveHint.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(28));
+            moveHint.setTextSize(TypedValue.COMPLEX_UNIT_PX, upx(26));
             if (moveHint.getLayoutParams() instanceof FrameLayout.LayoutParams) {
                 ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).leftMargin = px(MARGIN);
             }
@@ -768,15 +785,16 @@ public class MainActivity extends Activity {
         int screenW = getResources().getDisplayMetrics().widthPixels;
         int screenH = getResources().getDisplayMetrics().heightPixels;
         boolean isPortrait = screenH > screenW;
-        int m = isPortrait ? Math.max(px(28), Math.round(screenW * 0.032f)) : px(MARGIN);
-        int g = isPortrait ? Math.max(px(12), Math.round(screenW * 0.015f)) : px(GAP);
-        int topInset = isPortrait ? Math.round(screenH * 0.032f) : 0;
+        int m = isPortrait ? Math.max(upx(28), Math.round(screenW * 0.038f)) : px(MARGIN);
+        int g = isPortrait ? Math.max(upx(14), Math.round(screenW * 0.020f)) : px(GAP);
+        int topInset = isPortrait ? Math.round(screenH * 0.035f) : 0;
+        int clockTop = isPortrait ? (topInset + upx(12)) : px(38);
         gapPx = g;
 
         if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
             FrameLayout.LayoutParams clp = (FrameLayout.LayoutParams) clockContainer.getLayoutParams();
             clp.leftMargin = m;
-            clp.topMargin = px(38) + topInset;
+            clp.topMargin = clockTop;
             clockContainer.setLayoutParams(clp);
         }
 
@@ -791,28 +809,45 @@ public class MainActivity extends Activity {
         if (inputs.size() > room) inputs = inputs.subList(0, room);
         int bottomCount = (store ? 1 : 0) + inputs.size() + 2;
 
-        // Adapt column count when both rows have fewer than 6 items, so 5 apps + 5 bottom tiles
-        // fill the full row width cleanly with no wasted column on the right.
-        cols = Math.max(5, Math.min(PER_ROW, Math.max(topCols, bottomCount)));
+        // On Portrait / Foldable Outer & Inner screens, use a 3-column grid (3 large cards + 2 centered large cards)
+        // so cards are ~1.7x bigger instead of a shrunk 5-column TV strip. On Landscape TVs, keep 5 columns.
+        if (isPortrait) {
+            cols = Math.min(3, Math.max(1, launchable));
+        } else {
+            cols = Math.max(5, Math.min(PER_ROW, Math.max(topCols, bottomCount)));
+        }
 
         int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-        int h;
-        if (isPortrait) {
-            float cardAspect = Math.min(0.92f, Math.max(0.68f, 0.5625f * ((float) screenH / Math.max(1, screenW)) * 0.80f));
-            h = Math.round(w * cardAspect);
-        } else {
-            h = w * 9 / 16;
-        }
-        int bottomW = w;
-        int bottomH = isPortrait ? Math.max(px(52), Math.round(w * 0.26f)) : px(52);
+        int h = isPortrait ? Math.round(w * 0.58f) : (w * 9 / 16);
+        int bottomCols = isPortrait ? Math.max(cols, bottomCount) : cols;
+        int bottomW = isPortrait ? ((screenW - 2 * m - g * (bottomCols - 1)) / bottomCols) : w;
+        int bottomH = isPortrait ? Math.max(upx(52), Math.round(h * 0.30f)) : px(52);
         tileW = w;
         tileH = h;
-        rowStepPx = Math.max(px(ROW_STEP), h + px(22));
+        rowStepPx = isPortrait ? (h + g) : Math.max(px(ROW_STEP), h + px(22));
+
+        // Top-right quick toggles dock (icon-only): Glow On/Off, Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
+        List<Integer> quick = quickList();
+        int totalTopItems = quick.size() + 3; // Glow toggle + Theme picker + quick items + Wi-Fi
+        float dockScale = isPortrait ? (uiScale * 0.92f) : scale;
+        int itemW = Math.round((isPortrait ? 54 : 56) * dockScale);
+        int itemH = Math.round((isPortrait ? 48 : 50) * dockScale);
+        int ig = Math.round(6 * dockScale), dockPad = Math.round(8 * dockScale);
+        int gridRight = (screenW + (cols * w + (cols - 1) * g)) / 2;
+        int dockW = totalTopItems * itemW + (totalTopItems - 1) * ig + 2 * dockPad;
+        int dockH = itemH + 2 * dockPad;
+        int dockX = Math.max(m, gridRight - dockW);
+        int dockY = isPortrait ? (clockTop + upx(44)) : Math.max(px(20), px(58) - dockPad);
+        int iconY = dockY + dockPad;
 
         int rows = Math.max(1, (launchable + cols - 1) / cols);
-        gridTop = Math.max(px(GRID_MIN_TOP) + topInset, px(ROW1_TOP) + topInset - (rows - 1) * rowStepPx);
-        int bottomTop = gridTop + rows * rowStepPx + px(6);
-        ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - px(46);
+        if (isPortrait) {
+            gridTop = Math.max(clockTop + upx(156), dockY + dockH + upx(24));
+        } else {
+            gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * rowStepPx);
+        }
+        int bottomTop = gridTop + rows * rowStepPx + (isPortrait ? Math.max(upx(6), g / 3) : px(6));
+        ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(42);
         root.setMinimumHeight(bottomTop + bottomH + m);
 
         for (String pkg : apps) {
@@ -829,7 +864,7 @@ public class MainActivity extends Activity {
             addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
         }
 
-        // Compact bottom row: aligned column-for-column with the 5 app cards above (bottomW == w).
+        // Compact bottom row: aligned column-for-column with the app card columns above.
         int col = 0;
         int bottomRowW = bottomCount * bottomW + (bottomCount - 1) * g;
         int bottomStartX = (screenW - bottomRowW) / 2;
@@ -840,18 +875,6 @@ public class MainActivity extends Activity {
         addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
         addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, bottomStartX + col * (bottomW + g), bottomTop, bottomW, bottomH);
 
-        // Top-right quick toggles dock (icon-only): Glow On/Off, Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
-        List<Integer> quick = quickList();
-        int totalTopItems = quick.size() + 3; // Glow toggle + Theme picker + quick items + Wi-Fi
-        float dockScale = isPortrait ? Math.max(scale, Math.min(settingsScale, screenW / 1600f)) : scale;
-        int itemW = Math.round(56 * dockScale), itemH = Math.round(50 * dockScale);
-        int ig = Math.round(6 * dockScale), dockPad = Math.round(8 * dockScale);
-        int gridRight = (screenW + (cols * w + (cols - 1) * g)) / 2;
-        int dockW = totalTopItems * itemW + (totalTopItems - 1) * ig + 2 * dockPad;
-        int dockH = itemH + 2 * dockPad;
-        int dockX = Math.max(m, gridRight - dockW);
-        int dockY = Math.max(px(20), px(58) - dockPad) + topInset;
-        int iconY = dockY + dockPad;
         View dock = new View(this);
         GradientDrawable dockBg = new GradientDrawable();
         dockBg.setCornerRadius(dockH / 2f);
@@ -1101,7 +1124,7 @@ public class MainActivity extends Activity {
 
     // Top-right quick icon button (icon-only, no text wording) inside the glass dock pill.
     private ImageView addIcon(final String key, String label, Drawable icon, int x, final int y, int w, int h) {
-        int size = Math.max(px(22), Math.round(h * 0.52f));
+        int size = Math.max(px(22), Math.round(h * 0.56f));
         FrameLayout card = new FrameLayout(this);
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(h / 2f);
@@ -1156,8 +1179,10 @@ public class MainActivity extends Activity {
 
     private void applyThemeTypography(int theme) {
         Typeface tf = themeFontFor(theme);
-        int datePx = theme == 0 ? px(36) : px(26);
-        int timePx = theme == 0 ? px(144) : px(108);
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        boolean isPortrait = dm.heightPixels > dm.widthPixels;
+        int datePx = isPortrait ? (theme == 0 ? upx(32) : upx(24)) : (theme == 0 ? px(36) : px(26));
+        int timePx = isPortrait ? (theme == 0 ? upx(118) : upx(92)) : (theme == 0 ? px(144) : px(108));
         if (dateClockView != null) {
             dateClockView.setTypeface(tf);
             dateClockView.setTextSize(TypedValue.COMPLEX_UNIT_PX, datePx);
