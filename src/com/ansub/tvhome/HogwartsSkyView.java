@@ -6670,32 +6670,44 @@ final class HogwartsSkyView extends View {
     static Drawable createHogwartsBanner(Resources res, String pkg, String label,
                                          int w, int h, float scale,
                                          Typeface harryFont, Typeface cinzelFont) {
-        return createHogwartsBanner(res, pkg, label, w, h, scale, harryFont, cinzelFont, 0);
+        return createHogwartsBanner(res, pkg, label, w, h, scale, harryFont, cinzelFont, 0, null, 0);
     }
 
     static Drawable createHogwartsBanner(Resources res, String pkg, String label,
                                          int w, int h, float scale,
-                                         Typeface harryFont, Typeface cinzelFont, int theme) {
+                                         Typeface harryFont, Typeface cinzelFont, int theme,
+                                         Drawable defaultIcon, int slotIndex) {
         Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bm);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setDither(true);
 
+        float cardScale = Math.max(0.35f, w / 324f);
         String k = pkg == null ? "" : pkg.toLowerCase();
+        int packSlot = -1;
+        if (k.contains("youtube")) packSlot = 0;
+        else if (k.contains("surfshark")) packSlot = 1;
+        else if (k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")) packSlot = 2;
+        else if (k.contains("plex")) packSlot = 3;
+        else if (k.contains("hotstar") || k.contains("disney")) packSlot = 4;
+
+        boolean useCustomPackIcon = (packSlot >= 0);
+        int styleSlot = useCustomPackIcon ? packSlot : (Math.abs(slotIndex) % 5);
+
         int topBg, botBg, glowCol, emblemType;
         String houseSub;
         if (theme == 1) {
             // Theme 2: NARUTO App Banners
-            if (k.contains("youtube")) {
+            if (styleSlot == 0) {
                 topBg = 0xFF2A070C; botBg = 0xFF120306; glowCol = 0x60FF2430;
                 houseSub = "UCHIHA CLAN  |  SHARINGAN"; emblemType = 101;
-            } else if (k.contains("surfshark")) {
+            } else if (styleSlot == 1) {
                 topBg = 0xFF0A2416; botBg = 0xFF04100A; glowCol = 0x5828D878;
                 houseSub = "HIDDEN LEAF  |  WILL OF FIRE"; emblemType = 102;
-            } else if (k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")) {
+            } else if (styleSlot == 2) {
                 topBg = 0xFF081A34; botBg = 0xFF040B18; glowCol = 0x5838B8FF;
                 houseSub = "SEVENTH HOKAGE  |  RASENGAN"; emblemType = 103;
-            } else if (k.contains("plex")) {
+            } else if (styleSlot == 3) {
                 topBg = 0xFF2A1406; botBg = 0xFF120802; glowCol = 0x60FF7820;
                 houseSub = "NINE-TAILS  |  KURAMA MODE"; emblemType = 104;
             } else {
@@ -6704,16 +6716,16 @@ final class HogwartsSkyView extends View {
             }
         } else if (theme == 2) {
             // Theme 3: DEMON SLAYER App Banners
-            if (k.contains("youtube")) {
+            if (styleSlot == 0) {
                 topBg = 0xFF2A0908; botBg = 0xFF120404; glowCol = 0x60FF4820;
                 houseSub = "HINOKAMI KAGURA  |  SUN BREATH"; emblemType = 201;
-            } else if (k.contains("surfshark")) {
+            } else if (styleSlot == 1) {
                 topBg = 0xFF06241E; botBg = 0xFF03100D; glowCol = 0x5820E8B8;
                 houseSub = "MIZU NO KOKYU  |  WATER BREATH"; emblemType = 202;
-            } else if (k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")) {
+            } else if (styleSlot == 2) {
                 topBg = 0xFF081E2C; botBg = 0xFF040C14; glowCol = 0x5848E8FF;
                 houseSub = "MUICHIRO  |  MIST HASHIRA"; emblemType = 203;
-            } else if (k.contains("plex")) {
+            } else if (styleSlot == 3) {
                 topBg = 0xFF281C06; botBg = 0xFF120C02; glowCol = 0x60FFD828;
                 houseSub = "KAMINARI  |  THUNDERCLAP"; emblemType = 204;
             } else {
@@ -6722,16 +6734,16 @@ final class HogwartsSkyView extends View {
             }
         } else if (theme == 3) {
             // Theme 4: STAR WARS App Banners
-            if (k.contains("youtube")) {
+            if (styleSlot == 0) {
                 topBg = 0xFF28060A; botBg = 0xFF100305; glowCol = 0x60FF2028;
                 houseSub = "GALACTIC EMPIRE  |  DARTH VADER"; emblemType = 301;
-            } else if (k.contains("surfshark")) {
+            } else if (styleSlot == 1) {
                 topBg = 0xFF08221A; botBg = 0xFF040E0A; glowCol = 0x5838E898;
                 houseSub = "MANDALORIAN  |  BESKAR CLAN"; emblemType = 302;
-            } else if (k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")) {
+            } else if (styleSlot == 2) {
                 topBg = 0xFF071A32; botBg = 0xFF030B16; glowCol = 0x5838B8FF;
                 houseSub = "JEDI ORDER  |  SKYWALKER"; emblemType = 303;
-            } else if (k.contains("plex")) {
+            } else if (styleSlot == 3) {
                 topBg = 0xFF281606; botBg = 0xFF100902; glowCol = 0x60FF9828;
                 houseSub = "REBEL ALLIANCE  |  STARBIRD"; emblemType = 304;
             } else {
@@ -6740,16 +6752,16 @@ final class HogwartsSkyView extends View {
             }
         } else if (theme == 4) {
             // Theme 5: MCU App Banners
-            if (k.contains("youtube")) {
+            if (styleSlot == 0) {
                 topBg = 0xFF2A070A; botBg = 0xFF120305; glowCol = 0x60FF2830;
                 houseSub = "STARK TECH  |  MARK LXXXV"; emblemType = 401;
-            } else if (k.contains("surfshark")) {
+            } else if (styleSlot == 1) {
                 topBg = 0xFF062418; botBg = 0xFF03100A; glowCol = 0x5828FF78;
                 houseSub = "KAMAR-TAJ  |  TIME STONE"; emblemType = 402;
-            } else if (k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")) {
+            } else if (styleSlot == 2) {
                 topBg = 0xFF081A32; botBg = 0xFF040B16; glowCol = 0x5848E8FF;
                 houseSub = "ASGARDIAN  |  MJOLNIR"; emblemType = 403;
-            } else if (k.contains("plex")) {
+            } else if (styleSlot == 3) {
                 topBg = 0xFF281806; botBg = 0xFF100A02; glowCol = 0x60FFB828;
                 houseSub = "AVENGERS  |  INFINITY SAGA"; emblemType = 404;
             } else {
@@ -6758,60 +6770,42 @@ final class HogwartsSkyView extends View {
             }
         } else if (theme == 5) {
             // Theme 6: DCU App Banners
-            if (k.contains("youtube")) {
+            if (styleSlot == 0) {
                 topBg = 0xFF28080C; botBg = 0xFF100306; glowCol = 0x60FF2830;
                 houseSub = "HOUSE OF EL  |  METROPOLIS"; emblemType = 501;
-            } else if (k.contains("surfshark")) {
+            } else if (styleSlot == 1) {
                 topBg = 0xFF062416; botBg = 0xFF031009; glowCol = 0x5828FF78;
                 houseSub = "SECTOR 2814  |  GREEN LANTERN"; emblemType = 502;
-            } else if (k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")) {
+            } else if (styleSlot == 2) {
                 topBg = 0xFF08162C; botBg = 0xFF040914; glowCol = 0x58FFE068;
                 houseSub = "THE DARK KNIGHT  |  GOTHAM"; emblemType = 503;
-            } else if (k.contains("plex")) {
+            } else if (styleSlot == 3) {
                 topBg = 0xFF281806; botBg = 0xFF100A02; glowCol = 0x60FFD838;
                 houseSub = "THEMYSCIRA  |  WONDER WOMAN"; emblemType = 504;
             } else {
                 topBg = 0xFF140C2C; botBg = 0xFF080514; glowCol = 0x5848A8FF;
                 houseSub = "JUSTICE LEAGUE  |  WATCHTOWER"; emblemType = 505;
             }
-        } else if (k.contains("youtube")) {
+        } else if (styleSlot == 0) {
             topBg = 0xFF28090E; botBg = 0xFF110407; glowCol = 0x58E83038;
             houseSub = "GRYFFINDOR  |  PENSIEVE";
             emblemType = 1;
-        } else if (k.contains("surfshark")) {
+        } else if (styleSlot == 1) {
             topBg = 0xFF07221B; botBg = 0xFF040F0C; glowCol = 0x5418C878;
             houseSub = "SLYTHERIN  |  PROTEGO";
             emblemType = 2;
-        } else if (k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")) {
+        } else if (styleSlot == 2) {
             topBg = 0xFF091830; botBg = 0xFF050B16; glowCol = 0x563282FF;
             houseSub = "RAVENCLAW  |  CHAMBER";
             emblemType = k.contains("hulu") ? 6 : 3;
-        } else if (k.contains("plex")) {
+        } else if (styleSlot == 3) {
             topBg = 0xFF241806; botBg = 0xFF100A03; glowCol = 0x58FFB020;
             houseSub = "HUFFLEPUFF  |  THEATER";
             emblemType = 4;
-        } else if (k.contains("hotstar") || k.contains("disney")) {
+        } else {
             topBg = 0xFF180C2C; botBg = 0xFF0A0514; glowCol = 0x58A848FF;
             houseSub = "ASTRONOMY  |  LUMOS";
             emblemType = 5;
-        } else {
-            int variant = Math.abs(k.hashCode()) % 5;
-            if (variant == 0) {
-                topBg = 0xFF28090E; botBg = 0xFF110407; glowCol = 0x58E83038;
-                houseSub = "GRYFFINDOR  |  PENSIEVE"; emblemType = 1;
-            } else if (variant == 1) {
-                topBg = 0xFF07221B; botBg = 0xFF040F0C; glowCol = 0x5418C878;
-                houseSub = "SLYTHERIN  |  PROTEGO"; emblemType = 2;
-            } else if (variant == 2) {
-                topBg = 0xFF091830; botBg = 0xFF050B16; glowCol = 0x563282FF;
-                houseSub = "RAVENCLAW  |  CHAMBER"; emblemType = 3;
-            } else if (variant == 3) {
-                topBg = 0xFF241806; botBg = 0xFF100A03; glowCol = 0x58FFB020;
-                houseSub = "HUFFLEPUFF  |  THEATER"; emblemType = 4;
-            } else {
-                topBg = 0xFF180C2C; botBg = 0xFF0A0514; glowCol = 0x58A848FF;
-                houseSub = "HOGWARTS  |  ENCHANTED"; emblemType = 6;
-            }
         }
 
         p.setShader(new LinearGradient(0, 0, 0, h, topBg, botBg, Shader.TileMode.CLAMP));
@@ -6822,30 +6816,30 @@ final class HogwartsSkyView extends View {
         c.drawRect(0, 0, w, h, p);
         p.setShader(null);
 
-        float pad = 11f * scale;
-        float r = 18f * scale;
+        float pad = 11f * cardScale;
+        float r = 18f * cardScale;
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(1.4f * scale);
+        p.setStrokeWidth(1.4f * cardScale);
         p.setColor(0x52F5D078);
         c.drawRoundRect(new RectF(pad, pad, w - pad, h - pad), r, r, p);
 
-        float pad2 = 15f * scale;
-        p.setStrokeWidth(0.8f * scale);
+        float pad2 = 15f * cardScale;
+        p.setStrokeWidth(0.8f * cardScale);
         p.setColor(0x2CF5D078);
         c.drawRoundRect(new RectF(pad2, pad2, w - pad2, h - pad2), r * 0.8f, r * 0.8f, p);
 
         p.setStyle(Paint.Style.FILL);
         p.setColor(0x88FFE082);
         float[][] corners = {
-            {pad + 6f * scale, pad + 6f * scale},
-            {w - pad - 6f * scale, pad + 6f * scale},
-            {pad + 6f * scale, h - pad - 6f * scale},
-            {w - pad - 6f * scale, h - pad - 6f * scale}
+            {pad + 6f * cardScale, pad + 6f * cardScale},
+            {w - pad - 6f * cardScale, pad + 6f * cardScale},
+            {pad + 6f * cardScale, h - pad - 6f * cardScale},
+            {w - pad - 6f * cardScale, h - pad - 6f * cardScale}
         };
-        for (float[] cn : corners) c.drawCircle(cn[0], cn[1], 2.2f * scale, p);
+        for (float[] cn : corners) c.drawCircle(cn[0], cn[1], 2.2f * cardScale, p);
 
         float cx = w * 0.5f, cy = h * 0.34f;
-        float er = 24f * scale;
+        float er = 24f * cardScale;
 
         p.setShader(new RadialGradient(cx, cy, er * 1.9f,
                 new int[] {0x48FFD878, 0x00FFD878}, null, Shader.TileMode.CLAMP));
@@ -6853,10 +6847,27 @@ final class HogwartsSkyView extends View {
         p.setShader(null);
 
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(2.2f * scale);
+        p.setStrokeWidth(2.2f * cardScale);
         p.setColor(0xFFFFE498);
 
-        if (emblemType >= 101 && emblemType <= 105) {
+        if (!useCustomPackIcon && defaultIcon != null) {
+            // Fallback from the 5-app custom icon pack to the device's default application icon
+            float ir = er * 1.15f;
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0x6608060C);
+            c.drawCircle(cx, cy, ir, p);
+            c.save();
+            Path clip = new Path();
+            clip.addCircle(cx, cy, ir, Path.Direction.CW);
+            c.clipPath(clip);
+            defaultIcon.setBounds(Math.round(cx - ir), Math.round(cy - ir), Math.round(cx + ir), Math.round(cy + ir));
+            defaultIcon.draw(c);
+            c.restore();
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(1.8f * cardScale);
+            p.setColor(0xCCFFE498);
+            c.drawCircle(cx, cy, ir + 1.4f * cardScale, p);
+        } else if (emblemType >= 101 && emblemType <= 105) {
             // NARUTO Custom Vector Emblems: Sharingan, Konoha Leaf, Rasengan Shuriken, Uzumaki Spiral, Akatsuki Cloud
             if (emblemType == 101) { // Sharingan Eye
                 c.drawCircle(cx, cy, er * 0.95f, p);
@@ -7089,16 +7100,22 @@ final class HogwartsSkyView extends View {
         p.setStyle(Paint.Style.FILL);
         p.setTextAlign(Paint.Align.CENTER);
         if (harryFont != null) p.setTypeface(harryFont);
-        p.setTextSize((theme == 0 ? 44f : (theme == 2 ? 34f : 28f)) * scale);
+        float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * cardScale;
+        p.setTextSize(titleSize);
+        float maxTextW = w - 36f * cardScale;
+        if (label != null && maxTextW > 0) {
+            float measured = p.measureText(label);
+            if (measured > maxTextW) p.setTextSize(Math.max(14f * cardScale, titleSize * (maxTextW / measured)));
+        }
         p.setColor(0xFFFFF4D2);
-        p.setShadowLayer(10f * scale, 0, 2f * scale, 0xCC000000);
-        c.drawText(label, cx, h * 0.74f, p);
+        p.setShadowLayer(10f * cardScale, 0, 2f * cardScale, 0xCC000000);
+        c.drawText(label != null ? label : "", cx, h * 0.74f, p);
 
         if (cinzelFont != null) p.setTypeface(cinzelFont);
-        p.setTextSize(11.5f * scale);
+        p.setTextSize(11.5f * cardScale);
         p.setLetterSpacing(0.18f);
         p.setColor(0xB8F5D488);
-        p.setShadowLayer(4f * scale, 0, 1f * scale, 0xAA000000);
+        p.setShadowLayer(4f * cardScale, 0, 1f * cardScale, 0xAA000000);
         c.drawText(houseSub, cx, h * 0.88f, p);
 
         if (android.os.Build.VERSION.SDK_INT >= 26) {

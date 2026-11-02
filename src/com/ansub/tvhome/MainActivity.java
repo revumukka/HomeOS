@@ -178,17 +178,21 @@ public class MainActivity extends Activity {
         {0xFFB07624, 0xFF86401E, 0xFF2A1410, 0x90FFD060, 0x70FF5040},
     };
     private float scale = 1f;
+    private float settingsScale = 1f;
+    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27};
 
     private static Typeface regular, semibold, harryFont, cinzelFont;
     private static final Typeface[] themeFonts = new Typeface[6];
 
     private FrameLayout root; // the page, inside a vertical scroller
     private HogwartsSkyView skyView;
+    private LinearLayout clockContainer;
+    private Dialog activeDialog;
     private TextClock dateClockView, timeClockView;
     private TextView weatherView;
     private TextView fancySyncView;
     private long lastWeatherFetch = 0L;
-    private int tileW, tileH, gridTop, cols = PER_ROW; // app grid geometry, set by buildTiles
+    private int tileW, tileH, rowStepPx, gridTop, cols = PER_ROW; // app grid geometry, set by buildTiles
     private final List<View> tiles = new ArrayList<>();
     private final List<View> chrome = new ArrayList<>();
     private final Map<View, ValueAnimator> lifts = new WeakHashMap<>(); // a running focus fade per tile
@@ -237,12 +241,26 @@ public class MainActivity extends Activity {
         return Math.max(0.42f, Math.min(sw, sh * 1.18f));
     }
 
+    // Orientation-invariant, uniform scale for Settings UI (buttons, quick dock, dropdowns, and panels)
+    // across Foldable cover screens, inner unfolded screens, Tablets, and TVs without changing skyView animation sizes.
+    private float computeSettingsScale() {
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float longSide = Math.max(dm.widthPixels, dm.heightPixels) / 1920f;
+        float shortSide = Math.min(dm.widthPixels, dm.heightPixels) / 1080f;
+        return Math.max(0.55f, Math.min(longSide, shortSide));
+    }
+
+    private int spx(int v) {
+        return Math.round(v * settingsScale);
+    }
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         saveConfig(getIntent());
         loadFonts(this);
         scale = computeAdaptiveScale();
+        settingsScale = computeSettingsScale();
         getWindow().setBackgroundDrawable(new ColorDrawable(0xFF060916));
 
         FrameLayout viewport = new FrameLayout(this);
@@ -289,6 +307,7 @@ public class MainActivity extends Activity {
         viewport.addView(scroller, new FrameLayout.LayoutParams(-1, -1));
 
         LinearLayout clock = new LinearLayout(this);
+        clockContainer = clock;
         clock.setOrientation(LinearLayout.VERTICAL);
         shownLocale = java.util.Locale.getDefault();
         String day = Strings.datePattern();
@@ -446,32 +465,58 @@ public class MainActivity extends Activity {
     private List<String> appList(PackageManager pm) {
         List<String> out = new ArrayList<>();
         String saved = getSharedPreferences(PREFS, 0).getString("apps", null);
-        String[] wanted = saved != null ? saved.split("[,\\s]+") : new String[] {
-            "com.google.android.youtube.tv",
-            "com.google.android.youtube",
-            "com.surfshark.vpnclient.android",
-            "in.startv.hotstar",
-            "com.plexapp.android",
-            "com.hulu.livingroomplus",
-            "com.hulu.plus",
-            "com.netflix.ninja",
-            "com.netflix.mediaclient",
-            "com.disney.disneyplus",
-            "com.amazon.amazonvideo.livingroom",
-            "com.android.chrome"
+        if (saved != null) {
+            for (String p : saved.split("[,\\s]+")) {
+                if (!p.isEmpty() && !out.contains(p) && launchIntent(pm, p) != null) out.add(p);
+            }
+            return out;
+        }
+        // Primary 5-app custom icon pack slots (pick at most 1 installed package per slot first)
+        String[][] iconPackSlots = {
+            {"com.google.android.youtube.tv", "com.google.android.youtube"},
+            {"com.surfshark.vpnclient.android"},
+            {"in.startv.hotstar", "com.disney.disneyplus"},
+            {"com.plexapp.android"},
+            {"com.hulu.livingroomplus", "com.hulu.plus", "com.oumi.utility", "com.vidhub"}
         };
-        for (String p : wanted) {
-            if (!p.isEmpty() && !out.contains(p) && launchIntent(pm, p) != null) {
-                out.add(p);
-                if (saved == null && out.size() >= 5) break;
+        for (String[] slot : iconPackSlots) {
+            for (String p : slot) {
+                if (!out.contains(p) && launchIntent(pm, p) != null) {
+                    out.add(p);
+                    break;
+                }
             }
         }
-        if (saved == null && out.size() < 5) {
+        // Fallback to popular media & device default apps when the 5-app icon pack is not all present
+        String[] deviceDefaults = {
+            "com.netflix.ninja",
+            "com.netflix.mediaclient",
+            "com.amazon.amazonvideo.livingroom",
+            "com.amazon.avod.thirdpartyclient",
+            "com.android.chrome",
+            "com.sec.android.app.sbrowser",
+            "com.google.android.apps.photos",
+            "com.sec.android.gallery3d",
+            "com.google.android.apps.messaging",
+            "com.samsung.android.messaging",
+            "com.google.android.dialer",
+            "com.samsung.android.dialer",
+            "com.google.android.gm",
+            "com.google.android.apps.maps",
+            "com.google.android.GoogleCamera",
+            "com.sec.android.app.camera",
+            "com.android.camera2"
+        };
+        for (String p : deviceDefaults) {
+            if (out.size() >= 5) break;
+            if (!out.contains(p) && launchIntent(pm, p) != null) out.add(p);
+        }
+        if (out.size() < 5) {
             for (String p : Apps.LIST) {
                 if (out.size() >= 5) break;
                 if (!p.isEmpty() && !out.contains(p) && launchIntent(pm, p) != null) out.add(p);
             }
-            // Query both Android TV (LEANBACK_LAUNCHER) and Tablet/Foldable (LAUNCHER) apps
+            // Query user-installed and updated apps across Android TV and Foldable/Tablet launchers
             for (String category : new String[] {Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
                 if (out.size() >= 5) break;
                 Intent q = new Intent(Intent.ACTION_MAIN).addCategory(category);
@@ -482,6 +527,17 @@ public class MainActivity extends Activity {
                     boolean stockSystem = (flags & ApplicationInfo.FLAG_SYSTEM) != 0
                             && (flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0;
                     if (stockSystem || out.contains(p) || NOT_APPS.contains(p) || p.equals(getPackageName())) continue;
+                    out.add(p);
+                }
+            }
+            // Final fallback: include any default device launcher app so all 5 slots are always populated
+            for (String category : new String[] {Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
+                if (out.size() >= 5) break;
+                Intent q = new Intent(Intent.ACTION_MAIN).addCategory(category);
+                for (ResolveInfo ri : pm.queryIntentActivities(q, 0)) {
+                    if (out.size() >= 5) break;
+                    String p = ri.activityInfo.packageName;
+                    if (out.contains(p) || NOT_APPS.contains(p) || p.equals(getPackageName())) continue;
                     out.add(p);
                 }
             }
@@ -545,8 +601,40 @@ public class MainActivity extends Activity {
             recreate();
             return;
         }
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+            activeDialog = null;
+        }
         scale = computeAdaptiveScale();
+        settingsScale = computeSettingsScale();
         if (skyView != null) skyView.setScale(scale);
+        if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams clp = (FrameLayout.LayoutParams) clockContainer.getLayoutParams();
+            clp.leftMargin = px(MARGIN);
+            clp.topMargin = px(38);
+            clockContainer.setLayoutParams(clp);
+        }
+        if (weatherView != null && weatherView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            ((LinearLayout.LayoutParams) weatherView.getLayoutParams()).leftMargin = px(18);
+        }
+        if (fancySyncView != null) {
+            fancySyncView.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(16));
+            if (fancySyncView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                ((LinearLayout.LayoutParams) fancySyncView.getLayoutParams()).leftMargin = px(18);
+            }
+        }
+        if (timeClockView != null) {
+            timeClockView.setPadding(px(4), px(2), px(14), px(12));
+            if (timeClockView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                ((LinearLayout.LayoutParams) timeClockView.getLayoutParams()).topMargin = px(-14);
+            }
+        }
+        if (moveHint != null) {
+            moveHint.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(28));
+            if (moveHint.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+                ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).leftMargin = px(MARGIN);
+            }
+        }
         applyThemeTypography(universeTheme());
         buildTiles();
     }
@@ -620,13 +708,13 @@ public class MainActivity extends Activity {
     // The wallpapers, each with a small dot of its colours. Moving through the list shows each one
     // behind the panel; OK keeps it, Back goes back to the one before.
     private void showWallpapers() {
-        final int size = px(40);
+        final int size = spx(44);
         panel(Strings.t("Wallpaper"), Arrays.asList(WALLPAPER_NAMES), pos -> {
             int[] c = WALLPAPERS[pos];
             GradientDrawable dot = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                     new int[] {glow(c[3], c[0]), c[1], glow(c[4], c[0])});
             dot.setShape(GradientDrawable.OVAL);
-            dot.setStroke(Math.max(1, px(2)), 0x26FFFFFF);
+            dot.setStroke(Math.max(1, spx(2)), 0x26FFFFFF);
             dot.setSize(size, size);
             return dot;
         }, size, wallpaper(), this::showWallpaper, which -> {
@@ -689,17 +777,20 @@ public class MainActivity extends Activity {
 
         // Adapt column count when both rows have fewer than 6 items, so 5 apps + 5 bottom tiles
         // fill the full row width cleanly with no wasted column on the right.
-        cols = Math.max(4, Math.min(PER_ROW, Math.max(topCols, bottomCount)));
+        cols = Math.max(5, Math.min(PER_ROW, Math.max(topCols, bottomCount)));
 
         int w = (screenW - 2 * m - g * (cols - 1)) / cols;
         int h = w * 9 / 16;
-        int bottomH = px(52);
+        int bottomH = Math.max(spx(50), px(52));
+        int maxBottomColW = (screenW - 2 * m - Math.max(0, bottomCount - 1) * g) / Math.max(1, bottomCount);
+        int bottomW = Math.max(w, Math.min(spx(230), maxBottomColW));
         tileW = w;
         tileH = h;
+        rowStepPx = Math.max(px(ROW_STEP), h + px(22));
 
         int rows = Math.max(1, (launchable + cols - 1) / cols);
-        gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * px(ROW_STEP));
-        int bottomTop = gridTop + rows * px(ROW_STEP) + px(6);
+        gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * rowStepPx);
+        int bottomTop = gridTop + rows * rowStepPx + px(6);
         ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - px(46);
         root.setMinimumHeight(bottomTop + bottomH + px(MARGIN));
 
@@ -709,32 +800,37 @@ public class MainActivity extends Activity {
         for (int i = 0; i < rowApps.size(); i++) {
             String pkg = rowApps.get(i);
             String label = pkg;
+            Drawable defaultIcon = null;
             try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
+            try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
             Drawable banner = HogwartsSkyView.createHogwartsBanner(
-                    getResources(), pkg, label, w, h, scale, themeFontFor(universeTheme()), cinzelFont, universeTheme());
+                    getResources(), pkg, label, w, h, scale, themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
             addTile(root, pkg, label, banner, null, null, gridX(i), gridY(i), w, h);
         }
 
-        // Compact bottom row: aligned column-for-column with the 5 app cards above, slim 52px height.
+        // Compact bottom row: uniform width & height across TV, Foldable cover/inner screens, and Tablets.
         int col = 0;
-        int bottomRowW = bottomCount * w + (bottomCount - 1) * g;
+        int bottomRowW = bottomCount * bottomW + (bottomCount - 1) * g;
         int bottomStartX = (screenW - bottomRowW) / 2;
         if (store)
-            addTile(root, PLAY_STORE, "Play Store", null, LineIcon.PLAY, null, bottomStartX + col++ * (w + g), bottomTop, w, bottomH);
+            addTile(root, PLAY_STORE, "Play Store", null, LineIcon.PLAY, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
         for (TvInputInfo in : inputs)
-            addTile(root, in.getId(), inputLabel(in), null, LineIcon.HDMI, null, bottomStartX + col++ * (w + g), bottomTop, w, bottomH);
-        addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, bottomStartX + col++ * (w + g), bottomTop, w, bottomH);
-        addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, bottomStartX + col * (w + g), bottomTop, w, bottomH);
+            addTile(root, in.getId(), inputLabel(in), null, LineIcon.HDMI, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
+        addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, bottomStartX + col++ * (bottomW + g), bottomTop, bottomW, bottomH);
+        addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, bottomStartX + col * (bottomW + g), bottomTop, bottomW, bottomH);
 
         // Top-right quick toggles dock (icon-only): Glow On/Off, Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
         List<Integer> quick = quickList();
         int totalTopItems = quick.size() + 3; // Glow toggle + Theme picker + quick items + Wi-Fi
-        int itemW = px(56), itemH = px(50), ig = px(6), dockPad = px(8);
+        float dockScale = Math.max(scale, Math.min(settingsScale, screenW / 1450f));
+        int itemW = Math.round(56 * dockScale), itemH = Math.round(50 * dockScale);
+        int ig = Math.round(6 * dockScale), dockPad = Math.round(8 * dockScale);
         int gridRight = (screenW + (cols * w + (cols - 1) * g)) / 2;
         int dockW = totalTopItems * itemW + (totalTopItems - 1) * ig + 2 * dockPad;
         int dockH = itemH + 2 * dockPad;
-        int dockX = gridRight - dockW;
-        int dockY = px(58) - dockPad;
+        int dockX = Math.max(px(MARGIN), gridRight - dockW);
+        int dockY = Math.max(px(20), px(58) - dockPad);
+        int iconY = dockY + dockPad;
         View dock = new View(this);
         GradientDrawable dockBg = new GradientDrawable();
         dockBg.setCornerRadius(dockH / 2f);
@@ -746,15 +842,15 @@ public class MainActivity extends Activity {
 
         int qx = dockX + dockPad;
         boolean glowEnabled = skyView == null || skyView.isEdgeGlowEnabled();
-        glowIconView = addIcon(GLOW_TOGGLE, glowEnabled ? "Glow On" : "Glow Off", createGlowDrawable(glowEnabled), qx, itemW, itemH);
+        glowIconView = addIcon(GLOW_TOGGLE, glowEnabled ? "Glow On" : "Glow Off", createGlowDrawable(glowEnabled), qx, iconY, itemW, itemH);
         qx += itemW + ig;
-        addIcon(THEME_PICK, "Theme", createThemeDrawable(universeTheme()), qx, itemW, itemH);
+        addIcon(THEME_PICK, "Theme", createThemeDrawable(universeTheme()), qx, iconY, itemW, itemH);
         qx += itemW + ig;
         for (int q : quick) {
-            addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), qx, itemW, itemH);
+            addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), qx, iconY, itemW, itemH);
             qx += itemW + ig;
         }
-        netIcon = addIcon(NETWORK, "Wi-Fi", null, qx, itemW, itemH);
+        netIcon = addIcon(NETWORK, "Wi-Fi", null, qx, iconY, itemW, itemH);
         netState = -1;
         refreshNetwork();
 
@@ -779,28 +875,30 @@ public class MainActivity extends Activity {
             iv.setImageDrawable(fit(banner, w, h));
             card.addView(iv, new FrameLayout.LayoutParams(-1, -1));
         } else {
-            // Compact Hogwarts dark-gold capsule pill for bottom utility tiles.
+            // Compact dark-gold capsule pill for bottom utility tiles, scaled uniformly with pill height h.
             bg.setColor(0x28181210);
             LinearLayout inner = new LinearLayout(this);
             boolean pill = lineIcon != null;
             inner.setOrientation(pill ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
             inner.setGravity(Gravity.CENTER);
-            inner.setPadding(px(14), 0, px(14), 0);
+            int padX = pill ? Math.max(px(10), Math.round(h * 0.24f)) : px(14);
+            inner.setPadding(padX, 0, padX, 0);
             ImageView iv = new ImageView(this);
-            int size = pill ? px(22) : px(64);
+            int size = pill ? Math.max(px(18), Math.round(h * 0.42f)) : px(64);
             if (lineIcon != null) {
                 LineIcon li = new LineIcon(lineIcon);
                 li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
                 iv.setImageDrawable(li);
             } else if (appIcon != null) iv.setImageDrawable(fit(appIcon, size, size));
             inner.addView(iv, new LinearLayout.LayoutParams(size, size));
-            TextView t = text(px(15), 0xF2FFF4D2, cinzelFont != null ? cinzelFont : regular);
+            int textPx = pill ? Math.max(px(13), Math.round(h * 0.30f)) : px(15);
+            TextView t = text(textPx, 0xF2FFF4D2, cinzelFont != null ? cinzelFont : semibold);
             t.setText(label);
             t.setSingleLine(true);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-            if (pill) lp.leftMargin = px(10);
+            if (pill) lp.leftMargin = Math.max(px(6), Math.round(h * 0.16f));
             else lp.topMargin = px(10);
             inner.addView(t, lp);
             card.addView(inner, new FrameLayout.LayoutParams(-1, -1));
@@ -952,8 +1050,8 @@ public class MainActivity extends Activity {
     }
 
     // Top-right quick icon button (icon-only, no text wording) inside the glass dock pill.
-    private ImageView addIcon(final String key, String label, Drawable icon, int x, int w, int h) {
-        int size = px(26);
+    private ImageView addIcon(final String key, String label, Drawable icon, int x, final int y, int w, int h) {
+        int size = Math.max(px(22), Math.round(h * 0.52f));
         FrameLayout card = new FrameLayout(this);
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(h / 2f);
@@ -975,7 +1073,7 @@ public class MainActivity extends Activity {
         card.setOnFocusChangeListener((v, has) -> {
             if (has) {
                 focusedKey = key;
-                if (skyView != null) skyView.onTileFocused(x + w * 0.5f, px(58) + h * 0.5f, px(58), 0xFFFFE082);
+                if (skyView != null) skyView.onTileFocused(x + w * 0.5f, y + h * 0.5f, y, 0xFFFFE082);
             }
             bg.setStroke(has ? Math.max(1, px(2)) : 0, has ? 0xEEFFE082 : Color.TRANSPARENT);
             lift(v, bg, has, Color.TRANSPARENT, 0x38382A18, h / 2, h / 2);
@@ -984,7 +1082,7 @@ public class MainActivity extends Activity {
         FrameLayout wrap = new FrameLayout(this);
         wrap.setClipChildren(false);
         wrap.addView(card, new FrameLayout.LayoutParams(w, h));
-        root.addView(wrap, at(x, px(58), w, h));
+        root.addView(wrap, at(x, y, w, h));
         tiles.add(card);
         return iv;
     }
@@ -1194,7 +1292,7 @@ public class MainActivity extends Activity {
     }
 
     private void showThemePicker() {
-        final int size = px(44);
+        final int size = spx(44);
         final int current = universeTheme();
         panel("Universe Theme", Arrays.asList(UNIVERSE_THEMES), pos -> createThemeRowIcon(pos, size), size, current, pos -> {
             if (skyView != null) skyView.setUniverseTheme(pos);
@@ -1446,17 +1544,21 @@ public class MainActivity extends Activity {
     // with selected again, to put things back.
     private void panel(String title, final List<String> labels, final Icon icon, final int size,
                        final int selected, final Pick preview, final Pick pick) {
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+        }
         final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        activeDialog = d;
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(px(48), px(92), px(48), px(48));
+        box.setPadding(spx(36), spx(56), spx(36), spx(36));
 
-        TextView head = text(px(52), 0xFFFFF4D2, harryFont);
-        head.setLetterSpacing(0.04f);
+        TextView head = text(spx(32), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        head.setLetterSpacing(0.08f);
         head.setText(title);
         head.setSingleLine(true);
         head.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        head.setPadding(px(24), 0, px(24), 0);
+        head.setPadding(spx(20), 0, spx(20), 0);
         box.addView(head);
 
         ListView list = new ListView(this);
@@ -1464,37 +1566,40 @@ public class MainActivity extends Activity {
         list.setVerticalScrollBarEnabled(false);
         list.setOverScrollMode(View.OVER_SCROLL_NEVER);
         GradientDrawable focus = new GradientDrawable();
-        focus.setCornerRadius(px(RADIUS));
+        focus.setCornerRadius(spx(RADIUS));
         focus.setColor(0x38FFE8B0);
-        focus.setStroke(Math.max(1, px(2)), 0x99FFE082);
+        focus.setStroke(Math.max(1, spx(2)), 0x99FFE082);
         list.setSelector(focus);
         // Icons load as rows appear, drawn small to save RAM.
         final Drawable[] icons = new Drawable[labels.size()];
+        final int iconBox = size > 0 ? spx(44) : 0;
         list.setAdapter(new BaseAdapter() {
             @Override public int getCount() { return labels.size(); }
             @Override public Object getItem(int pos) { return labels.get(pos); }
             @Override public long getItemId(int pos) { return pos; }
             @Override public View getView(int pos, View convert, ViewGroup parent) {
                 boolean isThemePanel = "Universe Theme".equals(title);
-                Typeface rowTf = isThemePanel ? themeFontFor(pos) : themeFontFor(universeTheme());
-                int rowSize = (isThemePanel && pos != 0) ? px(28) : px(34);
+                Typeface rowTf = isThemePanel ? themeFontFor(pos) : (cinzelFont != null ? cinzelFont : semibold);
+                int rowSize = isThemePanel
+                        ? spx(THEME_ROW_FONT_SIZES[Math.max(0, Math.min(THEME_ROW_FONT_SIZES.length - 1, pos))])
+                        : spx(24);
                 TextView t = convert != null ? (TextView) convert : text(rowSize, 0xF2FFF4D2, rowTf);
                 t.setTypeface(rowTf);
                 t.setTextSize(TypedValue.COMPLEX_UNIT_PX, rowSize);
-                t.setLetterSpacing(0.04f);
+                t.setLetterSpacing(0.05f);
                 t.setText(labels.get(pos));
                 t.setSingleLine(true);
                 t.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 t.setGravity(Gravity.CENTER_VERTICAL);
-                t.setMinHeight(px(88));
-                t.setPadding(px(24), 0, px(24), 0);
+                t.setMinHeight(spx(78));
+                t.setPadding(spx(20), 0, spx(20), 0);
                 if (icon != null && icons[pos] == null) {
                     try { icons[pos] = icon.at(pos); }
                     catch (Exception e) { icons[pos] = new ColorDrawable(Color.TRANSPARENT); }
-                    icons[pos].setBounds(0, 0, size, size);
+                    icons[pos].setBounds(0, 0, iconBox, iconBox);
                 }
                 t.setCompoundDrawablesRelative(icons[pos], null, null, null);
-                t.setCompoundDrawablePadding(px(24));
+                t.setCompoundDrawablePadding(spx(20));
                 return t;
             }
         });
@@ -1513,48 +1618,58 @@ public class MainActivity extends Activity {
             d.setOnCancelListener(x -> preview.at(selected));
         }
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, 0, 1f);
-        lp.topMargin = px(36);
+        lp.topMargin = spx(24);
         box.addView(list, lp);
 
         d.setContentView(box);
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int panelW = Math.min(spx(600), Math.round(screenW * 0.84f));
         Window w = d.getWindow();
         w.setBackgroundDrawable(new ColorDrawable(preview != null ? 0xFF161113 : 0xF7161113));
-        w.setLayout(px(640), -1);
         w.setGravity(Gravity.END);
         w.setDimAmount(preview != null ? 0f : 0.5f); // a preview needs the home screen undimmed
+        w.setLayout(panelW, -1);
         d.show();
+        w.setLayout(panelW, -1);
     }
 
     // A small menu that drops down under a tile, in the same glass as the tiles. Opens above the
     // tile when there's no room below. Back closes it.
     private void dropdown(View anchor, String[] items, final Pick pick) {
+        if (anchor == null) return;
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+        }
         final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        activeDialog = d;
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        int pad = px(10), rowH = px(64);
+        int pad = spx(10), rowH = spx(58);
         box.setPadding(pad, pad, pad, pad);
         GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(px(RADIUS));
+        bg.setCornerRadius(spx(RADIUS));
         bg.setColor(0xF5141018);
-        bg.setStroke(Math.max(1, px(2)), 0x55F5D078);
+        bg.setStroke(Math.max(1, spx(2)), 0x55F5D078);
         box.setBackground(bg);
         float widest = 0; // some languages need more room than the tile is wide
+        Typeface menuTf = cinzelFont != null ? cinzelFont : semibold;
         for (int i = 0; i < items.length; i++) {
             final int which = i;
-            final TextView t = text(px(32), 0xEBFFF4D2, harryFont);
-            t.setLetterSpacing(0.04f);
+            final TextView t = text(spx(22), 0xEBFFF4D2, menuTf);
+            t.setLetterSpacing(0.06f);
             t.setText(Strings.t(items[i]));
             t.setSingleLine(true);
+            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setGravity(Gravity.CENTER_VERTICAL);
-            t.setPadding(px(22), 0, px(22), 0);
-            widest = Math.max(widest, t.getPaint().measureText(t.getText().toString()) + 2 * px(22) + 2 * pad);
+            t.setPadding(spx(22), 0, spx(22), 0);
+            widest = Math.max(widest, t.getPaint().measureText(t.getText().toString()) * 1.12f + 2 * spx(22) + 2 * pad);
             final GradientDrawable focus = new GradientDrawable();
-            focus.setCornerRadius(px(RADIUS - pad));
+            focus.setCornerRadius(spx(RADIUS - 8));
             focus.setColor(Color.TRANSPARENT);
             t.setBackground(focus);
             t.setFocusable(true);
             t.setOnFocusChangeListener((v, has) -> {
-                tween(t, focus, has, Color.TRANSPARENT, 0x38FFE8B0, px(RADIUS - pad), px(RADIUS - pad));
+                tween(t, focus, has, Color.TRANSPARENT, 0x38FFE8B0, spx(RADIUS - 8), spx(RADIUS - 8));
                 t.setTextColor(has ? 0xFFFFF8E0 : 0xEBFFF4D2);
             });
             t.setOnClickListener(v -> {
@@ -1565,25 +1680,31 @@ public class MainActivity extends Activity {
         }
         d.setContentView(box);
 
-        // Line it up with the tile as drawn (focused tiles are scaled up), below its name.
+        // Line it up with the tile as drawn (focused tiles are scaled up), clamped cleanly on Foldables/Tablets.
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int screenH = getResources().getDisplayMetrics().heightPixels;
         int[] at = new int[2];
         anchor.getLocationOnScreen(at);
         int tileBottom = at[1] + Math.round(anchor.getHeight() * anchor.getScaleY());
-        int w = Math.max(Math.max(Math.round(anchor.getWidth() * anchor.getScaleX()), px(320)), (int) Math.ceil(widest));
+        int w = Math.min(screenW - spx(32),
+                Math.max(Math.max(Math.round(anchor.getWidth() * anchor.getScaleX()), spx(300)), (int) Math.ceil(widest)));
         int h = items.length * rowH + 2 * pad;
-        int y = tileBottom + px(64);
-        if (y + h > getResources().getDisplayMetrics().heightPixels - px(24)) y = at[1] - h - px(16);
+        int y = tileBottom + spx(12);
+        if (y + h > screenH - spx(24)) y = Math.max(spx(24), at[1] - h - spx(12));
+        int x = Math.max(spx(16), Math.min(at[0], screenW - w - spx(16)));
         Window win = d.getWindow();
         win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         win.setGravity(Gravity.TOP | Gravity.START);
         android.view.WindowManager.LayoutParams lp = win.getAttributes();
-        lp.x = at[0];
+        lp.x = x;
         lp.y = y;
         lp.width = w;
         lp.height = h;
         win.setAttributes(lp);
         d.show();
+        win.setAttributes(lp);
+        win.setLayout(w, h);
     }
 
     // Hold OK (or Menu) on a top-row app: move it, swap it for another, or take it off the home
@@ -1796,8 +1917,9 @@ public class MainActivity extends Activity {
         final List<String> pkgs = new ArrayList<>(byLabel.values());
         String title = replaceIndex < 0 ? Strings.t("Add an app")
                 : String.format(Strings.t("Replace %s"), labelOf(rowApps.get(replaceIndex)));
-        panel(title, new ArrayList<>(byLabel.keySet()), pos -> fit(pm.getApplicationIcon(pkgs.get(pos)), px(48), px(48)),
-                px(48), -1, null, which -> {
+        final int iconSz = spx(44);
+        panel(title, new ArrayList<>(byLabel.keySet()), pos -> fit(pm.getApplicationIcon(pkgs.get(pos)), iconSz, iconSz),
+                iconSz, -1, null, which -> {
             if (replaceIndex < 0) rowApps.add(pkgs.get(which));
             else rowApps.set(replaceIndex, pkgs.get(which));
             saveRow();
@@ -1830,7 +1952,7 @@ public class MainActivity extends Activity {
     }
 
     private int gridY(int i) {
-        return gridTop + (i / cols) * px(ROW_STEP);
+        return gridTop + (i / cols) * (rowStepPx > 0 ? rowStepPx : px(ROW_STEP));
     }
 
     private View tile(String key) {

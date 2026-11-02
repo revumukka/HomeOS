@@ -59,7 +59,9 @@ final class LineIcon extends Drawable {
     @Override
     public void draw(Canvas c) {
         if (ops == null) return;
-        float s = getBounds().width() / 240f; // ops are in tenths of the 24-unit grid
+        float bw = getBounds().width(), bh = getBounds().height();
+        float side = Math.min(bw, bh);
+        float s = side / 240f; // ops are in tenths of the 24-unit grid
         paint.setStrokeWidth(16 * s);
         path.reset();
         for (int i = 0; i < ops.length; ) {
@@ -76,7 +78,7 @@ final class LineIcon extends Drawable {
             }
         }
         c.save();
-        c.translate(getBounds().left, getBounds().top);
+        c.translate(getBounds().left + (bw - side) * 0.5f, getBounds().top + (bh - side) * 0.5f);
         c.drawPath(path, paint);
         c.restore();
     }
@@ -84,6 +86,6 @@ final class LineIcon extends Drawable {
     @Override public void setAlpha(int a) { paint.setAlpha(a); }
     @Override public void setColorFilter(ColorFilter cf) { paint.setColorFilter(cf); }
     @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
-    @Override public int getIntrinsicWidth() { return 44; }
-    @Override public int getIntrinsicHeight() { return 44; }
+    @Override public int getIntrinsicWidth() { return -1; }
+    @Override public int getIntrinsicHeight() { return -1; }
 }
