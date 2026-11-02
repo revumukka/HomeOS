@@ -366,32 +366,50 @@ public class MainActivity extends Activity {
     private boolean gestureHandled;
     private boolean gestureLockedHorizontal;
 
-    // v6.0 Universal Landscape & Unfolded Foldable Cinema Story Screensaver Mode (2 minutes of inactivity):
-    // Active on Android TV, any landscape orientation (width > height), and unfolded/open foldables (width >= height * 0.75f).
+    // Universal Cinema Story Screensaver Mode (customizable trigger time in App Settings, default 2 min):
+    // Active across EVERY device type and posture (Android TV, Foldables open or closed, Phones in portrait/landscape, Tablets).
     // Hides all app tiles, page dots, bottom buttons, and quick icon dock while keeping the
     // top-left Date, Time & Weather and SkyView, scaling the story stage to the bottom 3/4th of the screen
     // and randomizing across all 300 stories from all 6 Universe Themes with matching font & sky.
-    private static final long SCREENSAVER_IDLE_MS = 2 * 60 * 1000L;
+    private static final String PREF_SCREENSAVER_SEC = "screensaver_timeout_sec";
+    private static final int[] SCREENSAVER_TIMEOUT_SECS = {15, 30, 60, 120, 180, 300, 600, 900, 1800, 0};
+    private static final String[] SCREENSAVER_TIMEOUT_LABELS = {
+        "15 sec", "30 sec", "1 min", "2 min", "3 min", "5 min", "10 min", "15 min", "30 min", "Off"
+    };
     private final android.os.Handler idleHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private boolean screensaverActive = false;
     private boolean swallowWakeKeyUp = false;
     private boolean swallowWakeTouch = false;
     private final Runnable startScreensaverTask = this::enterScreensaver;
 
+    private int getScreensaverTimeoutIndex() {
+        int savedSec = prefs().getInt(PREF_SCREENSAVER_SEC, 120);
+        for (int i = 0; i < SCREENSAVER_TIMEOUT_SECS.length; i++) {
+            if (SCREENSAVER_TIMEOUT_SECS[i] == savedSec) return i;
+        }
+        return 3; // Default: 120 sec ("2 min")
+    }
+
+    private int getScreensaverTimeoutSec() {
+        return SCREENSAVER_TIMEOUT_SECS[getScreensaverTimeoutIndex()];
+    }
+
+    private String getScreensaverTimeoutLabel() {
+        return SCREENSAVER_TIMEOUT_LABELS[getScreensaverTimeoutIndex()];
+    }
+
     private boolean isScreensaverEligiblePosture() {
-        if (isTvDevice()) return true;
-        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
-        // True for any landscape orientation AND when a foldable is open/unfolded
-        return dm.widthPixels >= dm.heightPixels * 0.75f;
+        // Available on every device type and orientation (TV, Foldables, Phones & Tablets)
+        return true;
     }
 
     private void updateKeepScreenOn() {
         try {
             Window win = getWindow();
             if (win == null) return;
-            if (isScreensaverEligiblePosture()) {
+            if (isTvDevice() || getScreensaverTimeoutSec() > 0) {
                 win.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            } else if (!isTvDevice()) {
+            } else {
                 win.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
         } catch (Throwable ignored) {}
@@ -444,8 +462,9 @@ public class MainActivity extends Activity {
         if (screensaverActive) {
             exitScreensaver();
         }
-        if (isScreensaverEligiblePosture() && hasWindowFocus()) {
-            idleHandler.postDelayed(startScreensaverTask, SCREENSAVER_IDLE_MS);
+        int timeoutSec = getScreensaverTimeoutSec();
+        if (timeoutSec > 0 && isScreensaverEligiblePosture() && hasWindowFocus()) {
+            idleHandler.postDelayed(startScreensaverTask, timeoutSec * 1000L);
         }
     }
 
@@ -3233,7 +3252,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v6.5.2  \u00B7  Build 67");
+        appTitleTv.setText("HomeScreen v6.5.3  \u00B7  Build 68");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
@@ -3289,6 +3308,7 @@ public class MainActivity extends Activity {
 
         final TextView colsValTv = text(sp(16f), 0xFFFFFFFF, semibold);
         final TextView rowsValTv = text(sp(16f), 0xFFFFFFFF, semibold);
+        final TextView ssValTv = text(sp(14.5f), 0xFFFFE082, semibold);
 
         final Runnable refreshGridLabels = () -> {
             int c = getCustomGridCols(tvMode, isNarrowVertical);
@@ -3296,6 +3316,7 @@ public class MainActivity extends Activity {
             colsValTv.setText(String.valueOf(c));
             rowsValTv.setText(String.valueOf(r));
             overflowBadgeTv.setText(c + " \u00D7 " + r + " = " + (c * r) + " / page");
+            ssValTv.setText(getScreensaverTimeoutLabel());
         };
         refreshGridLabels.run();
 
@@ -3350,6 +3371,40 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams rcrLp = new LinearLayout.LayoutParams(-1, -2);
         rcrLp.topMargin = dp(8);
         gridCard.addView(rowsControlRow, rcrLp);
+
+        // Row 3: Screensaver Trigger Time (available on every device type)
+        ssValTv.setOnClickListener(v -> {
+            dropdown(ssValTv, SCREENSAVER_TIMEOUT_LABELS, which -> {
+                prefs().edit().putInt(PREF_SCREENSAVER_SEC, SCREENSAVER_TIMEOUT_SECS[which]).apply();
+                refreshGridLabels.run();
+                updateKeepScreenOn();
+                resetIdleTimer();
+            });
+        });
+        LinearLayout ssControlRow = createStepperRow(
+                "Screensaver Trigger Time",
+                "Idle timer across all devices (15s\u201330m, or Off)",
+                ssValTv,
+                v -> {
+                    int idx = getScreensaverTimeoutIndex();
+                    int nextIdx = (idx - 1 + SCREENSAVER_TIMEOUT_SECS.length) % SCREENSAVER_TIMEOUT_SECS.length;
+                    prefs().edit().putInt(PREF_SCREENSAVER_SEC, SCREENSAVER_TIMEOUT_SECS[nextIdx]).apply();
+                    refreshGridLabels.run();
+                    updateKeepScreenOn();
+                    resetIdleTimer();
+                },
+                v -> {
+                    int idx = getScreensaverTimeoutIndex();
+                    int nextIdx = (idx + 1) % SCREENSAVER_TIMEOUT_SECS.length;
+                    prefs().edit().putInt(PREF_SCREENSAVER_SEC, SCREENSAVER_TIMEOUT_SECS[nextIdx]).apply();
+                    refreshGridLabels.run();
+                    updateKeepScreenOn();
+                    resetIdleTimer();
+                }
+        );
+        LinearLayout.LayoutParams sscrLp = new LinearLayout.LayoutParams(-1, -2);
+        sscrLp.topMargin = dp(8);
+        gridCard.addView(ssControlRow, sscrLp);
 
         // Reset Grid button row
         LinearLayout resetGridRow = new LinearLayout(this);
@@ -3753,8 +3808,10 @@ public class MainActivity extends Activity {
         row.addView(minusBtn, new LinearLayout.LayoutParams(dp(40), dp(38)));
 
         valueTv.setGravity(Gravity.CENTER);
-        valueTv.setMinimumWidth(dp(38));
-        row.addView(valueTv, new LinearLayout.LayoutParams(dp(42), -2));
+        valueTv.setSingleLine(true);
+        valueTv.setMinimumWidth(dp(48));
+        valueTv.setPadding(dp(6), 0, dp(6), 0);
+        row.addView(valueTv, new LinearLayout.LayoutParams(-2, -2));
 
         TextView plusBtn = createSettingsPillButton("+", false, onPlus);
         plusBtn.setMinimumWidth(dp(40));
@@ -3817,6 +3874,7 @@ public class MainActivity extends Activity {
         int rl = p.getInt(PREF_ROWS_LANDSCAPE, getDefaultGridRows(false, false));
         int ct = p.getInt(PREF_COLS_TV, getDefaultGridCols(true, false));
         int rt = p.getInt(PREF_ROWS_TV, getDefaultGridRows(true, false));
+        int ss = getScreensaverTimeoutSec();
         int th = universeTheme();
         String clk = p.getString(PREF_CLOCK, "auto");
         String inNames = p.getString(PREF_INPUT_NAMES, "").replace("\n", ";;");
@@ -3826,6 +3884,7 @@ public class MainActivity extends Activity {
                 + "|cp=" + cp + "|rp=" + rp
                 + "|cl=" + cl + "|rl=" + rl
                 + "|ct=" + ct + "|rt=" + rt
+                + "|ss=" + ss
                 + "|theme=" + th
                 + "|clock=" + clk
                 + "|inputs=" + inNames;
@@ -3899,6 +3958,8 @@ public class MainActivity extends Activity {
                     e.putInt(PREF_COLS_TV, Math.max(2, Math.min(8, Integer.parseInt(v))));
                 } else if ("rt".equals(k)) {
                     e.putInt(PREF_ROWS_TV, Math.max(1, Math.min(5, Integer.parseInt(v))));
+                } else if ("ss".equals(k)) {
+                    e.putInt(PREF_SCREENSAVER_SEC, Math.max(0, Math.min(1800, Integer.parseInt(v))));
                 } else if ("theme".equals(k)) {
                     restoredTheme = Math.max(0, Math.min(UNIVERSE_THEMES.length - 1, Integer.parseInt(v)));
                     e.putInt(PREF_THEME, restoredTheme);
@@ -3917,6 +3978,8 @@ public class MainActivity extends Activity {
             skyView.setUniverseTheme(restoredTheme);
         }
         applyThemeTypography(restoredTheme);
+        updateKeepScreenOn();
+        resetIdleTimer();
         buildTiles();
         Toast.makeText(this, "Layout restored (" + rowApps.size() + " apps, " + UNIVERSE_THEMES[restoredTheme] + ")!", Toast.LENGTH_SHORT).show();
         return true;
@@ -3924,7 +3987,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v6.5.2 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v6.5.3 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -3935,7 +3998,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.2 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.3 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -3947,7 +4010,7 @@ public class MainActivity extends Activity {
 
     // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
     private void showInstallOnTvDialog() {
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.2_67.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.3_68.apk";
         List<String> options = Arrays.asList(
             "1. Share Download Link to TV (Quick Share / LocalSend)",
             "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",

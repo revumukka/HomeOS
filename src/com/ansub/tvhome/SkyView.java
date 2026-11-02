@@ -863,14 +863,16 @@ final class SkyView extends View {
         return 1.50f + 0.80f * screensaverZoom;
     }
 
-    // Scales the bottom story stage. In Screensaver Mode (screensaverZoom -> 1.0f) on TV,
-    // any landscape orientation, or unfolded/open foldables, stories grow huge to take over up to the bottom 3/4th of the screen.
+    // Scales the bottom story stage. In Screensaver Mode (screensaverZoom -> 1.0f) across all device types
+    // (TV, Portrait/Landscape Phones, Foldables & Tablets), stories grow huge to take over up to the bottom 3/4th of the screen.
     private void applyStageTransform(Canvas c, int w, int h, float groundY) {
         boolean isNarrowVertical = w < h * 0.75f;
         float z = smoothstep(screensaverZoom);
-        if (isNarrowVertical && z <= 0.001f) {
+        if (isNarrowVertical) {
             float stScale = getStageScale(w, h);
-            c.scale(stScale, stScale, w * 0.45f, groundY);
+            float sx = stScale + 0.35f * z;
+            float sy = stScale + 0.95f * z;
+            c.scale(sx, sy, w * 0.45f, groundY);
         } else {
             float baseScale = h > w ? Math.min(1.85f, Math.max(1.55f, (h / (float) Math.max(1, w)) * 1.05f)) : 1.50f;
             float sx = baseScale + 0.80f * z;

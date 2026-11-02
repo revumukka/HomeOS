@@ -4,7 +4,7 @@
 
 **Universal Multi-Universe Animated Home Launcher & Cinema Story Screensaver for Android TV, Google TV, Foldables, Phones & Tablets**
 
-[![Version](https://img.shields.io/badge/version-6.5.2-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
+[![Version](https://img.shields.io/badge/version-6.5.3-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Refresh Rate](https://img.shields.io/badge/Refresh_Rate-Dynamic_Up_to_120_FPS-00d2d3.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Size](https://img.shields.io/badge/APK_Size-420_KB-2ecc71.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Platform](https://img.shields.io/badge/Android-5.0%2B_(TV_%7C_Foldable_%7C_Phone_%7C_Tablet)-3ddc84.svg?style=flat-square)](https://github.com/revumukka/HomeOS)
@@ -19,7 +19,7 @@
 
 ## Overview
 
-**HomeScreen (`v6.5.2`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~420 KB` total APK size, zero external dependencies, zero trackers).
+**HomeScreen (`v6.5.3`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~420 KB` total APK size, zero external dependencies, zero trackers).
 
 Every element—from twinkling sky constellations and floating candles to custom crest banners, vector icons, and the **300-scene animated saga stage** along the bottom horizon—is drawn procedurally in real time on Android's hardware-accelerated `Canvas` with **sub-microsecond `elapsedRealtimeNanos()` timing**, **frame-rate-independent exponential damping**, and **zero per-frame heap allocations**.
 
@@ -42,10 +42,11 @@ Switch seamlessly at any time via the bottom **Theme** icon button:
 
 ## Key Features
 
-- **v6.5.2 Interactive Bottom-Sheet Physics, Dedicated App Settings Page, Custom Grid Sizing & Layout Backup/Restore**:
+- **v6.5.3 Universal Screensaver Trigger Time Picker, Interactive Bottom-Sheet Physics, Dedicated App Settings Page, Custom Grid Sizing & Layout Backup/Restore**:
+  - **Customizable Screensaver Trigger Time Across All Devices**: Choose your preferred inactivity timeout (`15 sec`, `30 sec`, `1 min`, `2 min`, `3 min`, `5 min`, `10 min`, `15 min`, `30 min`, or `Off`) directly in **App Settings**, available on **every device type and orientation** (Android TV, Foldables open or closed, Portrait & Landscape Phones, and Tablets).
   - **Full-Screen Expand & Swipe-Down Dismiss Bottom Sheets**: Both the **App Settings** sheet and the **All Apps Drawer** support dragging UP on the top handle bar/sheet (or tapping the top handle bar) to smoothly expand to **100% Full Screen**, and swiping DOWN at the top of the list/scroll view (or on the top bar) to slide down and dismiss.
   - **Settings Button Dropdown**: Tapping the **Settings** button opens the quick dropdown (`App Settings`, `Pin / Manage Apps`, `Next Story Scene`, `Start Screensaver`, `System Settings` / `TV settings`, `Privacy & Safety`)—replacing legacy `Sky Palette` and `Glow` options since each Universe Theme renders its own procedural story sky background.
-  - **Small About Section at the Top**: Displays app version (`HomeScreen v6.5.2 · Build 67`), creator credit, and quick **Invite Friends** + **Install on TV** action buttons.
+  - **Small About Section at the Top**: Displays app version (`HomeScreen v6.5.3 · Build 68`), creator credit, and quick **Invite Friends** + **Install on TV** action buttons.
   - **Custom Apps in a Row (Columns) & Apps in a Column (Rows Before Overflow)**: Interactive `[ − ]  Value  [ + ]` steppers let you customize columns per row (`2–6` on Phones/Foldables/Tablets, `2–8` on TV) and vertical rows per page before overflow (`1–6` in Portrait, `1–5` in Landscape/Unfolded & TV) with live real-time layout updates and a one-tap **Reset Grid** button.
   - **Save & Restore Layout**: One-tap **Save Layout** snapshots your pinned apps, posture row/column counts, active Universe Theme, Clock format, and HDMI input names to local storage *and* copies a portable `HOMESCREEN_LAYOUT_V1|...` backup string to the clipboard so you can restore or transfer your setup across devices with **Restore Layout**.
   - **Invite Friends & Install on TV Guide**: Share a pre-formatted invitation link via Android's native share sheet or open the interactive **Install on Android TV / Google TV** modal (Quick Share / LocalSend to TV, direct TV browser release URL, and wireless ADB command copy).
@@ -75,11 +76,11 @@ Switch seamlessly at any time via the bottom **Theme** icon button:
 
 ### Download Prebuilt APK
 Grab the latest signed universal APK from the [**Releases**](https://github.com/revumukka/HomeOS/releases) page:
-- `HomeScreen_Release_v6.5.2_67.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
+- `HomeScreen_Release_v6.5.3_68.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
 
 ### Install via ADB
 ```sh
-adb install -r out/HomeScreen_Release_v6.5.2_67.apk
+adb install -r out/HomeScreen_Release_v6.5.3_68.apk
 ```
 
 ---
@@ -93,8 +94,8 @@ sh build.sh
 ```
 
 Output APKs are generated in `out/`:
-- `out/HomeScreen_Release_v6.5.2_67.apk`
-- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v6.5.2-b67.apk`
+- `out/HomeScreen_Release_v6.5.3_68.apk`
+- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v6.5.3-b68.apk`
 - `out/HomeScreen.apk`
 
 ---
