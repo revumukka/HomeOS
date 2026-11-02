@@ -429,7 +429,7 @@ final class SkyView extends View {
     private float curR = 228f, curG = 58f, curB = 54f;
     private float targetR = 228f, targetG = 58f, targetB = 54f;
     private boolean prismMode = false;
-    private boolean edgeGlowEnabled = true;
+    private boolean edgeGlowEnabled = false;
 
     // Live FancyLEDs Hub (10.0.0.153 / Tuya UDP 6667) state
     private volatile boolean fancyHubOnline = true;

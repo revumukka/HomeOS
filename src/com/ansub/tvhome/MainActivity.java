@@ -635,11 +635,10 @@ public class MainActivity extends Activity {
         }
 
         FrameLayout viewport = new FrameLayout(this);
-        skyView = new SkyView(this, scale, wallpaper(), cinzelFont);
+        skyView = new SkyView(this, scale, 0, cinzelFont);
         skyView.setUniverseTheme(universeTheme());
         skyView.setScreensaverThemeListener(theme -> runOnUiThread(() -> applyThemeTypography(theme)));
-        boolean glowOn = prefs().getBoolean("edge_glow", true);
-        skyView.setEdgeGlowEnabled(glowOn);
+        skyView.setEdgeGlowEnabled(false);
         viewport.addView(skyView, new FrameLayout.LayoutParams(-1, -1));
 
         ScrollView scroller = new ScrollView(this);
@@ -700,21 +699,6 @@ public class MainActivity extends Activity {
         wp.leftMargin = isTvDevice() ? upx(16) : dp(10);
         dateRow.addView(weatherView, wp);
         setWeatherText(prefs().getString("weather_text", "66°F Cloudy"));
-
-        fancySyncView = text(isTvDevice() ? upx(16) : sp(11), 0xEEFFE082, cinzelFont);
-        fancySyncView.setLetterSpacing(0.14f);
-        fancySyncView.setText("|   FANCYLEDS SYNC");
-        fancySyncView.setShadowLayer(px(8), 0, px(2), 0xAA000000);
-        fancySyncView.setVisibility((glowOn && isTvDevice()) ? View.VISIBLE : View.GONE);
-        LinearLayout.LayoutParams fp = new LinearLayout.LayoutParams(-2, -2);
-        fp.leftMargin = upx(16);
-        dateRow.addView(fancySyncView, fp);
-        skyView.setHubStatusListener((online, ip) -> {
-            if (fancySyncView != null) {
-                boolean en = skyView != null && skyView.isEdgeGlowEnabled();
-                fancySyncView.setVisibility((online && en) ? View.VISIBLE : View.GONE);
-            }
-        });
 
         // The clock follows the TV unless --es clock 12 or 24 says otherwise.
         String clockPref = prefs().getString(PREF_CLOCK, null);
@@ -1423,9 +1407,9 @@ public class MainActivity extends Activity {
             tileH = h;
             rowStepPx = Math.max(px(ROW_STEP), h + px(22));
 
-            // Top-right quick toggles dock (icon-only): Glow On/Off, Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
+            // Top-right quick toggles dock (icon-only): Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
             List<Integer> quick = quickList();
-            int totalTopItems = quick.size() + 3; // Glow toggle + Theme picker + quick items + Wi-Fi
+            int totalTopItems = quick.size() + 2; // Theme picker + quick items + Wi-Fi
             int itemW = Math.round(56 * scale);
             int itemH = Math.round(50 * scale);
             int ig = Math.round(6 * scale), dockPad = Math.round(8 * scale);
@@ -1478,9 +1462,7 @@ public class MainActivity extends Activity {
             chrome.add(dock);
 
             int qx = dockX + dockPad;
-            boolean glowEnabled = skyView == null || skyView.isEdgeGlowEnabled();
-            glowIconView = addIcon(GLOW_TOGGLE, glowEnabled ? "Glow On" : "Glow Off", createGlowDrawable(glowEnabled), qx, iconY, itemW, itemH);
-            qx += itemW + ig;
+            glowIconView = null;
             addIcon(THEME_PICK, "Theme", createThemeDrawable(universeTheme()), qx, iconY, itemW, itemH);
             qx += itemW + ig;
             for (int q : quick) {
@@ -2198,7 +2180,43 @@ public class MainActivity extends Activity {
             showAddMenu(-1);
             return;
         } else if (SETTINGS.equals(key)) {
-            showAppSettingsDialog();
+            // Settings button dropdown: App Settings replaces Sky Palette & Glow (which are removed
+            // because each Universe Theme renders its own procedural story sky background).
+            List<String> list = new ArrayList<>();
+            list.add("App Settings");
+            if (!isTvDevice()) {
+                list.add("Pin / Manage Apps");
+            }
+            list.add("Next Story Scene");
+            if (isScreensaverEligiblePosture()) {
+                list.add("Start Screensaver");
+            }
+            if (isTvDevice()) {
+                if (!isBox(this)) list.add("Brightness");
+                list.add("TV settings");
+            } else {
+                list.add("System Settings");
+            }
+            list.add("Privacy & Safety");
+            final String[] items = list.toArray(new String[0]);
+            dropdown(tile(SETTINGS), items, which -> {
+                String picked = items[which];
+                if ("App Settings".equals(picked)) {
+                    showAppSettingsDialog();
+                } else if ("Pin / Manage Apps".equals(picked)) {
+                    showAllAppsDrawer(true);
+                } else if ("Next Story Scene".equals(picked)) {
+                    if (skyView != null) skyView.nextStoryScene();
+                } else if ("Start Screensaver".equals(picked)) {
+                    idleHandler.postDelayed(startScreensaverTask, 180);
+                } else if ("Brightness".equals(picked)) {
+                    openBrightness();
+                } else if ("Privacy & Safety".equals(picked)) {
+                    showPrivacySafetyDialog();
+                } else {
+                    openTvSettings();
+                }
+            });
             return;
         } else if (isInput(key)) {
             openInput(key);
@@ -3212,7 +3230,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v6.5.0  \u00B7  Build 65");
+        appTitleTv.setText("HomeScreen v6.5.1  \u00B7  Build 66");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
@@ -3365,7 +3383,7 @@ public class MainActivity extends Activity {
             if (meta != null && !meta.isEmpty()) {
                 backupMetaTv.setText("Saved backup: " + meta);
             } else {
-                backupMetaTv.setText("Saves pinned apps, row/column grid counts, universe theme & sky palette.");
+                backupMetaTv.setText("Saves pinned apps, row/column grid counts & universe theme.");
             }
         };
         updateBackupMeta.run();
@@ -3400,114 +3418,11 @@ public class MainActivity extends Activity {
         backupCard.addView(backupBtnRow, bbrLp);
         content.addView(backupCard, createCardMarginParams());
 
-        // -----------------------------------------------------------------
-        // 4. LAUNCHER & DISPLAY QUICK ACTIONS CARD
-        // -----------------------------------------------------------------
-        LinearLayout actionsCard = createSettingsSectionCard();
-        TextView actionsHeadTv = text(sp(15f), 0xFFFFE8A8, semibold);
-        actionsHeadTv.setText("Launcher & Display");
-        LinearLayout.LayoutParams ahLp = new LinearLayout.LayoutParams(-1, -2);
-        ahLp.bottomMargin = dp(6);
-        actionsCard.addView(actionsHeadTv, ahLp);
-
-        actionsCard.addView(createSettingsActionRow(
-                tvMode ? "Add App to Home Grid" : "Pin / Manage Home Apps",
-                rowApps.size() + " apps pinned",
-                v -> {
-                    d.dismiss();
-                    if (tvMode) showAddMenu(-1);
-                    else showAllAppsDrawer(true);
-                }
-        ));
-
-        int curTheme = universeTheme();
-        actionsCard.addView(createSettingsActionRow(
-                "Universe Theme",
-                UNIVERSE_THEMES[curTheme],
-                v -> {
-                    d.dismiss();
-                    showThemePicker();
-                }
-        ));
-
-        actionsCard.addView(createSettingsActionRow(
-                "Sky Palette",
-                WALLPAPER_NAMES[wallpaper()],
-                v -> {
-                    d.dismiss();
-                    showWallpapers();
-                }
-        ));
-
-        final TextView[] glowValueHolder = new TextView[1];
-        boolean glowNow = skyView == null || skyView.isEdgeGlowEnabled();
-        actionsCard.addView(createSettingsActionRow(
-                "Ambient Edge Glow",
-                glowNow ? "On" : "Off",
-                glowValueHolder,
-                v -> {
-                    toggleEdgeGlow();
-                    boolean on = skyView == null || skyView.isEdgeGlowEnabled();
-                    if (glowValueHolder[0] != null) glowValueHolder[0].setText(on ? "On" : "Off");
-                }
-        ));
-
-        actionsCard.addView(createSettingsActionRow(
-                "Next Story Scene",
-                "Skip to next animation",
-                v -> {
-                    if (skyView != null) skyView.nextStoryScene();
-                    Toast.makeText(this, "Switched to next story scene", Toast.LENGTH_SHORT).show();
-                }
-        ));
-
-        if (isScreensaverEligiblePosture()) {
-            actionsCard.addView(createSettingsActionRow(
-                    "Start Cinema Screensaver",
-                    "Full-bleed randomized stories",
-                    v -> {
-                        d.dismiss();
-                        idleHandler.postDelayed(startScreensaverTask, 180);
-                    }
-            ));
-        }
-
-        if (tvMode && !isBox(this)) {
-            actionsCard.addView(createSettingsActionRow(
-                    "TV Picture & Brightness",
-                    "Display panel",
-                    v -> {
-                        d.dismiss();
-                        openBrightness();
-                    }
-            ));
-        }
-
-        actionsCard.addView(createSettingsActionRow(
-                tvMode ? "TV System Settings" : "Android System Settings",
-                "Open device settings",
-                v -> {
-                    d.dismiss();
-                    openTvSettings();
-                }
-        ));
-
-        actionsCard.addView(createSettingsActionRow(
-                "Privacy & Data Safety",
-                "Zero telemetry \u00B7 Local only",
-                v -> {
-                    d.dismiss();
-                    showPrivacySafetyDialog();
-                }
-        ));
-
-        content.addView(actionsCard, createCardMarginParams());
-
         sheet.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
         d.setContentView(sheet);
 
         int sheetW = tvMode ? Math.min(screenW - dp(48), dp(680)) : Math.min(screenW, dp(640));
-        int sheetH = tvMode ? Math.round(screenH * 0.90f) : Math.round(screenH * 0.90f);
+        int sheetH = tvMode ? Math.round(screenH * 0.86f) : Math.round(screenH * 0.84f);
         Window win = d.getWindow();
         win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         win.setGravity(tvMode ? Gravity.CENTER : (Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
@@ -3639,8 +3554,8 @@ public class MainActivity extends Activity {
         return wrap;
     }
 
-    // Saves a complete layout snapshot (pinned apps, row/col counts for all postures, theme, sky palette,
-    // edge glow, clock format, and custom HDMI input names) to SharedPreferences + clipboard.
+    // Saves a complete layout snapshot (pinned apps, row/col counts for all postures, universe theme,
+    // clock format, and custom HDMI input names) to SharedPreferences + clipboard.
     private void saveLayoutBackup() {
         SharedPreferences p = prefs();
         String appsCsv = android.text.TextUtils.join(",", rowApps);
@@ -3651,8 +3566,6 @@ public class MainActivity extends Activity {
         int ct = p.getInt(PREF_COLS_TV, getDefaultGridCols(true, false));
         int rt = p.getInt(PREF_ROWS_TV, getDefaultGridRows(true, false));
         int th = universeTheme();
-        String wp = WALLPAPER_NAMES[wallpaper()];
-        boolean glow = skyView == null || skyView.isEdgeGlowEnabled();
         String clk = p.getString(PREF_CLOCK, "auto");
         String inNames = p.getString(PREF_INPUT_NAMES, "").replace("\n", ";;");
 
@@ -3662,8 +3575,6 @@ public class MainActivity extends Activity {
                 + "|cl=" + cl + "|rl=" + rl
                 + "|ct=" + ct + "|rt=" + rt
                 + "|theme=" + th
-                + "|wp=" + wp
-                + "|glow=" + (glow ? "1" : "0")
                 + "|clock=" + clk
                 + "|inputs=" + inNames;
 
@@ -3715,8 +3626,6 @@ public class MainActivity extends Activity {
         SharedPreferences.Editor e = p.edit();
         String[] parts = payload.split("\\|");
         int restoredTheme = universeTheme();
-        String restoredWp = WALLPAPER_NAMES[wallpaper()];
-        boolean restoredGlow = skyView == null || skyView.isEdgeGlowEnabled();
 
         for (String part : parts) {
             int eq = part.indexOf('=');
@@ -3741,12 +3650,6 @@ public class MainActivity extends Activity {
                 } else if ("theme".equals(k)) {
                     restoredTheme = Math.max(0, Math.min(UNIVERSE_THEMES.length - 1, Integer.parseInt(v)));
                     e.putInt(PREF_THEME, restoredTheme);
-                } else if ("wp".equals(k) && Arrays.asList(WALLPAPER_NAMES).contains(v)) {
-                    restoredWp = v;
-                    e.putString("wallpaper", v);
-                } else if ("glow".equals(k)) {
-                    restoredGlow = "1".equals(v);
-                    e.putBoolean("edge_glow", restoredGlow);
                 } else if ("clock".equals(k) && !v.isEmpty()) {
                     if ("auto".equals(v)) e.remove(PREF_CLOCK);
                     else e.putString(PREF_CLOCK, v);
@@ -3760,8 +3663,6 @@ public class MainActivity extends Activity {
 
         if (skyView != null) {
             skyView.setUniverseTheme(restoredTheme);
-            skyView.setPalette( Math.max(0, Arrays.asList(WALLPAPER_NAMES).indexOf(restoredWp)) );
-            skyView.setEdgeGlowEnabled(restoredGlow);
         }
         applyThemeTypography(restoredTheme);
         buildTiles();
@@ -3771,7 +3672,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v6.5.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v6.5.1 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 6 Universe Themes and 300 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -3782,7 +3683,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.0 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v6.5.1 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -3794,7 +3695,7 @@ public class MainActivity extends Activity {
 
     // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
     private void showInstallOnTvDialog() {
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.0_65.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v6.5.1_66.apk";
         List<String> options = Arrays.asList(
             "1. Share Download Link to TV (Quick Share / LocalSend)",
             "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",
