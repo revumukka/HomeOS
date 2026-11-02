@@ -4,7 +4,7 @@
 
 **Universal Multi-Universe Animated Home Launcher & Cinema Story Screensaver for Android TV, Google TV, Foldables, Phones & Tablets**
 
-[![Version](https://img.shields.io/badge/version-7.0.0-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
+[![Version](https://img.shields.io/badge/version-7.1.0-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Refresh Rate](https://img.shields.io/badge/Refresh_Rate-Dynamic_Up_to_120_FPS-00d2d3.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Size](https://img.shields.io/badge/APK_Size-560_KB-2ecc71.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Platform](https://img.shields.io/badge/Android-5.0%2B_(TV_%7C_Foldable_%7C_Phone_%7C_Tablet)-3ddc84.svg?style=flat-square)](https://github.com/revumukka/HomeOS)
@@ -19,7 +19,7 @@
 
 ## Overview
 
-**HomeScreen (`v7.0.0`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~560 KB` total APK size, zero external dependencies, zero trackers).
+**HomeScreen (`v7.1.0`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~560 KB` total APK size, zero external dependencies, zero trackers).
 
 Every element—from twinkling sky constellations and floating candles to custom crest banners, vector icons, and the **344-scene animated saga stage** along the bottom horizon—is drawn procedurally in real time on Android's hardware-accelerated `Canvas` with **sub-microsecond `elapsedRealtimeNanos()` timing**, **frame-rate-independent exponential damping**, and **zero per-frame heap allocations**.
 
@@ -37,18 +37,19 @@ Switch seamlessly at any time via the **Theme Universe** icon button:
 | 4 | **Star Wars — The Skywalker Saga** | Hyperspace starfield, binary twin suns of Tatooine, TIE fighters, X-Wings & Death Star silhouette | Jedi Order, Galactic Empire, Rebel Alliance & Mandalorian Beskar crests | **44 iconic scenes** (Binary Sunset, Trench Run, Battle of Hoth, Duel of the Fates, Force Ghosts, Ferrix Rising) |
 | 5 | **Marvel Cinematic Universe — The Infinity Saga** | Cosmic Quantum & Bifrost sky, Stark HUD rings, Mjolnir lightning & Sling-Ring portals | Avengers Initiative, Stark Arc Reactor, Wakanda Forever & Sanctum crests | **44 iconic scenes** (Super-Soldier Chamber, Battle of New York, Wakanda Entrance, Portals Assembly, "I Am Iron Man") |
 | 6 | **DC Universe — Dawn of Justice League** | Gotham storm clouds, Bat-Signal projection, Kryptonian sunbeams & Speed Force lightning | Wayne Enterprises Dark Knight, House of El, Themyscira & Speed Force crests | **44 iconic scenes** (First Flight, Batcave, No Man's Land, Speed Force, Tower of Fate, Kingdom Come) |
-| 7 | **Formula 1 — Grand Prix World Championship** | Floodlit night circuit sky, FIA 5-Red-Lights starting gantry, broadcast helicopters, Pirelli blimps & sector telemetry pods | Scuderia Ferrari, Oracle Red Bull Racing, McLaren Papaya, Mercedes-AMG Petronas & Aston Martin crests | **44 iconic scenes** (Bahrain Lights Out, Monaco Tunnel, Monza Tifosi Trophy Lift, Spa Eau Rouge, Suzuka Crossover, 1.8s Pit Stop, Championship Donuts & Podium Champagne Trophy Lifts) |
+| 7 | **Formula 1 — Grand Prix World Championship** | Stadium floodlight banks with volumetric spotlight cones, tiered grandstand tribunes, high-speed xenon camera flashes & quadcopter recording drones (`REC ●`) | Scuderia Ferrari, Oracle Red Bull Racing, McLaren Papaya, Mercedes-AMG Petronas & Aston Martin crests | **44 iconic scenes** with faded Constructor Team Name watermarks, per-car floating team/number callouts (`FERRARI #16`, `RED BULL #1`, `McLAREN #4`, `MERCEDES #44`), multi-color team liveries & Podium Trophy Lifts |
 
 ---
 
 ## Key Features
 
-- **v7.0.0 Brand-New Formula 1 Racing Theme Universe (44 Grand Prix Scenes, Team-Accurate Cars & Winning Trophy Lifts) + "Theme Universe" Selector**:
-  - **Formula 1 Theme Universe (`universeTheme = 6`)**: Features a floodlit Night Grand Prix sky with the FIA 5-Red-Lights starting gantry, Pit Lane race control tower, TV broadcast helicopters, Pirelli blimps, a spinning Pirelli Soft Red-wall tire focus companion, 5 F1 Constructor crest banners (**Scuderia Ferrari**, **Oracle Red Bull Racing**, **McLaren**, **Mercedes-AMG Petronas**, **Aston Martin**), sporty italic motorsport typography (`f1.ttf`), and **44 live Grand Prix story scenes** with team-accurate ground-effect F1 cars (Halo cockpit, active DRS wing, Pirelli color-coded tires, glowing brake rotors, titanium floor sparks), iconic circuits (Monaco, Monza, Spa Eau Rouge, Silverstone, Suzuka Figure-8, Interlagos, Singapore, Las Vegas Sphere, COTA, Zandvoort, Yas Marina), a 1.8-second pit stop crew, victory donuts, and podium winning trophy lifts with champagne spray!
+- **v7.1.0 Formula 1 Theme Universe Overhaul (Stadium Floodlights, Camera Flashes, Recording Drones, Distinct Team Liveries & Faded Team Name Watermarks)**:
+  - **Formula 1 Top SkyView (`universeTheme = 6`)**: Features 4 cantilever Stadium Floodlight Banks (2×4 LED halogen arrays with downward volumetric spotlight cones), tiered Grandstand Tribunes, high-speed xenon **Camera Flashes** popping with 4-point and 8-point lens star-glints across the grandstands, and **Quadcopter Recording Camera Drones** with X-frame carbon arms, 4 spinning rotor blur discs, underslung 3-axis cinema gimbals, downward recording cones, and blinking red `REC ●` tally indicator lights.
+  - **Formula 1 Bottom Story Stage (`44` Grand Prix Scenes)**: Renders a large faded **Constructor Team Name Watermark** (`SCUDERIA FERRARI`, `ORACLE RED BULL RACING`, `McLAREN FORMULA 1`, `MERCEDES-AMG PETRONAS`, `ASTON MARTIN ARAMCO`, `McLAREN HONDA MP4/4`, `LOTUS RENAULT 97T`, `RENAULT F1 TEAM`, `WILLIAMS FW14B`, `BRAWN GP`) and telemetry sub-banner in the bottom area, distinct multi-color team car liveries & silhouettes (open-cockpit 1980s MP4/4 & Lotus 97T vs. modern Halo SF-24/RB20/MCL38/W15/AMR24), per-car faded floating team/number callouts (`FERRARI #16`, `RED BULL #1`, `McLAREN #4`, `MERCEDES #44`, etc.), iconic circuits, a 1.8-second pit stop crew, victory donuts, and podium winning trophy lifts with champagne spray!
   - **Customizable Screensaver Trigger Time Across All Devices**: Choose your preferred inactivity timeout (`15 sec`, `30 sec`, `1 min`, `2 min`, `3 min`, `5 min`, `10 min`, `15 min`, `30 min`, or `Off`) directly in **App Settings**, available on **every device type and orientation** (Android TV, Foldables open or closed, Portrait & Landscape Phones, and Tablets).
   - **Full-Screen Expand & Swipe-Down Dismiss Bottom Sheets**: Both the **App Settings** sheet and the **All Apps Drawer** support dragging UP on the top handle bar/sheet (or tapping the top handle bar) to smoothly expand to **100% Full Screen**, and swiping DOWN at the top of the list/scroll view (or on the top bar) to slide down and dismiss.
   - **Settings Button Dropdown**: Tapping the **Settings** button opens the quick dropdown (`App Settings`, `Pin / Manage Apps`, `Next Story Scene`, `Start Screensaver`, `System Settings` / `TV settings`, `Privacy & Safety`)—replacing legacy `Sky Palette` and `Glow` options since each Theme Universe renders its own procedural story sky background.
-  - **Small About Section at the Top**: Displays app version (`HomeScreen v7.0.0 · Build 70`), creator credit, and quick **Invite Friends** + **Install on TV** action buttons.
+  - **Small About Section at the Top**: Displays app version (`HomeScreen v7.1.0 · Build 71`), creator credit, and quick **Invite Friends** + **Install on TV** action buttons.
   - **Custom Apps in a Row (Columns) & Apps in a Column (Rows Before Overflow)**: Interactive `[ − ]  Value  [ + ]` steppers let you customize columns per row (`2–6` on Phones/Foldables/Tablets, `2–8` on TV) and vertical rows per page before overflow (`1–6` in Portrait, `1–5` in Landscape/Unfolded & TV) with live real-time layout updates and a one-tap **Reset Grid** button.
   - **Save & Restore Layout**: One-tap **Save Layout** snapshots your pinned apps, posture row/column counts, active Theme Universe, Clock format, and HDMI input names to local storage *and* copies a portable `HOMESCREEN_LAYOUT_V1|...` backup string to the clipboard so you can restore or transfer your setup across devices with **Restore Layout**.
   - **Invite Friends & Install on TV Guide**: Share a pre-formatted invitation link via Android's native share sheet or open the interactive **Install on Android TV / Google TV** modal (Quick Share / LocalSend to TV, direct TV browser release URL, and wireless ADB command copy).
@@ -78,11 +79,11 @@ Switch seamlessly at any time via the **Theme Universe** icon button:
 
 ### Download Prebuilt APK
 Grab the latest signed universal APK from the [**Releases**](https://github.com/revumukka/HomeOS/releases) page:
-- `HomeScreen_Release_v7.0.0_70.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
+- `HomeScreen_Release_v7.1.0_71.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
 
 ### Install via ADB
 ```sh
-adb install -r out/HomeScreen_Release_v7.0.0_70.apk
+adb install -r out/HomeScreen_Release_v7.1.0_71.apk
 ```
 
 ---
@@ -96,8 +97,8 @@ sh build.sh
 ```
 
 Output APKs are generated in `out/`:
-- `out/HomeScreen_Release_v6.5.3_68.apk`
-- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v6.5.3-b68.apk`
+- `out/HomeScreen_Release_v7.1.0_71.apk`
+- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v7.1.0-b71.apk`
 - `out/HomeScreen.apk`
 
 ---

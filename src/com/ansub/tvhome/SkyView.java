@@ -131,6 +131,7 @@ final class SkyView extends View {
     private final Path actorPath = new Path();
     private static final RectF storyRect = new RectF();
     private Typeface cinzelFont;
+    private Typeface f1Font;
 
     private static RectF rectF(float l, float t, float r, float b) {
         storyRect.set(l, t, r, b);
@@ -512,6 +513,11 @@ final class SkyView extends View {
         this.scale = scale;
         this.paletteIndex = paletteIndex;
         this.cinzelFont = cinzel;
+        try {
+            this.f1Font = Typeface.createFromAsset(context.getAssets(), "f1.ttf");
+        } catch (Throwable ignored) {
+            this.f1Font = cinzel;
+        }
         initParticles(1920f * scale, 1080f * scale);
         buildGlowSprite();
         startFancyLedsListener();
@@ -1041,9 +1047,9 @@ final class SkyView extends View {
                 topCol = 0xFF040710; midCol = 0xFF0B1426; botCol = 0xFF050811;
                 glow1 = 0x42FFE068; glow2 = 0x382898FF; glow3 = 0x32FFB828;
             } else if (universeTheme == 6) {
-                // Theme 7: FORMULA 1 — Floodlit Night Grand Prix Circuit (Bahrain / Singapore / Las Vegas Asphalt & Crimson Telemetry)
-                topCol = 0xFF05060C; midCol = 0xFF140810; botCol = 0xFF08090F;
-                glow1 = 0x44FF1801; glow2 = 0x3800D2BE; glow3 = 0x38FF8000;
+                // Theme 7: FORMULA 1 — Night Grand Prix Stadium Floodlights, Camera Flashes & Telemetry Sky
+                topCol = 0xFF04070E; midCol = 0xFF0B1324; botCol = 0xFF070912;
+                glow1 = 0x42C8EEFF; glow2 = 0x3800D2BE; glow3 = 0x36FF1801;
             } else if (paletteIndex == 1) {
                 topCol = 0xFF16080A; midCol = 0xFF220E12; botCol = 0xFF0E070A;
                 glow1 = 0x44FFB840; glow2 = 0x38B82830;
@@ -1348,58 +1354,82 @@ final class SkyView extends View {
                 c.drawLine(w * 0.82f, skyY(w, h, 0.72f), w * 0.86f, skyY(w, h, 0.72f), p);
                 c.drawLine(0, groundY, w, groundY, p);
             } else if (universeTheme == 6) {
-                // FORMULA 1 SKY: FIA 5-Red-Lights Starting Gantry in Upper Right + Pit Lane Control Tower & Grandstand Horizon
-                float mx = w * 0.84f, my = h * 0.16f, mr = px(44);
-                p.setShader(new RadialGradient(mx, my, mr * 3.8f,
-                        new int[] {0x48FF1801, 0x1A900810, 0x00000000}, new float[] {0f, 0.48f, 1f}, Shader.TileMode.CLAMP));
-                c.drawCircle(mx, my, mr * 3.8f, p);
-                p.setShader(null);
+                // FORMULA 1 SKY: Grand Prix Stadium Floodlight Towers, Overhead Light Banks & Tiered Grandstand Tribune
+                float[] towerX = {w * 0.44f, w * 0.62f, w * 0.78f, w * 0.91f};
+                float[] towerY = {h * 0.12f, h * 0.09f, h * 0.13f, h * 0.17f};
+                for (int tw = 0; tw < towerX.length; tw++) {
+                    float tx = towerX[tw], ty = towerY[tw];
+                    // Volumetric downward stadium floodlight beam cone
+                    p.setStyle(Paint.Style.FILL);
+                    p.setShader(new RadialGradient(tx, ty, px(240f),
+                            new int[] {0x42E8F8FF, 0x1888D4FF, 0x00000000}, new float[] {0f, 0.45f, 1f}, Shader.TileMode.CLAMP));
+                    c.drawCircle(tx, ty, px(240f), p);
+                    p.setShader(null);
+                    p.setColor(0x14D8F2FF);
+                    Path beam = new Path();
+                    beam.moveTo(tx - px(26f), ty + px(6f));
+                    beam.lineTo(tx + px(26f), ty + px(6f));
+                    beam.lineTo(tx + px(110f), ty + px(240f));
+                    beam.lineTo(tx - px(140f), ty + px(240f));
+                    beam.close();
+                    c.drawPath(beam, p);
 
-                // Carbon Starting Gantry Truss & 5 FIA Red Light Pods in upper-right sky
-                float gw = px(88f), gh = px(28f);
-                p.setStyle(Paint.Style.FILL);
-                p.setColor(0xCC121620);
-                c.drawRoundRect(mx - gw * 0.56f, my - gh * 0.65f, mx + gw * 0.56f, my - gh * 0.35f, px(3f), px(3f), p);
-                for (int lt = 0; lt < 5; lt++) {
-                    float lx = mx + (lt - 2) * px(16.5f);
-                    p.setColor(0xEE181C26);
-                    c.drawRoundRect(lx - px(6f), my - gh * 0.5f, lx + px(6f), my + gh * 0.55f, px(3f), px(3f), p);
-                    p.setColor(0x55FF1801);
-                    c.drawCircle(lx, my - px(3.5f), px(3.2f), p);
-                    p.setColor(0xFFFF1801);
-                    c.drawCircle(lx, my + px(5.0f), px(3.6f), p);
-                    p.setColor(0xFFFFB0A0);
-                    c.drawCircle(lx, my + px(5.0f), px(1.5f), p);
+                    // Cantilever Stadium Floodlight Bank Frame (2x4 LED Halogen Array)
+                    p.setColor(0xDD141A26);
+                    c.drawRoundRect(tx - px(28f), ty - px(11f), tx + px(28f), ty + px(11f), px(4f), px(4f), p);
+                    p.setStyle(Paint.Style.STROKE);
+                    p.setStrokeWidth(px(1.6f));
+                    p.setColor(0x88587090);
+                    c.drawRoundRect(tx - px(28f), ty - px(11f), tx + px(28f), ty + px(11f), px(4f), px(4f), p);
+                    p.setStyle(Paint.Style.FILL);
+                    for (int row = 0; row < 2; row++) {
+                        for (int col = 0; col < 4; col++) {
+                            float lx = tx + (col - 1.5f) * px(12f);
+                            float ly = ty + (row - 0.5f) * px(8f);
+                            p.setColor(0xFF98E4FF);
+                            c.drawCircle(lx, ly, px(3.4f), p);
+                            p.setColor(0xFFFFFFFF);
+                            c.drawCircle(lx, ly, px(1.8f), p);
+                        }
+                    }
                 }
 
                 float groundY = h * 0.900f;
                 p.setStyle(Paint.Style.FILL);
-                p.setColor(0x90070910);
+                p.setColor(0x92060912);
                 Path stage = new Path();
                 stage.moveTo(0, h);
                 stage.lineTo(0, groundY);
-                stage.lineTo(w * 0.68f, groundY);
-                // F1 Pit Building, Race Control Tower & Illuminated Yas/Vegas Archway on right (0.70..0.96)
-                stage.lineTo(w * 0.70f, skyY(w, h, 0.80f));
-                stage.lineTo(w * 0.78f, skyY(w, h, 0.79f)); // Pit Lane Roof Overhang
-                stage.lineTo(w * 0.76f, groundY);
+                stage.lineTo(w * 0.66f, groundY);
+                // Tiered Grandstand Tribune & Race Control Tower on right (0.66..0.98)
+                stage.lineTo(w * 0.69f, skyY(w, h, 0.77f)); // Grandstand lower tier
+                stage.lineTo(w * 0.79f, skyY(w, h, 0.72f)); // Grandstand upper canopy roof
+                stage.lineTo(w * 0.77f, groundY);
                 stage.lineTo(w * 0.81f, groundY);
-                stage.lineTo(w * 0.82f, skyY(w, h, 0.67f)); // Slanted Race Control & Timing Tower
-                stage.lineTo(w * 0.86f, skyY(w, h, 0.69f));
+                stage.lineTo(w * 0.82f, skyY(w, h, 0.66f)); // Race Control & Timing Tower
+                stage.lineTo(w * 0.86f, skyY(w, h, 0.68f));
                 stage.lineTo(w * 0.85f, groundY);
-                stage.lineTo(w * 0.88f, skyY(w, h, 0.76f)); // Grandstand Canopy
-                stage.lineTo(w * 0.96f, skyY(w, h, 0.74f));
-                stage.lineTo(w * 0.95f, groundY);
+                stage.lineTo(w * 0.88f, skyY(w, h, 0.74f)); // Second Stadium Grandstand
+                stage.lineTo(w * 0.97f, skyY(w, h, 0.71f));
+                stage.lineTo(w * 0.96f, groundY);
                 stage.lineTo(w, groundY);
                 stage.lineTo(w, h);
                 stage.close();
                 c.drawPath(stage, p);
 
-                // Illuminated Neon Telemetry & Pit Garage Windows + FIA Red/White Track Kerbs
+                // Stadium Floodlight Pylon Trusses rising from the Grandstands + Lit Grandstand Tiers
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(px(2.0f));
-                p.setColor(0x7800D2BE);
-                c.drawArc(rectF(w * 0.71f, skyY(w, h, 0.74f), w * 0.94f, groundY + px(24f)), 195, 150, false, p);
+                p.setColor(0x6688B8E8);
+                c.drawLine(w * 0.74f, skyY(w, h, 0.74f), w * 0.74f, skyY(w, h, 0.62f), p);
+                c.drawLine(w * 0.92f, skyY(w, h, 0.72f), w * 0.92f, skyY(w, h, 0.60f), p);
+                p.setStyle(Paint.Style.FILL);
+                p.setColor(0xCCF0FAFF);
+                c.drawRoundRect(w * 0.71f, skyY(w, h, 0.60f), w * 0.77f, skyY(w, h, 0.63f), px(2f), px(2f), p);
+                c.drawRoundRect(w * 0.89f, skyY(w, h, 0.58f), w * 0.95f, skyY(w, h, 0.61f), px(2f), px(2f), p);
+
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(1.8f));
                 p.setColor(0x88FF1801);
                 c.drawLine(0, groundY, w, groundY, p);
             } else {
@@ -1577,11 +1607,36 @@ final class SkyView extends View {
             canvas.drawRect(px(1f), px(1f), w - px(1f), h - px(1f), paint);
         }
 
-        // 1. Twinkling enchanted ceiling stars
+        // 1. Twinkling enchanted ceiling stars (or Stadium Paparazzi Camera Flashes in Formula 1 theme)
         paint.setStyle(Paint.Style.FILL);
         for (int i = 0; i < STAR_COUNT; i++) {
             int b = i * 6;
             float sx = stars[b], sy = stars[b + 1], sr = stars[b + 2];
+            if (universeTheme == 6) {
+                // FORMULA 1: High-Speed Xenon Camera Flashes popping across the stadium & grandstands
+                float flashWave = (float) Math.sin(t * (stars[b + 3] * 2.6f) + stars[b + 4] * 3.7f);
+                if (flashWave > 0.72f) {
+                    float fl = (flashWave - 0.72f) / 0.28f;
+                    int flAlpha = Math.min(255, Math.round(fl * fl * 255f));
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((flAlpha / 3 << 24) | 0x00A8ECFF);
+                    canvas.drawCircle(sx, sy, sr * (4.5f + fl * 3.5f), paint);
+                    paint.setColor((flAlpha << 24) | 0x00FFFFFF);
+                    canvas.drawCircle(sx, sy, sr * (1.4f + fl * 1.2f), paint);
+                    paint.setStrokeWidth(px(1.3f));
+                    float ray = sr * (4.2f + fl * 5.0f);
+                    canvas.drawLine(sx - ray, sy, sx + ray, sy, paint);
+                    canvas.drawLine(sx, sy - ray, sx, sy + ray, paint);
+                    float dRay = ray * 0.58f;
+                    canvas.drawLine(sx - dRay, sy - dRay, sx + dRay, sy + dRay, paint);
+                    canvas.drawLine(sx - dRay, sy + dRay, sx + dRay, sy - dRay, paint);
+                } else {
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0x28D8ECFF);
+                    canvas.drawCircle(sx, sy, sr * 0.75f, paint);
+                }
+                continue;
+            }
             float pulse = 0.55f + 0.45f * (float) Math.sin(t * stars[b + 3] + stars[b + 4]);
             int alpha = Math.min(255, Math.max(30, Math.round(pulse * 220f)));
             paint.setColor((alpha << 24) | 0x00FDF4DC);
@@ -1628,7 +1683,7 @@ final class SkyView extends View {
             float flicker = 0.88f + 0.12f * (float) Math.sin(t * 6.5f + candles[b + 6])
                     + 0.06f * (float) Math.cos(t * 11.3f + candles[b + 5]);
             float flameTipY = cy - px(11f) * flicker;
-            if (glowSprite != null) {
+            if (glowSprite != null && universeTheme != 6) {
                 bitmapPaint.setAlpha(Math.min(255, Math.max(120, Math.round(190f * flicker))));
                 canvas.drawBitmap(glowSprite, cx - glowHalf, cy - px(5f) - glowHalf, bitmapPaint);
             }
@@ -1691,14 +1746,45 @@ final class SkyView extends View {
                 paint.setStyle(Paint.Style.FILL);
                 continue;
             } else if (universeTheme == 6) {
-                // FORMULA 1 Top Sky: Floating FIA Sector Telemetry Pods (Red Lights, Purple Fastest-Lap, Green Sector,DRS)
-                int f1Col = (i % 4 == 0) ? 0xFFFF1801 : (i % 4 == 1 ? 0xFFD500F9 : (i % 4 == 2 ? 0xFF00E676 : 0xFF00D2BE));
-                paint.setColor((0x34 << 24) | (f1Col & 0xFFFFFF));
-                canvas.drawCircle(cx, cy + ch * 0.30f, cw * 2.5f * flicker, paint);
-                paint.setColor(0xDD141822);
-                canvas.drawRoundRect(cx - cw * 0.75f, cy, cx + cw * 0.75f, cy + ch * 0.56f, px(3f), px(3f), paint);
-                paint.setColor(f1Col);
-                canvas.drawCircle(cx, cy + ch * 0.28f, cw * 0.46f * flicker, paint);
+                // FORMULA 1 Top Sky: Stadium Floodlight Rigs + Strobe Camera Flash Bursts (NO warm candle glow!)
+                float stY = candles[b + 1];
+                if (i % 2 == 0) {
+                    // Suspended Multi-Bulb Stadium Floodlight Bank with downward beam cone
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0x16C8EEFF);
+                    flamePath.reset();
+                    flamePath.moveTo(cx - cw * 1.4f, stY + px(4f));
+                    flamePath.lineTo(cx + cw * 1.4f, stY + px(4f));
+                    flamePath.lineTo(cx + cw * 3.8f, stY + ch * 1.35f);
+                    flamePath.lineTo(cx - cw * 3.8f, stY + ch * 1.35f);
+                    flamePath.close();
+                    canvas.drawPath(flamePath, paint);
+
+                    paint.setColor(0x28A8E8FF);
+                    canvas.drawCircle(cx, stY + px(3f), cw * 2.6f * flicker, paint);
+                    paint.setColor(0xEE141A24);
+                    canvas.drawRoundRect(cx - cw * 1.55f, stY - px(3f), cx + cw * 1.55f, stY + px(6f), px(2.5f), px(2.5f), paint);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx - cw * 0.9f, stY + px(1.5f), cw * 0.34f, paint);
+                    canvas.drawCircle(cx, stY + px(1.5f), cw * 0.38f, paint);
+                    canvas.drawCircle(cx + cw * 0.9f, stY + px(1.5f), cw * 0.34f, paint);
+                } else {
+                    // Strobe Camera Flash Burst in the Grandstands / Media Gantry
+                    float camWave = (float) Math.sin(t * 4.8f + i * 2.1f);
+                    if (camWave > 0.55f) {
+                        float fl = (camWave - 0.55f) / 0.45f;
+                        int fa = Math.min(255, Math.round(fl * fl * 255f));
+                        paint.setStyle(Paint.Style.FILL);
+                        paint.setColor((fa / 3 << 24) | 0x00B8F2FF);
+                        canvas.drawCircle(cx, stY, cw * (2.4f + fl * 2.2f), paint);
+                        paint.setColor((fa << 24) | 0x00FFFFFF);
+                        canvas.drawCircle(cx, stY, cw * (0.65f + fl * 0.55f), paint);
+                        paint.setStrokeWidth(px(1.5f));
+                        float rLen = cw * (2.2f + fl * 2.8f);
+                        canvas.drawLine(cx - rLen, stY, cx + rLen, stY, paint);
+                        canvas.drawLine(cx, stY - rLen, cx, stY + rLen, paint);
+                    }
+                }
                 continue;
             }
             paint.setColor((0x24 << 24) | rgbOnly);
@@ -1960,35 +2046,55 @@ final class SkyView extends View {
                 drawBird(c, gx - dir * px(22f * sc), gy + px(8f * sc), t * 16f + g, px(13f * sc), 0xCCFFE068);
                 continue;
             } else if (universeTheme == 6) {
-                // FORMULA 1 Top Sky: TV Broadcast Helicopters with Searchlights & Pirelli Circuit Blimps
+                // FORMULA 1 Top Sky: High-Speed Quadcopter Recording Camera Drones with Gimbal Spotlight & Blinking REC Indicator
                 paint.setStyle(Paint.Style.FILL);
-                if (g % 2 == 0) {
-                    // Broadcast Camera Helicopter with spinning rotor & searchlight cone
-                    paint.setColor(0x20FFFFFF);
-                    actorPath.reset();
-                    actorPath.moveTo(gx + dir * px(8f * sc), gy + px(3f * sc));
-                    actorPath.lineTo(gx + dir * px(36f * sc), gy + px(28f * sc));
-                    actorPath.lineTo(gx + dir * px(12f * sc), gy + px(30f * sc));
-                    actorPath.close();
-                    c.drawPath(actorPath, paint);
-                    paint.setColor(0xDD1C222E);
-                    c.drawOval(gx - px(11f * sc), gy - px(5f * sc), gx + px(11f * sc), gy + px(5f * sc), paint);
-                    paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(px(1.8f * sc));
-                    c.drawLine(gx, gy, gx - dir * px(22f * sc), gy - px(2f * sc), paint);
-                    paint.setColor(0xCCFF1801);
-                    float rotorSpan = px(18f * sc) * (0.4f + 0.6f * (float) Math.abs(Math.sin(t * 28f + g)));
-                    c.drawLine(gx - rotorSpan, gy - px(8f * sc), gx + rotorSpan, gy - px(8f * sc), paint);
-                    paint.setStyle(Paint.Style.FILL);
-                } else {
-                    // Pirelli Grand Prix Blimp gliding over the circuit
-                    paint.setColor(0xDD1E2430);
-                    c.drawOval(gx - px(18f * sc), gy - px(7f * sc), gx + px(18f * sc), gy + px(7f * sc), paint);
-                    paint.setColor(0xEEFFD800);
-                    c.drawRect(gx - px(10f * sc), gy - px(2f * sc), gx + px(10f * sc), gy + px(1.5f * sc), paint);
-                    paint.setColor(0xEEFF1801);
-                    c.drawCircle(gx + dir * px(12f * sc), gy, px(2.0f * sc), paint);
+                // 1. Translucent downward camera recording spotlight cone from gimbal lens
+                paint.setColor(0x1AC8F0FF);
+                actorPath.reset();
+                actorPath.moveTo(gx, gy + px(5f * sc));
+                actorPath.lineTo(gx + dir * px(34f * sc), gy + px(36f * sc));
+                actorPath.lineTo(gx + dir * px(6f * sc), gy + px(38f * sc));
+                actorPath.close();
+                c.drawPath(actorPath, paint);
+
+                // 2. Carbon Quadcopter X-Frame Arms & 4 Motor Pods
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.0f * sc));
+                paint.setColor(0xEE2A3446);
+                c.drawLine(gx - px(16f * sc), gy - px(4f * sc), gx + px(16f * sc), gy - px(4f * sc), paint);
+                c.drawLine(gx - px(11f * sc), gy - px(8f * sc), gx + px(11f * sc), gy + px(2f * sc), paint);
+                c.drawLine(gx - px(11f * sc), gy + px(2f * sc), gx + px(11f * sc), gy - px(8f * sc), paint);
+
+                // 3. 4 High-RPM Spinning Propeller Blur Discs at rotor tips
+                float propSpan = px(7.5f * sc) * (0.55f + 0.45f * (float) Math.abs(Math.sin(t * 36f + g)));
+                paint.setStrokeWidth(px(1.5f * sc));
+                paint.setColor(0xBBD8F0FF);
+                float[] rx = {gx - px(16f * sc), gx - px(9f * sc), gx + px(9f * sc), gx + px(16f * sc)};
+                float[] ry = {gy - px(6.5f * sc), gy - px(9.5f * sc), gy - px(9.5f * sc), gy - px(6.5f * sc)};
+                for (int r = 0; r < 4; r++) {
+                    c.drawLine(rx[r] - propSpan, ry[r], rx[r] + propSpan, ry[r], paint);
                 }
+
+                // 4. Central Carbon Drone Body, Underslung 3-Axis Cinema Gimbal & Telephoto Lens
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0xFF18202C);
+                c.drawRoundRect(gx - px(8f * sc), gy - px(5f * sc), gx + px(8f * sc), gy + px(2.5f * sc), px(3f * sc), px(3f * sc), paint);
+                // Underslung gimbal camera pod
+                paint.setColor(0xFF283244);
+                c.drawCircle(gx + dir * px(2f * sc), gy + px(5.5f * sc), px(3.8f * sc), paint);
+                paint.setColor(0xFF58E8FF);
+                c.drawCircle(gx + dir * px(3.4f * sc), gy + px(6.0f * sc), px(1.8f * sc), paint);
+
+                // 5. Blinking Red "REC ●" Recording Tally Light & Navigation LEDs
+                boolean recBlink = (((int) (t * 4.5f + g)) % 2) == 0;
+                if (recBlink) {
+                    paint.setColor(0x55FF1801);
+                    c.drawCircle(gx - dir * px(3.5f * sc), gy - px(1.5f * sc), px(5.5f * sc), paint);
+                    paint.setColor(0xFFFF1801);
+                    c.drawCircle(gx - dir * px(3.5f * sc), gy - px(1.5f * sc), px(2.2f * sc), paint);
+                }
+                paint.setColor(0xEE00E676);
+                c.drawCircle(gx + dir * px(15f * sc), gy - px(4f * sc), px(1.6f * sc), paint);
                 continue;
             }
             float shimmer = 0.72f + 0.28f * (float) Math.sin(t * 3.1f + g * 1.3f);
@@ -7155,21 +7261,24 @@ final class SkyView extends View {
         applyStageTransform(c, w, h, groundY);
 
         // Team Livery Palettes: (Body RGB, Accent RGB, Pirelli Sidewall RGB)
-        final int FERRARI_RED = 0x00DC0000, FERRARI_ACC = 0x00FFF200;
-        final int REDBULL_NAVY = 0x000B163E, REDBULL_ACC = 0x00FFCC00;
-        final int MCLAREN_PAPAYA = 0x00FF8000, MCLAREN_ACC = 0x0018B8FF;
-        final int MERC_SILVER = 0x00242C36, MERC_PETRONAS = 0x0000D2BE;
-        final int ASTON_GREEN = 0x00006F62, ASTON_LIME = 0x00CEDC00;
+        final int FERRARI_RED = 0x00FF1801, FERRARI_ACC = 0x00FFF200;
+        final int REDBULL_NAVY = 0x001B3C98, REDBULL_ACC = 0x00FFD800;
+        final int MCLAREN_PAPAYA = 0x00FF8000, MCLAREN_ACC = 0x0018C8FF;
+        final int MERC_SILVER = 0x00C8D6E6, MERC_PETRONAS = 0x0000F5D4;
+        final int ASTON_GREEN = 0x0000A878, ASTON_LIME = 0x00D4FF00;
         final int MP4_WHITE = 0x00F4F6FA, MP4_RED = 0x00FF1801;
-        final int LOTUS_BLACK = 0x0016161C, LOTUS_GOLD = 0x00FFD048;
-        final int RENAULT_BLUE = 0x000090FF, RENAULT_YELLOW = 0x00FFE000;
-        final int WILLIAMS_BLUE = 0x001858D8, WILLIAMS_GOLD = 0x00FFD000;
+        final int LOTUS_BLACK = 0x001E2028, LOTUS_GOLD = 0x00FFD700;
+        final int RENAULT_BLUE = 0x0000A8FF, RENAULT_YELLOW = 0x00FFE600;
+        final int WILLIAMS_BLUE = 0x001E68F0, WILLIAMS_GOLD = 0x00FFD000;
         final int BRAWN_WHITE = 0x00F4F8FA, BRAWN_NEON = 0x00D8FF00;
 
         final int TIRE_SOFT = 0x00FF1801;
         final int TIRE_MED = 0x00FFD800;
         final int TIRE_HARD = 0x00F4F6FA;
         final int TIRE_WET = 0x000098FF;
+
+        // Render the faded Constructor / Team Name watermark in the bottom area behind the cars & track
+        drawF1TeamBackdrop(c, w, groundY, aBase, scene);
 
         switch (scene) {
             case 0: // Scene 1: Lights Out — Five Red Lights at Bahrain Night GP
@@ -7575,6 +7684,204 @@ final class SkyView extends View {
     }
 
     /**
+     * Renders the faded Constructor / Team Name watermark & telemetry badge in the bottom F1 story area
+     * so every scene clearly displays the competing Formula 1 Team(s) in a sleek faded motorsport look.
+     */
+    private void drawF1TeamBackdrop(Canvas c, int w, float groundY, int alpha, int scene) {
+        String teamWatermark;
+        String teamSub;
+        int teamColor;
+        switch (scene) {
+            case 0:
+                teamWatermark = "RED BULL RACING  ×  SCUDERIA FERRARI";
+                teamSub = "CONSTRUCTORS // RB20 #1  ·  SF-24 #16";
+                teamColor = 0x00FF1801;
+                break;
+            case 1:
+            case 22:
+                teamWatermark = "SCUDERIA FERRARI  ×  McLAREN F1";
+                teamSub = "CONSTRUCTORS // MARANELLO SF-24  ·  WOKING MCL38";
+                teamColor = 0x00FF2800;
+                break;
+            case 2:
+            case 16:
+            case 18:
+            case 20:
+            case 33:
+            case 37:
+            case 38:
+            case 40:
+            case 42:
+                teamWatermark = "SCUDERIA FERRARI";
+                teamSub = "MARANELLO // CAVALLINO RAMPANTE · SF-24";
+                teamColor = 0x00FF1801;
+                break;
+            case 3:
+            case 5:
+            case 8:
+            case 21:
+            case 43:
+                teamWatermark = "ORACLE RED BULL  ×  SCUDERIA FERRARI";
+                teamSub = "CHAMPIONSHIP RIVALRY // RB20 #1  ·  SF-24 #16";
+                teamColor = 0x00FFD800;
+                break;
+            case 4:
+                teamWatermark = "MERCEDES-AMG  ×  McLAREN F1";
+                teamSub = "SILVERSTONE // PETRONAS W15 #44  ·  PAPAYA MCL38 #4";
+                teamColor = 0x0000F5D4;
+                break;
+            case 6:
+            case 12:
+                teamWatermark = "McLAREN HONDA MP4/4";
+                teamSub = "WOKING HERITAGE // AYRTON SENNA #12 · TURBO V6";
+                teamColor = 0x00FF1801;
+                break;
+            case 7:
+                teamWatermark = "SCUDERIA FERRARI  ×  MERCEDES-AMG";
+                teamSub = "NIGHT STREET DUEL // SF-24 #16  ·  W15 #44";
+                teamColor = 0x0000F5D4;
+                break;
+            case 9:
+            case 10:
+            case 11:
+            case 14:
+            case 27:
+                teamWatermark = "ORACLE RED BULL RACING";
+                teamSub = "MILTON KEYNES // WORLD CHAMPIONS · RB20 #1";
+                teamColor = 0x00FFD800;
+                break;
+            case 13:
+                teamWatermark = "MERCEDES-AMG PETRONAS";
+                teamSub = "BRACKLEY SILVER ARROWS // LEWIS HAMILTON #44";
+                teamColor = 0x0000F5D4;
+                break;
+            case 15:
+            case 34:
+                teamWatermark = "McLAREN FORMULA 1 TEAM";
+                teamSub = "WOKING // PAPAYA RACING · MCL38 #4";
+                teamColor = 0x00FF8000;
+                break;
+            case 17:
+            case 41:
+                teamWatermark = "McLAREN  ·  RED BULL  ·  FERRARI";
+                teamSub = "THREE-TEAM GRAND PRIX SHOWDOWN // #4 · #1 · #16";
+                teamColor = 0x00FF8000;
+                break;
+            case 19:
+                teamWatermark = "ASTON MARTIN ARAMCO F1";
+                teamSub = "SILVERSTONE // BRITISH RACING GREEN · AMR24 #14";
+                teamColor = 0x0000E698;
+                break;
+            case 23:
+                teamWatermark = "McLAREN HONDA  ×  SCUDERIA FERRARI";
+                teamSub = "SUZUKA LEGENDS // SENNA #12  ·  PROST #2";
+                teamColor = 0x00FF1801;
+                break;
+            case 24:
+                teamWatermark = "SCUDERIA FERRARI  ×  RENAULT F1";
+                teamSub = "DIJON 1979 // VILLENEUVE #12  ·  ARNOUX #16";
+                teamColor = 0x00FFE600;
+                break;
+            case 25:
+                teamWatermark = "McLAREN MERCEDES  ×  FERRARI";
+                teamSub = "SPA KEMMEL // HÄKKINEN MP4/15  ·  SCHUMACHER F1-2000";
+                teamColor = 0x00DCE6F2;
+                break;
+            case 26:
+                teamWatermark = "McLAREN MERCEDES";
+                teamSub = "INTERLAGOS 2008 // VODAFONE McLAREN MP4-23 #22";
+                teamColor = 0x00FF1801;
+                break;
+            case 28:
+                teamWatermark = "RENAULT F1 TEAM";
+                teamSub = "ENSTONE & VIRY // FERNANDO ALONSO · R25 V10 #5";
+                teamColor = 0x0000A8FF;
+                break;
+            case 29:
+                teamWatermark = "BRAWN GP FORMULA 1";
+                teamSub = "BRACKLEY // JENSON BUTTON · BGP 001 #22";
+                teamColor = 0x00D8FF00;
+                break;
+            case 30:
+                teamWatermark = "TEAM LOTUS RENAULT 97T";
+                teamSub = "HETHEL // BLACK & GOLD JPS · AYRTON SENNA #12";
+                teamColor = 0x00FFD700;
+                break;
+            case 31:
+                teamWatermark = "SCUDERIA FERRARI  ×  MERCEDES-BENZ";
+                teamSub = "NÜRBURGRING LEGENDS // LAUDA 312T  ·  FANGIO W196";
+                teamColor = 0x00FF1801;
+                break;
+            case 32:
+                teamWatermark = "WILLIAMS RENAULT FW14B";
+                teamSub = "GROVE // NIGEL MANSELL · RED FIVE #5";
+                teamColor = 0x00FFD000;
+                break;
+            case 35:
+                teamWatermark = "RACING POINT BWT F1";
+                teamSub = "SAKHIR // SERGIO PÉREZ · RP20 #11";
+                teamColor = 0x00FF66B2;
+                break;
+            case 36:
+                teamWatermark = "MERCEDES  ·  FERRARI  ·  RED BULL";
+                teamSub = "SILVERSTONE CLUB // #44  ·  #16  ·  #11";
+                teamColor = 0x0000F5D4;
+                break;
+            case 39:
+                teamWatermark = "McLAREN MERCEDES  ×  RENAULT F1";
+                teamSub = "SUZUKA 130R // RÄIKKÖNEN MP4-20 #9  ·  FISICHELLA R25 #6";
+                teamColor = 0x0000A8FF;
+                break;
+            default:
+                teamWatermark = "FORMULA 1 WORLD CHAMPIONSHIP";
+                teamSub = "CONSTRUCTORS & DRIVERS GRAND PRIX";
+                teamColor = 0x00FF1801;
+                break;
+        }
+
+        float cx = w * 0.45f;
+        float maxW = w * 0.46f;
+        Typeface prevTf = paint.getTypeface();
+        Paint.Align prevAlign = paint.getTextAlign();
+        paint.setTypeface(f1Font != null ? f1Font : (cinzelFont != null ? cinzelFont : Typeface.DEFAULT_BOLD));
+        paint.setTextAlign(Paint.Align.CENTER);
+
+        // 1. Large Faded Team Name Watermark in the bottom stage behind the cars (faded motorsport look)
+        float wmSize = px(28f);
+        paint.setTextSize(wmSize);
+        float measured = paint.measureText(teamWatermark);
+        if (measured > maxW && measured > 0f) {
+            wmSize = Math.max(px(14f), wmSize * (maxW / measured));
+            paint.setTextSize(wmSize);
+        }
+        int fillA = Math.max(0, Math.min(255, Math.round(alpha * 0.16f)));
+        int strokeA = Math.max(0, Math.min(255, Math.round(alpha * 0.28f)));
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((fillA << 24) | (teamColor & 0xFFFFFF));
+        c.drawText(teamWatermark, cx, groundY - px(36f), paint);
+
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(1.1f));
+        paint.setColor((strokeA << 24) | 0x00F4F8FF);
+        c.drawText(teamWatermark, cx, groundY - px(36f), paint);
+
+        // 2. Faded Team Name & Chassis Telemetry Strip directly in the lower track apron area
+        paint.setStyle(Paint.Style.FILL);
+        int subA = Math.max(0, Math.min(255, Math.round(alpha * 0.42f)));
+        paint.setTextSize(px(9.2f));
+        paint.setColor((subA << 24) | 0x00E4ECF8);
+        c.drawText(teamSub, cx, groundY + px(14f), paint);
+
+        // Subtle faded team-colored speed rule flanking the bottom team label
+        int lineA = Math.max(0, Math.min(255, Math.round(alpha * 0.30f)));
+        paint.setColor((lineA << 24) | (teamColor & 0xFFFFFF));
+        c.drawRect(w * 0.25f, groundY + px(3.5f), w * 0.65f, groundY + px(5.2f), paint);
+
+        paint.setTextAlign(prevAlign);
+        paint.setTypeface(prevTf);
+    }
+
+    /**
      * Renders the scrolling FIA Grand Prix Track Kerbs (Red/White or circuit-themed) and optional wet-weather spray.
      */
     private void drawF1TrackBase(Canvas c, int w, float groundY, float t, int alpha, int kerbCol1, int kerbCol2, boolean wetTrack) {
@@ -7631,10 +7938,11 @@ final class SkyView extends View {
 
     /**
      * Bespoke Team-Accurate Formula 1 Car Renderer:
-     * - Sculpted ground-effect Venturi floor, low nose cone, multi-element front wing & DRS rear wing
-     * - Titanium Halo cockpit protection bar, driver helmet with team visor & roll-hoop airbox intake
-     * - 18-inch Pirelli P-Zero color-coded tires (Soft Red, Medium Yellow, Hard White, Wet Blue) + glowing brake discs
-     * - Titanium underfloor skid-block sparks & exhaust afterburner flames at high speed
+     * - Distinct Constructor Liveries & Silhouettes (Ferrari SF-24, Red Bull RB20, McLaren MCL38,
+     *   Mercedes W15, Aston Martin AMR24, Classic 1988 McLaren MP4/4, Classic 1985 Lotus 97T,
+     *   Renault R25, Williams FW14B, Brawn GP BGP 001)
+     * - Faded floating Constructor Team Name + Car Number callout above each car
+     * - 18-inch Pirelli P-Zero color-coded tires + glowing carbon-ceramic brake discs + titanium sparks
      */
     private void drawF1Car(Canvas c, float x, float y, float t, int alpha,
                            int bodyRgb, int accentRgb, int tireWallRgb,
@@ -7643,6 +7951,35 @@ final class SkyView extends View {
         int bodyCol = bodyRgb & 0xFFFFFF;
         int accCol = accentRgb & 0xFFFFFF;
         int tireCol = tireWallRgb & 0xFFFFFF;
+
+        // Identify Constructor Team from palette so each team gets a genuinely distinct livery & badge
+        boolean isFerrari = (bodyCol == 0xFF1801 || bodyCol == 0xDC0000);
+        boolean isRedBull = (bodyCol == 0x1B3C98 || bodyCol == 0x0B163E);
+        boolean isMcLaren = (bodyCol == 0xFF8000);
+        boolean isMercedes = (bodyCol == 0xC8D6E6 || bodyCol == 0x242C36 || bodyCol == 0xC8D2DC);
+        boolean isAston = (bodyCol == 0x00A878 || bodyCol == 0x006F62);
+        boolean isMp4 = (bodyCol == 0xF4F6FA && accCol == 0xFF1801);
+        boolean isLotus = (bodyCol == 0x1E2028 || bodyCol == 0x16161C);
+        boolean isRenault = (bodyCol == 0x00A8FF || bodyCol == 0x0090FF || bodyCol == 0xFFE600 || bodyCol == 0xFFE000);
+        boolean isWilliams = (bodyCol == 0x1E68F0 || bodyCol == 0x1858D8);
+        boolean isBrawn = (bodyCol == 0xF4F8FA && accCol == 0xD8FF00);
+        boolean isPink = (bodyCol == 0xFF66B2);
+        boolean classicOpenCockpit = isMp4 || isLotus;
+
+        String teamTag = "F1";
+        String carNum = "1";
+        int badgeRgb = accCol;
+        if (isFerrari) { teamTag = "FERRARI"; carNum = "16"; badgeRgb = 0x00FF2800; }
+        else if (isRedBull) { teamTag = "RED BULL"; carNum = "1"; badgeRgb = 0x00FFD800; }
+        else if (isMcLaren) { teamTag = "McLAREN"; carNum = "4"; badgeRgb = 0x00FF8000; }
+        else if (isMercedes) { teamTag = (accCol == 0xFF1801) ? "McLAREN-MERC" : "MERCEDES"; carNum = "44"; badgeRgb = 0x0000F5D4; }
+        else if (isAston) { teamTag = "ASTON MARTIN"; carNum = "14"; badgeRgb = 0x0000E698; }
+        else if (isMp4) { teamTag = "McLAREN MP4/4"; carNum = "12"; badgeRgb = 0x00FF1801; }
+        else if (isLotus) { teamTag = "LOTUS 97T"; carNum = "12"; badgeRgb = 0x00FFD700; }
+        else if (isRenault) { teamTag = "RENAULT"; carNum = "5"; badgeRgb = 0x00FFE600; }
+        else if (isWilliams) { teamTag = "WILLIAMS"; carNum = "5"; badgeRgb = 0x00FFD000; }
+        else if (isBrawn) { teamTag = "BRAWN GP"; carNum = "22"; badgeRgb = 0x00D8FF00; }
+        else if (isPink) { teamTag = "RACING POINT"; carNum = "11"; badgeRgb = 0x00FF66B2; }
 
         // 1. Titanium Underfloor Skid-Block Sparks & Exhaust Flame
         if (sparksAndFlames) {
@@ -7665,7 +8002,7 @@ final class SkyView extends View {
             }
         }
 
-        // 2. Carbon Venturi Underfloor Plank
+        // 2. Carbon Venturi Underfloor Plank & Sidepod Skirt
         paint.setStyle(Paint.Style.FILL);
         paint.setColor((alpha << 24) | 0x0012151E);
         float flL = Math.min(x - dir * px(42f * s), x + dir * px(46f * s));
@@ -7676,8 +8013,8 @@ final class SkyView extends View {
         paint.setColor((alpha << 24) | bodyCol);
         actorPath.reset();
         actorPath.moveTo(x - dir * px(38f * s), y - px(3f * s)); // Rear gearbox
-        actorPath.lineTo(x - dir * px(36f * s), y - px(18f * s)); // Rear engine cover
-        actorPath.lineTo(x - dir * px(10f * s), y - px(24f * s)); // Roll-hoop airbox peak
+        actorPath.lineTo(x - dir * px(36f * s), y - px(19f * s)); // Rear engine cover
+        actorPath.lineTo(x - dir * px(10f * s), y - px(classicOpenCockpit ? 26f * s : 24f * s)); // Roll-hoop airbox peak
         actorPath.lineTo(x - dir * px(4f * s), y - px(14f * s));  // Cockpit opening rear
         actorPath.lineTo(x + dir * px(12f * s), y - px(13f * s)); // Cockpit front cowling
         actorPath.lineTo(x + dir * px(48f * s), y - px(4f * s));  // Sleek low nose tip
@@ -7685,43 +8022,136 @@ final class SkyView extends View {
         actorPath.close();
         c.drawPath(actorPath, paint);
 
-        // 4. Team-Accurate Livery Stripe & Undercut Sidepod Accent
-        paint.setColor((alpha << 24) | accCol);
-        actorPath.reset();
-        actorPath.moveTo(x - dir * px(30f * s), y - px(6f * s));
-        actorPath.lineTo(x - dir * px(12f * s), y - px(16f * s));
-        actorPath.lineTo(x + dir * px(14f * s), y - px(10f * s));
-        actorPath.lineTo(x + dir * px(34f * s), y - px(5f * s));
-        actorPath.lineTo(x - dir * px(26f * s), y - px(4f * s));
-        actorPath.close();
-        c.drawPath(actorPath, paint);
+        // 4. Team-Specific Authentic Multi-Color Livery Patterns (so each team looks unmistakable!)
+        if (isRedBull) {
+            // Oracle Red Bull RB20: Bright Sun-Yellow Nose Cone Tip + Tall Yellow Airbox Roll-Hoop + Charging Red Bull on Engine Cover
+            paint.setColor((alpha << 24) | 0x00FFD800);
+            actorPath.reset();
+            actorPath.moveTo(x + dir * px(32f * s), y - px(8f * s));
+            actorPath.lineTo(x + dir * px(48f * s), y - px(4f * s));
+            actorPath.lineTo(x + dir * px(44f * s), y - px(1f * s));
+            actorPath.lineTo(x + dir * px(30f * s), y - px(2f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            // Yellow Airbox Crown
+            actorPath.reset();
+            actorPath.moveTo(x - dir * px(22f * s), y - px(20f * s));
+            actorPath.lineTo(x - dir * px(10f * s), y - px(24f * s));
+            actorPath.lineTo(x - dir * px(5f * s), y - px(16f * s));
+            actorPath.lineTo(x - dir * px(20f * s), y - px(14f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            // Charging Crimson Bull Silhouette on Engine Cover & Sidepod Red Stripe
+            paint.setColor((alpha << 24) | 0x00FF1828);
+            c.drawOval(rectF(x - dir * px(24f * s), y - px(19f * s), x - dir * px(8f * s), y - px(12f * s)), paint);
+            c.drawRect(Math.min(x - dir * px(28f * s), x + dir * px(26f * s)), y - px(6f * s),
+                       Math.max(x - dir * px(28f * s), x + dir * px(26f * s)), y - px(3.5f * s), paint);
+        } else if (isFerrari) {
+            // Scuderia Ferrari SF-24: White + Giallo Modena Yellow Diagonal Engine-Cover Slash & Scuderia Shield
+            paint.setColor((alpha << 24) | 0x00FFFFFF);
+            actorPath.reset();
+            actorPath.moveTo(x - dir * px(32f * s), y - px(19f * s));
+            actorPath.lineTo(x - dir * px(12f * s), y - px(23f * s));
+            actorPath.lineTo(x - dir * px(18f * s), y - px(11f * s));
+            actorPath.lineTo(x - dir * px(34f * s), y - px(11f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            paint.setColor((alpha << 24) | 0x00FFF200);
+            c.drawLine(x - dir * px(32f * s), y - px(17f * s), x + dir * px(26f * s), y - px(7f * s), paint);
+            c.drawCircle(x + dir * px(16f * s), y - px(10f * s), px(2.6f * s), paint); // Giallo Modena Scuderia Shield
+        } else if (isMcLaren) {
+            // McLaren MCL38: Anthracite Stealth Carbon Sidepod Belly + Electric Cyan Swoosh + Papaya Nose & Engine Cover
+            paint.setColor((alpha << 24) | 0x001C222E);
+            actorPath.reset();
+            actorPath.moveTo(x - dir * px(34f * s), y - px(4f * s));
+            actorPath.lineTo(x - dir * px(16f * s), y - px(14f * s));
+            actorPath.lineTo(x + dir * px(18f * s), y - px(9f * s));
+            actorPath.lineTo(x + dir * px(12f * s), y - px(3f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.2f * s));
+            paint.setColor((alpha << 24) | 0x0018C8FF);
+            c.drawLine(x - dir * px(28f * s), y - px(9f * s), x + dir * px(24f * s), y - px(6f * s), paint);
+            paint.setStyle(Paint.Style.FILL);
+        } else if (isMercedes) {
+            // Mercedes-AMG W15: Obsidian Carbon Rear Engine Cover + Dual Glowing Petronas Teal Flow Stripes
+            paint.setColor((alpha << 24) | 0x00181E28);
+            actorPath.reset();
+            actorPath.moveTo(x - dir * px(38f * s), y - px(4f * s));
+            actorPath.lineTo(x - dir * px(36f * s), y - px(19f * s));
+            actorPath.lineTo(x - dir * px(8f * s), y - px(22f * s));
+            actorPath.lineTo(x - dir * px(2f * s), y - px(5f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.2f * s));
+            paint.setColor((alpha << 24) | accCol);
+            c.drawLine(x - dir * px(34f * s), y - px(10f * s), x + dir * px(36f * s), y - px(6f * s), paint);
+            c.drawLine(x - dir * px(30f * s), y - px(6.5f * s), x + dir * px(28f * s), y - px(4f * s), paint);
+            paint.setStyle(Paint.Style.FILL);
+        } else if (isMp4) {
+            // 1988 McLaren Honda MP4/4: Marlboro Day-Glo Red Engine Cover & Nose Triangle Chevron over Pure White
+            paint.setColor((alpha << 24) | 0x00FF1801);
+            actorPath.reset();
+            actorPath.moveTo(x - dir * px(36f * s), y - px(19f * s));
+            actorPath.lineTo(x - dir * px(10f * s), y - px(26f * s));
+            actorPath.lineTo(x - dir * px(6f * s), y - px(13f * s));
+            actorPath.lineTo(x - dir * px(36f * s), y - px(11f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            c.drawRect(Math.min(x + dir * px(16f * s), x + dir * px(36f * s)), y - px(9f * s),
+                       Math.max(x + dir * px(16f * s), x + dir * px(36f * s)), y - px(5f * s), paint);
+        } else if (isLotus) {
+            // 1985 Lotus 97T: Double JPS Gold Pinstriping Outlining the Black Chassis
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(1.8f * s));
+            paint.setColor((alpha << 24) | 0x00FFD700);
+            c.drawLine(x - dir * px(35f * s), y - px(17f * s), x - dir * px(10f * s), y - px(24f * s), paint);
+            c.drawLine(x - dir * px(34f * s), y - px(8f * s), x + dir * px(40f * s), y - px(5f * s), paint);
+            paint.setStyle(Paint.Style.FILL);
+        } else {
+            // Aston Martin / Renault / Williams / Brawn GP: Bold Two-Tone Sidepod & Engine Cover Wedge
+            paint.setColor((alpha << 24) | accCol);
+            actorPath.reset();
+            actorPath.moveTo(x - dir * px(32f * s), y - px(6f * s));
+            actorPath.lineTo(x - dir * px(12f * s), y - px(18f * s));
+            actorPath.lineTo(x + dir * px(16f * s), y - px(10f * s));
+            actorPath.lineTo(x + dir * px(38f * s), y - px(5f * s));
+            actorPath.lineTo(x - dir * px(28f * s), y - px(4f * s));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+        }
 
-        // 5. Driver Helmet & Curved Titanium HALO Cockpit Protection Bar
-        paint.setColor((alpha << 24) | accCol);
-        c.drawCircle(x + dir * px(1f * s), y - px(16.5f * s), px(4.5f * s), paint);
+        // 5. Driver Helmet & Curved Titanium HALO Cockpit Protection Bar (Open Cockpit for 1980s MP4/4 & Lotus 97T!)
+        int helmetCol = (isMp4 || isLotus) ? 0x00FFE600 : (isFerrari ? 0x00FF2800 : (isMercedes ? 0x00FFD700 : accCol));
+        paint.setColor((alpha << 24) | helmetCol);
+        c.drawCircle(x + dir * px(1f * s), y - px(16.5f * s), px(4.6f * s), paint);
         paint.setColor((alpha << 24) | 0x00141822);
         c.drawRect(Math.min(x + dir * px(1f * s), x + dir * px(5.5f * s)), y - px(18f * s),
                    Math.max(x + dir * px(1f * s), x + dir * px(5.5f * s)), y - px(15.5f * s), paint);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(px(2.4f * s));
-        paint.setColor((alpha << 24) | 0x00DCE2EC);
-        c.drawLine(x - dir * px(5f * s), y - px(15f * s), x + dir * px(11f * s), y - px(18.5f * s), paint);
-        c.drawLine(x + dir * px(11f * s), y - px(18.5f * s), x + dir * px(13f * s), y - px(13f * s), paint);
+        if (!classicOpenCockpit) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.4f * s));
+            paint.setColor((alpha << 24) | (isFerrari ? 0x00FF1801 : (isMcLaren ? 0x00FF8000 : 0x00DCE2EC)));
+            c.drawLine(x - dir * px(5f * s), y - px(15f * s), x + dir * px(11f * s), y - px(18.5f * s), paint);
+            c.drawLine(x + dir * px(11f * s), y - px(18.5f * s), x + dir * px(13f * s), y - px(13f * s), paint);
+        }
 
         // 6. Dual-Plane Rear Wing with Open/Closed DRS Flap + Front Wing Endplates
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor((alpha << 24) | bodyCol);
+        paint.setColor((alpha << 24) | (isFerrari ? 0x00FFFFFF : bodyCol));
         float rwL = Math.min(x - dir * px(43f * s), x - dir * px(34f * s));
         float rwR = Math.max(x - dir * px(43f * s), x - dir * px(34f * s));
         c.drawRoundRect(rwL, y - px(25f * s), rwR, y - px(6f * s), px(2f * s), px(2f * s), paint);
         // DRS Top Flap (tilted open in green/white when DRS is active!)
-        paint.setColor((alpha << 24) | (drsOpen ? 0x0000E676 : accCol));
+        paint.setColor((alpha << 24) | (drsOpen ? 0x0000E676 : (isRedBull ? 0x00FF1828 : accCol)));
         c.drawRect(rwL - px(1f * s), y - px(drsOpen ? 28f * s : 25f * s), rwR + px(1f * s), y - px(22f * s), paint);
 
         // Front multi-element wing
         float fwL = Math.min(x + dir * px(38f * s), x + dir * px(51f * s));
         float fwR = Math.max(x + dir * px(38f * s), x + dir * px(51f * s));
-        paint.setColor((alpha << 24) | accCol);
+        paint.setColor((alpha << 24) | (isFerrari ? 0x00FFFFFF : accCol));
         c.drawRoundRect(fwL, y - px(6f * s), fwR, y, px(2f * s), px(2f * s), paint);
 
         // 7. 18-Inch Front & Rear F1 Wheels with Glowing Brake Discs & Pirelli Color-Coded Sidewalls
@@ -7738,7 +8168,7 @@ final class SkyView extends View {
             paint.setColor((alpha << 24) | 0x0012151C);
             c.drawCircle(wx, wheelY, wheelR, paint);
             // Glowing orange-red carbon-ceramic brake rotor inside wheel rim
-            paint.setColor((alpha * 4 / 5 << 24) | 0x00FF5500);
+            paint.setColor((alpha * 4 / 5 << 24) | (isLotus ? 0x00FFD700 : 0x00FF5500));
             c.drawCircle(wx, wheelY, wheelR * 0.42f, paint);
             // Spinning Pirelli P-Zero color-coded sidewall ring
             paint.setStyle(Paint.Style.STROKE);
@@ -7748,6 +8178,18 @@ final class SkyView extends View {
                     spinDeg + wIdx * 90f, 245f, false, paint);
         }
         paint.setStyle(Paint.Style.FILL);
+
+        // 8. Faded Floating Team Name & Driver Number Callout above the Car (so every car is immediately identifiable!)
+        Typeface prevTf = paint.getTypeface();
+        Paint.Align prevAlign = paint.getTextAlign();
+        paint.setTypeface(f1Font != null ? f1Font : Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(px(7.8f * s));
+        int tagAlpha = Math.max(0, Math.min(255, Math.round(alpha * 0.58f)));
+        paint.setColor((tagAlpha << 24) | (badgeRgb & 0xFFFFFF));
+        c.drawText(teamTag + " #" + carNum, x - dir * px(4f * s), y - px(29.5f * s), paint);
+        paint.setTextAlign(prevAlign);
+        paint.setTypeface(prevTf);
     }
 
     /**

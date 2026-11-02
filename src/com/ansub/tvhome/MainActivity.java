@@ -3282,7 +3282,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v7.0.0  \u00B7  Build 70");
+        appTitleTv.setText("HomeScreen v7.1.0  \u00B7  Build 71");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
@@ -4017,7 +4017,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v7.0.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 7 Theme Universes (including Formula 1!) and 344 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v7.1.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 7 Theme Universes (including Formula 1!) and 344 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -4028,7 +4028,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v7.0.0 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v7.1.0 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -4040,7 +4040,7 @@ public class MainActivity extends Activity {
 
     // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
     private void showInstallOnTvDialog() {
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v7.0.0_70.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v7.1.0_71.apk";
         List<String> options = Arrays.asList(
             "1. Share Download Link to TV (Quick Share / LocalSend)",
             "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",
