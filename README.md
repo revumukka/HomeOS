@@ -1,15 +1,15 @@
 <div align="center">
 
-# HomeScreen v5.0.0
+# HomeScreen v5.1.0
 
 ### Universal Multi-Universe Animated Home Launcher for Android TV, Google TV, Foldables, Phones & Tablets
 
-[![Version](https://img.shields.io/badge/version-v5.0.0_(Build_50)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v5.0.0_50.apk)
-[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Phones_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.0.0-b50.apk)
+[![Version](https://img.shields.io/badge/version-v5.1.0_(Build_51)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v5.1.0_51.apk)
+[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Phones_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.1.0-b51.apk)
 [![License](https://img.shields.io/badge/license-MIT-black?style=for-the-badge)](LICENSE)
 
-**Download Ready-to-Install Release APKs (`408 KB`):**
-[**⬇ Download `HomeScreen_Release_v5.0.0_50.apk`**](releases/HomeScreen_Release_v5.0.0_50.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.0.0-b50.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.0.0-b50.apk)
+**Download Ready-to-Install Release APKs (`409 KB`):**
+[**⬇ Download `HomeScreen_Release_v5.1.0_51.apk`**](releases/HomeScreen_Release_v5.1.0_51.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.1.0-b51.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v5.1.0-b51.apk)
 
 <img src="docs/home-screen.png" alt="HomeScreen Multi-Universe Launcher" width="100%">
 
@@ -40,8 +40,8 @@ Switch themes anytime from the top-right **3-Card Theme Swatch** icon or **Setti
 
 ---
 
-## 🎬 New in v5.0.0: TV Cinema Story Screensaver & Posture-Aware Foldable Layout
-- **2-Minute TV Inactivity Cinema Story Screensaver**: After 2 minutes of inactivity on Android TV / Google TV (or anytime via **Settings → Start Screensaver**), all app cards, bottom buttons, and the top-right dock smoothly fade away while the top-left **Date, Time & Weather** remains visible.
+## 🎬 New in v5.1.0: Universal Landscape & Unfolded Foldable Cinema Story Screensaver
+- **2-Minute Inactivity Cinema Story Screensaver (TV, Any Landscape Orientation & Unfolded Foldables)**: After 2 minutes of inactivity on Android TV / Google TV, any device in landscape orientation, or any foldable when open/unfolded (or anytime via **Settings → Start Screensaver**), all app cards, page dots, bottom buttons, and quick icons smoothly fade away while the top-left **Date, Time & Weather** remains visible.
 - **Expanded 3/4-Screen Story Stage**: During the TV screensaver, the animated story scenes grow huge (`scaleX = 2.30x`, `scaleY = 2.55x`) to take over up to the bottom 3/4th of the screen while keeping the bottom story caption & dots at their standard crisp size.
 - **Unified 248-Story Cross-Universe Random Pool**: Screensaver stories are randomized across all 6 franchises and within each franchise as a single 248-scene pool, dynamically updating both the **SkyView** universe backdrop and the top-left **Clock typography** to match each random story's franchise.
 - **Posture-Aware Paging & Icon-Only Controls (Phones / Foldables)**: Full-sized `54dp` squircle icons in Portrait (`4×4` = 16 apps/page), `4×2` (`8` apps/page) 16:9 Banner Cards in Landscape/Unfolded so the Bottom Story Stage is never covered, sleek icon-only `[ Theme ] [ + ] [ Settings ]` pills, and removal of the redundant `ALL APPS` button.
