@@ -41,35 +41,30 @@ public class HomeButton extends AccessibilityService {
         return super.onUnbind(intent);
     }
 
-    // TCL's background manager only binds the accessibility service once our process is running.
-    // With WRITE_SECURE_SETTINGS granted via ADB, re-trigger the bind automatically on boot/launch.
+    // Play Store & Play Protect compliant: never mutate Settings.Secure programmatically.
     static void ensureBound(final Context c) {
-        if (bound) return;
-        final Context app = c.getApplicationContext();
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (bound) return;
-            try {
-                ContentResolver cr = app.getContentResolver();
-                Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "");
-                Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 0);
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    try {
-                        Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, SERVICE_ID);
-                        Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
-                    } catch (Throwable ignored) {}
-                }, 400);
-            } catch (Throwable ignored) {}
-        }, 600);
+        // Accessibility service binding is managed strictly by Android OS after explicit user opt-in.
     }
 
     public static class BootReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (intent == null) return;
+            String act = intent.getAction();
+            if (!Intent.ACTION_BOOT_COMPLETED.equals(act)
+                    && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(act)
+                    && !"android.intent.action.QUICKBOOT_POWERON".equals(act)) {
+                return;
+            }
             try {
-                context.startActivity(new Intent(context, MainActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+                android.app.UiModeManager um = (android.app.UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+                boolean isTv = (um != null && um.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION)
+                        || context.getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK);
+                if (isTv) {
+                    context.startActivity(new Intent(context, MainActivity.class)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+                }
             } catch (Throwable ignored) {}
-            ensureBound(context);
         }
     }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ansub.tvhome" android:versionCode="41" android:versionName="4.1.0"
+    package="com.ansub.tvhome" android:versionCode="42" android:versionName="4.2.0"
     android:installLocation="internalOnly">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
@@ -16,7 +16,6 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <!-- Android 11+ only shows apps a home screen asks to see: TV apps and normal apps. -->
     <queries>
@@ -54,6 +53,8 @@
     <application android:label="HomeScreen" android:allowBackup="false"
         android:banner="@drawable/banner" android:icon="@drawable/icon" android:roundIcon="@drawable/icon"
         android:supportsRtl="true" android:resizeableActivity="true" android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <property android:name="android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE" android:value="false" />
         <activity android:name=".MainActivity"

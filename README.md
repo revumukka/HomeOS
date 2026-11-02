@@ -1,15 +1,15 @@
 <div align="center">
 
-# HomeScreen v4.1.0
+# HomeScreen v4.2.0
 
 ### Universal Multi-Universe Animated Home Launcher for Android TV, Google TV, Foldables, Phones & Tablets
 
-[![Version](https://img.shields.io/badge/version-v4.1.0_(Build_41)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v4.1.0_41.apk)
-[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Phones_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.1.0-b41.apk)
+[![Version](https://img.shields.io/badge/version-v4.2.0_(Build_42)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v4.2.0_42.apk)
+[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Phones_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.2.0-b42.apk)
 [![License](https://img.shields.io/badge/license-MIT-black?style=for-the-badge)](LICENSE)
 
 **Download Ready-to-Install Release APKs (`406 KB`):**
-[**⬇ Download `HomeScreen_Release_v4.1.0_41.apk`**](releases/HomeScreen_Release_v4.1.0_41.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.1.0-b41.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.1.0-b41.apk)
+[**⬇ Download `HomeScreen_Release_v4.2.0_42.apk`**](releases/HomeScreen_Release_v4.2.0_42.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.2.0-b42.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.2.0-b42.apk)
 
 <img src="docs/home-screen.png" alt="HomeScreen Multi-Universe Launcher" width="100%">
 

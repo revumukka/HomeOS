@@ -492,6 +492,15 @@ final class SkyView extends View {
     }
 
     private void startFancyLedsListener() {
+        // Only listen for local FancyLEDs Sync Box UDP broadcasts on Android TV devices
+        try {
+            android.app.UiModeManager um = (android.app.UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
+            boolean isTv = (um != null && um.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION)
+                    || getContext().getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK);
+            if (!isTv) return;
+        } catch (Throwable ignored) {
+            return;
+        }
         hubListenerThread = new Thread(() -> {
             DatagramSocket ds = null;
             try {
@@ -504,22 +513,13 @@ final class SkyView extends View {
                     try {
                         DatagramPacket dp = new DatagramPacket(buf, buf.length);
                         ds.receive(dp);
-                        String ip = dp.getAddress() != null ? dp.getAddress().getHostAddress() : "10.0.0.153";
+                        String ip = dp.getAddress() != null ? dp.getAddress().getHostAddress() : "local";
                         int len = dp.getLength();
                         fancyHubOnline = true;
                         fancyPulseEnergy = Math.min(100, 45 + (len % 55));
                         if (hubListener != null) post(() -> hubListener.onHubStatusChanged(true, ip));
-                    } catch (java.net.SocketTimeoutException ste) {
-                        boolean reachable = false;
-                        try (Socket s = new Socket()) {
-                            s.connect(new InetSocketAddress("10.0.0.153", 6668), 800);
-                            reachable = true;
-                        } catch (Throwable ignored) {}
-                        if (reachable) {
-                            fancyHubOnline = true;
-                            fancyPulseEnergy = 35;
-                            if (hubListener != null) post(() -> hubListener.onHubStatusChanged(true, "10.0.0.153"));
-                        }
+                    } catch (java.net.SocketTimeoutException ignored) {
+                        // Passive UDP listener only: never probe hardcoded private LAN IPs (MASVS-NETWORK)
                     }
                 }
             } catch (Throwable ignored) {

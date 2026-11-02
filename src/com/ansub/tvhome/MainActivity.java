@@ -593,9 +593,11 @@ public class MainActivity extends Activity {
         if (apps == null && quick == null && clock == null && fake == null && theme == null) return false;
         SharedPreferences prefs = getSharedPreferences(PREFS, 0);
         String stamp = intent.getStringExtra("stamp");
-        if (stamp != null && stamp.equals(prefs.getString("stamp", null))) return false;
+        // OWASP MASVS-PLATFORM-1: Require a valid numeric stamp from install.sh so untrusted 3rd-party
+        // apps cannot inject arbitrary SharedPreferences via exported MainActivity intents.
+        if (stamp == null || !stamp.matches("\\d{8,15}") || stamp.equals(prefs.getString("stamp", null))) return false;
         SharedPreferences.Editor e = prefs.edit();
-        if (stamp != null) e.putString("stamp", stamp);
+        e.putString("stamp", stamp);
         if (theme != null) {
             try {
                 int th = Integer.parseInt(theme.trim());
@@ -607,8 +609,18 @@ public class MainActivity extends Activity {
         }
         if (apps != null) {
             apps = apps.trim();
-            if (apps.isEmpty() || apps.equalsIgnoreCase("auto")) e.remove("apps");
-            else e.putString("apps", apps);
+            if (apps.isEmpty() || apps.equalsIgnoreCase("auto")) {
+                e.remove("apps");
+            } else {
+                StringBuilder valid = new StringBuilder();
+                for (String p : apps.split("[,\\s]+")) {
+                    if (p.matches("[a-zA-Z0-9_.]{3,128}")) {
+                        if (valid.length() > 0) valid.append(',');
+                        valid.append(p);
+                    }
+                }
+                if (valid.length() > 0) e.putString("apps", valid.toString());
+            }
         }
         if (quick != null) {
             quick = quick.trim();
@@ -1957,6 +1969,7 @@ public class MainActivity extends Activity {
             } else {
                 list.add("System Settings");
             }
+            list.add("Privacy & Safety");
             final String[] items = list.toArray(new String[0]);
             dropdown(tile(SETTINGS), items, which -> {
                 String picked = items[which];
@@ -1970,6 +1983,8 @@ public class MainActivity extends Activity {
                     toggleEdgeGlow();
                 } else if ("Brightness".equals(picked)) {
                     openBrightness();
+                } else if ("Privacy & Safety".equals(picked)) {
+                    showPrivacySafetyDialog();
                 } else {
                     openTvSettings();
                 }
@@ -2884,6 +2899,19 @@ public class MainActivity extends Activity {
             startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception ignored) {}
+    }
+
+    // In-App Privacy Policy, Data Safety & OWASP MASVS Compliance Disclosure (Play Store Requirement)
+    private void showPrivacySafetyDialog() {
+        List<String> disclosures = Arrays.asList(
+            "Zero Personal Data Collected (No Analytics / No Ads)",
+            "App List (<queries>) Stays 100% On-Device",
+            "HTTPS-Only Network Security (Weather Lookup Only)",
+            "Local Preferences Stored Privately (MODE_PRIVATE)",
+            "Optional Accessibility Helper (Google TV Home Only)",
+            "Close"
+        );
+        panel("Privacy & Data Safety", disclosures, which -> {});
     }
 
     private String labelOf(String pkg) {
