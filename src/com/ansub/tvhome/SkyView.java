@@ -1607,7 +1607,7 @@ final class SkyView extends View {
             canvas.drawRect(px(1f), px(1f), w - px(1f), h - px(1f), paint);
         }
 
-        // 1. Twinkling enchanted ceiling stars (or Stadium Paparazzi Camera Flashes in Formula 1 theme)
+        // 1. Twinkling ceiling stars / theme-specific atmospheric sky glints (Camera Flashes in F1, Chakra Embers in Naruto, etc.)
         paint.setStyle(Paint.Style.FILL);
         for (int i = 0; i < STAR_COUNT; i++) {
             int b = i * 6;
@@ -1639,12 +1639,31 @@ final class SkyView extends View {
             }
             float pulse = 0.55f + 0.45f * (float) Math.sin(t * stars[b + 3] + stars[b + 4]);
             int alpha = Math.min(255, Math.max(30, Math.round(pulse * 220f)));
-            paint.setColor((alpha << 24) | 0x00FDF4DC);
+            int starRgb = 0x00FDF4DC;
+            int glintRgb = 0x00FFE8A8;
+            if (universeTheme == 1) {
+                starRgb = (i % 3 == 0) ? 0x00FF5828 : 0x00FFD098;
+                glintRgb = 0x00FF7830;
+            } else if (universeTheme == 2) {
+                starRgb = (i % 3 == 0) ? 0x00E098FF : (i % 3 == 1 ? 0x0068F0FF : 0x00FFE4B8);
+                glintRgb = 0x00D888FF;
+            } else if (universeTheme == 3) {
+                starRgb = (i % 3 == 0) ? 0x0098E0FF : (i % 3 == 1 ? 0x00FFFFFF : 0x00FFD8A8);
+                glintRgb = 0x0068C8FF;
+            } else if (universeTheme == 4) {
+                int[] mcuStars = {0x0058C8FF, 0x00FFE058, 0x00FF5868, 0x00C868FF, 0x0048FF98, 0x00FF9840};
+                starRgb = mcuStars[i % 6];
+                glintRgb = starRgb;
+            } else if (universeTheme == 5) {
+                starRgb = (i % 3 == 0) ? 0x0048FF90 : (i % 3 == 1 ? 0x0078E0FF : 0x00FFE478);
+                glintRgb = starRgb;
+            }
+            paint.setColor((alpha << 24) | starRgb);
             canvas.drawCircle(sx, sy, sr, paint);
             if (stars[b + 5] > 0.5f) {
                 paint.setStrokeWidth(px(1.1f));
                 int glintAlpha = alpha * 2 / 3;
-                paint.setColor((glintAlpha << 24) | 0x00FFE8A8);
+                paint.setColor((glintAlpha << 24) | glintRgb);
                 float len = sr * (2.6f + pulse * 1.4f);
                 canvas.drawLine(sx - len, sy, sx + len, sy, paint);
                 canvas.drawLine(sx, sy - len, sx, sy + len, paint);
@@ -1667,10 +1686,10 @@ final class SkyView extends View {
             canvas.drawCircle(pxPos, pyPos, sparks[b + 4], paint);
         }
 
-        // 3A. Flying Translucent Hogwarts Ghosts gliding among the top candles
+        // 3A. Flying Translucent Hogwarts Ghosts / Theme Sky Flyers gliding among the top lights
         drawFlyingGhosts(canvas, w, h, t);
 
-        // 3B. Floating Great Hall Candles
+        // 3B. Theme-Specific Iconic Floating Sky Lights (18 Fixtures)
         float glowHalf = glowSprite != null ? glowSprite.getWidth() / 2f : 0f;
         for (int i = 0; i < CANDLE_COUNT; i++) {
             int b = i * 7;
@@ -1683,125 +1702,473 @@ final class SkyView extends View {
             float flicker = 0.88f + 0.12f * (float) Math.sin(t * 6.5f + candles[b + 6])
                     + 0.06f * (float) Math.cos(t * 11.3f + candles[b + 5]);
             float flameTipY = cy - px(11f) * flicker;
-            if (glowSprite != null && universeTheme != 6) {
+            // Only apply the warm Hogwarts candle glowSprite in the Harry Potter theme (universeTheme == 0)
+            if (glowSprite != null && universeTheme == 0) {
                 bitmapPaint.setAlpha(Math.min(255, Math.max(120, Math.round(190f * flicker))));
                 canvas.drawBitmap(glowSprite, cx - glowHalf, cy - px(5f) - glowHalf, bitmapPaint);
             }
 
             if (universeTheme == 1) {
-                // Konoha Chakra Lanterns floating in the top sky
-                paint.setColor((0x2C << 24) | 0x00FF4820);
-                canvas.drawCircle(cx, cy + ch * 0.35f, cw * 2.6f * flicker, paint);
-                paint.setColor(0xDDDF2818);
-                canvas.drawOval(cx - cw * 1.15f, cy, cx + cw * 1.15f, cy + ch * 0.68f, paint);
-                paint.setColor(0xEEFFA838);
-                canvas.drawCircle(cx, cy + ch * 0.34f, cw * 0.55f * flicker, paint);
-                paint.setColor(0xFF221008);
-                canvas.drawRect(cx - cw * 0.7f, cy - px(2f), cx + cw * 0.7f, cy + px(2.5f), paint);
-                canvas.drawRect(cx - cw * 0.7f, cy + ch * 0.66f, cx + cw * 0.7f, cy + ch * 0.74f, paint);
-                continue;
-            } else if (universeTheme == 2) {
-                // DEMON SLAYER Top Sky: Floating Wisteria Blossom Lanterns
-                paint.setColor((0x2E << 24) | 0x00C868FF);
-                canvas.drawCircle(cx, cy + ch * 0.35f, cw * 2.7f * flicker, paint);
-                paint.setColor(0xDDA848F0);
-                canvas.drawOval(cx - cw * 0.85f, cy, cx + cw * 0.85f, cy + ch * 0.55f, paint);
-                paint.setColor(0xEEF0C8FF);
-                canvas.drawOval(cx - cw * 0.45f, cy + ch * 0.42f, cx + cw * 0.45f, cy + ch * 0.85f, paint);
-                continue;
-            } else if (universeTheme == 3) {
-                // STAR WARS Top Sky: Floating Glowing Kyber Crystals (Blue, Green, Crimson, Purple)
-                int kyberCol = (i % 4 == 0) ? 0xFF38B8FF : (i % 4 == 1 ? 0xFF38FF88 : (i % 4 == 2 ? 0xFFFF2838 : 0xFFC858FF));
-                paint.setColor((0x30 << 24) | (kyberCol & 0xFFFFFF));
-                canvas.drawCircle(cx, cy + ch * 0.30f, cw * 2.4f * flicker, paint);
-                paint.setColor(kyberCol);
-                flamePath.reset();
-                flamePath.moveTo(cx, cy - px(4f));
-                flamePath.lineTo(cx + cw * 0.65f, cy + ch * 0.30f);
-                flamePath.lineTo(cx, cy + ch * 0.65f);
-                flamePath.lineTo(cx - cw * 0.65f, cy + ch * 0.30f);
-                flamePath.close();
-                canvas.drawPath(flamePath, paint);
-                continue;
-            } else if (universeTheme == 4) {
-                // MCU Top Sky: Floating 6 Infinity Stones (Space, Mind, Reality, Power, Time, Soul)
-                int[] stones = {0xFF2888FF, 0xFFFFE038, 0xFFFF2438, 0xFFB838FF, 0xFF28FF78, 0xFFFF8820};
-                int stCol = stones[i % 6];
-                paint.setColor((0x34 << 24) | (stCol & 0xFFFFFF));
-                canvas.drawCircle(cx, cy + ch * 0.30f, cw * 2.5f * flicker, paint);
-                paint.setColor(stCol);
-                canvas.drawOval(cx - cw * 0.75f, cy, cx + cw * 0.75f, cy + ch * 0.55f, paint);
-                paint.setColor(0xDDFFFFFF);
-                canvas.drawCircle(cx, cy + ch * 0.24f, cw * 0.28f, paint);
-                continue;
-            } else if (universeTheme == 5) {
-                // DCU Top Sky: Floating Green Lantern Power Rings & Kryptonian Sunstones
-                int dcCol = (i % 3 == 0) ? 0xFF28FF78 : (i % 3 == 1 ? 0xFF38B8FF : 0xFFFFD848);
-                paint.setColor((0x32 << 24) | (dcCol & 0xFFFFFF));
-                canvas.drawCircle(cx, cy + ch * 0.30f, cw * 2.4f * flicker, paint);
+                // NARUTO Top Sky: Traditional Konoha Festival Chōchin Paper Lanterns with Bamboo Ribs, Uzumaki Crest & Silk Tassel
+                float lTop = cy - px(2f);
+                float lBot = cy + ch * 0.72f;
+                float lMidY = (lTop + lBot) * 0.5f;
+                float lRx = cw * 1.35f;
+                // Warm Will-of-Fire outer chakra halo
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((0x34 << 24) | 0x00FF5820);
+                canvas.drawCircle(cx, lMidY, cw * 3.0f * flicker, paint);
+                // Top hanging cord
                 paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(px(2.0f));
-                paint.setColor(dcCol);
-                canvas.drawCircle(cx, cy + ch * 0.30f, cw * 0.85f, paint);
+                paint.setStrokeWidth(px(1.2f));
+                paint.setColor(0xAAFFE098);
+                canvas.drawLine(cx, lTop - px(6f), cx, lTop, paint);
+                // Plump Scarlet-Vermilion Chōchin Paper Body + Warm Golden Inner Flame Core
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0xE6E02418);
+                canvas.drawOval(rectF(cx - lRx, lTop, cx + lRx, lBot), paint);
+                paint.setColor(0xEEFFB838);
+                canvas.drawOval(rectF(cx - lRx * 0.62f, lTop + ch * 0.14f, cx + lRx * 0.62f, lBot - ch * 0.14f), paint);
+                paint.setColor(0xFFFFF4C8);
+                canvas.drawCircle(cx, lMidY, cw * 0.36f * flicker, paint);
+                // Curved horizontal bamboo rib lines + central Uzumaki spiral emblem
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(1.0f));
+                paint.setColor(0x88480C08);
+                canvas.drawLine(cx - lRx * 0.92f, lMidY - ch * 0.14f, cx + lRx * 0.92f, lMidY - ch * 0.14f, paint);
+                canvas.drawLine(cx - lRx * 0.92f, lMidY + ch * 0.14f, cx + lRx * 0.92f, lMidY + ch * 0.14f, paint);
+                paint.setColor(0xCC98140C);
+                canvas.drawCircle(cx, lMidY, cw * 0.34f, paint);
+                // Lacquered Black & Gold Wooden Top/Bottom Caps (Ukebachi)
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0xFF1C100C);
+                canvas.drawRoundRect(cx - cw * 0.82f, lTop - px(2.2f), cx + cw * 0.82f, lTop + px(2.5f), px(1.5f), px(1.5f), paint);
+                canvas.drawRoundRect(cx - cw * 0.82f, lBot - px(2.2f), cx + cw * 0.82f, lBot + px(2.5f), px(1.5f), px(1.5f), paint);
+                // Swaying Golden Silk Tassel hanging below the lantern
+                float tasselSway = (float) Math.sin(t * 4.2f + i) * px(2.8f);
+                paint.setColor(0xFFFFD048);
+                canvas.drawCircle(cx, lBot + px(4.0f), px(1.8f), paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(1.5f));
+                canvas.drawLine(cx, lBot + px(4.0f), cx + tasselSway, lBot + px(13f), paint);
                 paint.setStyle(Paint.Style.FILL);
                 continue;
-            } else if (universeTheme == 6) {
-                // FORMULA 1 Top Sky: Stadium Floodlight Rigs + Strobe Camera Flash Bursts (NO warm candle glow!)
-                float stY = candles[b + 1];
+            } else if (universeTheme == 2) {
+                // DEMON SLAYER Top Sky: Alternating Taisho Roofed Chōchin Lanterns & Cascading Wisteria Blossom Vines
                 if (i % 2 == 0) {
-                    // Suspended Multi-Bulb Stadium Floodlight Bank with downward beam cone
+                    // Type A: Taisho-Era Roofed Paper Lantern (Asakusa / Butterfly Mansion Style)
+                    float lTop = cy;
+                    float lBot = cy + ch * 0.70f;
+                    float lMidY = (lTop + lBot) * 0.5f;
                     paint.setStyle(Paint.Style.FILL);
-                    paint.setColor(0x16C8EEFF);
+                    paint.setColor((0x32 << 24) | 0x00D878FF);
+                    canvas.drawCircle(cx, lMidY, cw * 2.9f * flicker, paint);
+                    // Glowing Washi Paper Body (Violet-Rose outer -> Warm Peach-Gold inner flame)
+                    paint.setColor(0xD89838D8);
+                    canvas.drawRoundRect(cx - cw * 1.15f, lTop, cx + cw * 1.15f, lBot, cw * 0.65f, cw * 0.65f, paint);
+                    paint.setColor(0xEEFFD898);
+                    canvas.drawOval(rectF(cx - cw * 0.65f, lTop + ch * 0.14f, cx + cw * 0.65f, lBot - ch * 0.14f), paint);
+                    // Horizontal bamboo ribs
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.0f));
+                    paint.setColor(0x77301048);
+                    canvas.drawLine(cx - cw * 1.08f, lMidY - ch * 0.12f, cx + cw * 1.08f, lMidY - ch * 0.12f, paint);
+                    canvas.drawLine(cx - cw * 1.08f, lMidY + ch * 0.12f, cx + cw * 1.08f, lMidY + ch * 0.12f, paint);
+                    // Pitched Japanese Pagoda Roof Eaves (Kasagi) on top of the lantern + base cap + tassel
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFF1A1026);
                     flamePath.reset();
-                    flamePath.moveTo(cx - cw * 1.4f, stY + px(4f));
-                    flamePath.lineTo(cx + cw * 1.4f, stY + px(4f));
-                    flamePath.lineTo(cx + cw * 3.8f, stY + ch * 1.35f);
-                    flamePath.lineTo(cx - cw * 3.8f, stY + ch * 1.35f);
+                    flamePath.moveTo(cx - cw * 1.55f, lTop + px(2f));
+                    flamePath.lineTo(cx, lTop - px(5.5f));
+                    flamePath.lineTo(cx + cw * 1.55f, lTop + px(2f));
                     flamePath.close();
                     canvas.drawPath(flamePath, paint);
-
-                    paint.setColor(0x28A8E8FF);
-                    canvas.drawCircle(cx, stY + px(3f), cw * 2.6f * flicker, paint);
-                    paint.setColor(0xEE141A24);
-                    canvas.drawRoundRect(cx - cw * 1.55f, stY - px(3f), cx + cw * 1.55f, stY + px(6f), px(2.5f), px(2.5f), paint);
-                    paint.setColor(0xFFFFFFFF);
-                    canvas.drawCircle(cx - cw * 0.9f, stY + px(1.5f), cw * 0.34f, paint);
-                    canvas.drawCircle(cx, stY + px(1.5f), cw * 0.38f, paint);
-                    canvas.drawCircle(cx + cw * 0.9f, stY + px(1.5f), cw * 0.34f, paint);
+                    canvas.drawRect(cx - cw * 0.85f, lBot - px(1.5f), cx + cw * 0.85f, lBot + px(2.5f), paint);
+                    float tSway = (float) Math.sin(t * 3.8f + i) * px(2.5f);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.4f));
+                    paint.setColor(0xFFE098FF);
+                    canvas.drawLine(cx, lBot + px(2.5f), cx + tSway, lBot + px(11f), paint);
+                    paint.setStyle(Paint.Style.FILL);
                 } else {
-                    // Strobe Camera Flash Burst in the Grandstands / Media Gantry
-                    float camWave = (float) Math.sin(t * 4.8f + i * 2.1f);
-                    if (camWave > 0.55f) {
-                        float fl = (camWave - 0.55f) / 0.45f;
-                        int fa = Math.min(255, Math.round(fl * fl * 255f));
-                        paint.setStyle(Paint.Style.FILL);
-                        paint.setColor((fa / 3 << 24) | 0x00B8F2FF);
-                        canvas.drawCircle(cx, stY, cw * (2.4f + fl * 2.2f), paint);
-                        paint.setColor((fa << 24) | 0x00FFFFFF);
-                        canvas.drawCircle(cx, stY, cw * (0.65f + fl * 0.55f), paint);
-                        paint.setStrokeWidth(px(1.5f));
-                        float rLen = cw * (2.2f + fl * 2.8f);
-                        canvas.drawLine(cx - rLen, stY, cx + rLen, stY, paint);
-                        canvas.drawLine(cx, stY - rLen, cx, stY + rLen, paint);
+                    // Type B: Illuminated Cascading Wisteria (Fuji) Blossom Raceme Cluster (3 Hanging Petal Vines)
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x34 << 24) | 0x00C868FF);
+                    canvas.drawCircle(cx, cy + ch * 0.42f, cw * 3.0f * flicker, paint);
+                    float vineSway = (float) Math.sin(t * 3.2f + i) * px(2.5f);
+                    for (int st = -1; st <= 1; st++) {
+                        float vx = cx + st * cw * 0.82f;
+                        int petals = (st == 0) ? 5 : 4;
+                        for (int pIdx = 0; pIdx < petals; pIdx++) {
+                            float py = cy + pIdx * (ch * 0.17f);
+                            float pRad = cw * (0.48f - pIdx * 0.065f);
+                            float pxOff = vineSway * (pIdx * 0.25f);
+                            paint.setColor(pIdx < 2 ? 0xEEB858FF : (pIdx < 4 ? 0xEEE898FF : 0xFFF8E0FF));
+                            canvas.drawOval(rectF(vx + pxOff - pRad * 1.25f, py - pRad * 0.8f,
+                                    vx + pxOff + pRad * 1.25f, py + pRad * 0.8f), paint);
+                        }
                     }
                 }
                 continue;
+            } else if (universeTheme == 3) {
+                // STAR WARS Top Sky: Ignited Lightsabers, Illuminated Jedi/Sith Holocrons & Marksman-H Training Remotes
+                int mode = i % 3;
+                if (mode == 0) {
+                    // Type A: Floating Ignited Lightsaber (Metallic Hilt + Blazing Plasma Blade & Emitter Cross-Flare)
+                    int saberCol = (i % 4 == 0) ? 0xFF28A8FF : (i % 4 == 1 ? 0xFF38FF78 : (i % 4 == 2 ? 0xFFFF2030 : 0xFFC858FF));
+                    float tilt = (float) Math.sin(t * 2.2f + i) * px(3.5f);
+                    float hiltTopY = cy + ch * 0.48f;
+                    float hiltBotY = cy + ch * 0.82f;
+                    float bladeTipX = cx + tilt;
+                    float bladeTipY = cy - ch * 0.36f;
+                    // Outer plasma blade glow
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeCap(Paint.Cap.ROUND);
+                    paint.setStrokeWidth(cw * 1.45f * flicker);
+                    paint.setColor((0x44 << 24) | (saberCol & 0xFFFFFF));
+                    canvas.drawLine(cx, hiltTopY, bladeTipX, bladeTipY, paint);
+                    // Mid plasma sheath
+                    paint.setStrokeWidth(cw * 0.65f);
+                    paint.setColor(saberCol);
+                    canvas.drawLine(cx, hiltTopY, bladeTipX, bladeTipY, paint);
+                    // White-hot plasma core
+                    paint.setStrokeWidth(cw * 0.28f);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawLine(cx, hiltTopY, bladeTipX, bladeTipY, paint);
+                    // Emitter cross-glint
+                    paint.setStrokeWidth(px(1.2f));
+                    canvas.drawLine(cx - cw * 0.9f, hiltTopY, cx + cw * 0.9f, hiltTopY, paint);
+                    // Metallic Silver & Black Ribbed Lightsaber Hilt
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFD0DCE8);
+                    canvas.drawRoundRect(cx - cw * 0.28f, hiltTopY, cx + cw * 0.28f, hiltBotY, px(1.5f), px(1.5f), paint);
+                    paint.setColor(0xFF18202C);
+                    canvas.drawRect(cx - cw * 0.30f, hiltTopY + ch * 0.10f, cx + cw * 0.30f, hiltBotY - ch * 0.08f, paint);
+                    paint.setColor(0xFFFFD048); // Gold activation switch stud
+                    canvas.drawCircle(cx, hiltTopY + ch * 0.06f, px(1.5f), paint);
+                } else if (mode == 1) {
+                    // Type B: Illuminated Jedi Cube Holocron & Sith Pyramid Holocron with Gold Lattice Matrix
+                    boolean sith = (i % 2 == 1);
+                    int holoCol = sith ? 0xFFFF2838 : 0xFF38C8FF;
+                    float hy = cy + ch * 0.32f;
+                    float hr = cw * 1.15f;
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x34 << 24) | (holoCol & 0xFFFFFF));
+                    canvas.drawCircle(cx, hy, cw * 2.8f * flicker, paint);
+                    if (sith) {
+                        // Sith Pyramid Holocron (Translucent Crimson Tetrahedron + Gold Filigree Trim)
+                        flamePath.reset();
+                        flamePath.moveTo(cx, hy - hr * 1.1f);
+                        flamePath.lineTo(cx + hr * 1.15f, hy + hr * 0.85f);
+                        flamePath.lineTo(cx - hr * 1.15f, hy + hr * 0.85f);
+                        flamePath.close();
+                        paint.setColor(0xCC98101C);
+                        canvas.drawPath(flamePath, paint);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(px(1.5f));
+                        paint.setColor(0xFFFFD068);
+                        canvas.drawPath(flamePath, paint);
+                        canvas.drawCircle(cx, hy + hr * 0.22f, hr * 0.45f, paint);
+                    } else {
+                        // Jedi Cube Holocron (Translucent Cyan Cube + Gold Corner Matrix & Inner Ring)
+                        paint.setColor(0xBB1068A8);
+                        canvas.drawRoundRect(cx - hr, hy - hr, cx + hr, hy + hr, px(2.5f), px(2.5f), paint);
+                        paint.setStyle(Paint.Style.STROKE);
+                        paint.setStrokeWidth(px(1.5f));
+                        paint.setColor(0xFFFFD878);
+                        canvas.drawRoundRect(cx - hr, hy - hr, cx + hr, hy + hr, px(2.5f), px(2.5f), paint);
+                        canvas.drawCircle(cx, hy, hr * 0.62f, paint);
+                        canvas.drawLine(cx - hr, hy - hr, cx + hr, hy + hr, paint);
+                        canvas.drawLine(cx + hr, hy - hr, cx - hr, hy + hr, paint);
+                    }
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx, hy + (sith ? hr * 0.22f : 0f), cw * 0.34f * flicker, paint);
+                } else {
+                    // Type C: Jedi Marksman-H Training Remote Sphere with Glowing Photoreceptor & Emitter Ports
+                    float ry = cy + ch * 0.32f;
+                    float rr = cw * 1.05f;
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x2C << 24) | 0x0048C8FF);
+                    canvas.drawCircle(cx, ry, cw * 2.5f * flicker, paint);
+                    paint.setColor(0xFF8C9EB2);
+                    canvas.drawCircle(cx, ry, rr, paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.2f));
+                    paint.setColor(0xFF243040);
+                    canvas.drawLine(cx - rr, ry, cx + rr, ry, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFFF2838); // Glowing red training remote photoreceptor eye
+                    canvas.drawCircle(cx - rr * 0.3f, ry - rr * 0.25f, px(2.2f), paint);
+                    paint.setColor(0xFF48F0FF);
+                    canvas.drawCircle(cx + rr * 0.35f, ry + rr * 0.25f, px(1.8f), paint);
+                }
+                continue;
+            } else if (universeTheme == 4) {
+                // MCU Top Sky: Tony Stark Arc Reactors, Tesseract Cubes, Eye of Agamotto & Infinity Containment Orbs
+                int mcuType = i % 4;
+                float my = cy + ch * 0.32f;
+                float mr = cw * 1.20f;
+                if (mcuType == 0) {
+                    // Type A: Tony Stark Circular Chest Arc Reactor (Palladium Ring, 8 Copper Coils & Blazing Cyan Core)
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x38 << 24) | 0x0038E8FF);
+                    canvas.drawCircle(cx, my, cw * 2.9f * flicker, paint);
+                    paint.setColor(0xFF1A2434);
+                    canvas.drawCircle(cx, my, mr, paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(2.0f));
+                    paint.setColor(0xFF48F0FF);
+                    canvas.drawCircle(cx, my, mr * 0.82f, paint);
+                    // 8 segmented copper/gold coil tabs around the Arc Reactor ring
+                    paint.setStrokeWidth(px(1.8f));
+                    paint.setColor(0xFFFFB848);
+                    for (int cl = 0; cl < 8; cl++) {
+                        double ang = cl * Math.PI / 4.0 + t * 0.6f;
+                        canvas.drawLine(cx + (float) Math.cos(ang) * (mr * 0.62f), my + (float) Math.sin(ang) * (mr * 0.62f),
+                                        cx + (float) Math.cos(ang) * (mr * 0.98f), my + (float) Math.sin(ang) * (mr * 0.98f), paint);
+                    }
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx, my, mr * 0.42f * flicker, paint);
+                } else if (mcuType == 1) {
+                    // Type B: The Tesseract (Glowing 3D Isometric Space Stone Cube)
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x38 << 24) | 0x002898FF);
+                    canvas.drawCircle(cx, my, cw * 2.8f * flicker, paint);
+                    float cr = mr * 0.85f;
+                    paint.setColor(0xBB1468D8);
+                    canvas.drawRect(cx - cr, my - cr, cx + cr * 0.7f, my + cr * 0.7f, paint);
+                    paint.setColor(0xCC28A8FF);
+                    canvas.drawRect(cx - cr * 0.7f, my - cr * 0.7f, cx + cr, my + cr, paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.4f));
+                    paint.setColor(0xFFA8F4FF);
+                    canvas.drawRect(cx - cr, my - cr, cx + cr * 0.7f, my + cr * 0.7f, paint);
+                    canvas.drawRect(cx - cr * 0.7f, my - cr * 0.7f, cx + cr, my + cr, paint);
+                    canvas.drawLine(cx - cr, my - cr, cx - cr * 0.7f, my - cr * 0.7f, paint);
+                    canvas.drawLine(cx + cr * 0.7f, my + cr * 0.7f, cx + cr, my + cr, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx, my, cr * 0.42f * flicker, paint);
+                } else if (mcuType == 2) {
+                    // Type C: Doctor Strange's Eye of Agamotto & Rotating Emerald Time Mandala
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x36 << 24) | 0x0028FF78);
+                    canvas.drawCircle(cx, my, cw * 2.8f * flicker, paint);
+                    // Golden eye amulet frame
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.8f));
+                    paint.setColor(0xFFFFC848);
+                    canvas.drawOval(rectF(cx - mr * 1.25f, my - mr * 0.72f, cx + mr * 1.25f, my + mr * 0.72f), paint);
+                    // Emerald Time Mandala Ring & Core
+                    paint.setStrokeWidth(px(1.3f));
+                    paint.setColor(0xFF28FF78);
+                    canvas.drawCircle(cx, my, mr * 0.62f, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    canvas.drawCircle(cx, my, mr * 0.36f * flicker, paint);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx, my, mr * 0.18f, paint);
+                } else {
+                    // Type D: Morag Containment Orb / Scepter Cradle with Faceted Power/Mind/Reality Infinity Gem
+                    int gemCol = (i % 3 == 0) ? 0xFFC848FF : (i % 3 == 1 ? 0xFFFFE038 : 0xFFFF2838);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x36 << 24) | (gemCol & 0xFFFFFF));
+                    canvas.drawCircle(cx, my, cw * 2.8f * flicker, paint);
+                    // Metallic containment cradle arcs on left & right
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.8f));
+                    paint.setColor(0xFFD8B868);
+                    canvas.drawArc(rectF(cx - mr, my - mr, cx + mr, my + mr), 135, 90, false, paint);
+                    canvas.drawArc(rectF(cx - mr, my - mr, cx + mr, my + mr), 315, 90, false, paint);
+                    // Faceted Hexagon Infinity Stone + 4-point star flare
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(gemCol);
+                    canvas.drawOval(rectF(cx - mr * 0.52f, my - mr * 0.72f, cx + mr * 0.52f, my + mr * 0.72f), paint);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx, my - mr * 0.12f, mr * 0.24f * flicker, paint);
+                }
+                continue;
+            } else if (universeTheme == 5) {
+                // DCU Top Sky: Green Lantern Power Batteries, Fortress Sunstone Crystals & Gotham Bat-Beacons
+                int dcType = i % 3;
+                float dy = cy + ch * 0.32f;
+                float dr = cw * 1.15f;
+                if (dcType == 0) {
+                    // Type A: Green Lantern Corps Power Battery (Oa Lantern Silhouette + Blazing Emerald Core)
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x38 << 24) | 0x0028FF78);
+                    canvas.drawCircle(cx, dy, cw * 2.9f * flicker, paint);
+                    // Top & Bottom flared green battery caps + side struts
+                    paint.setColor(0xFF148848);
+                    canvas.drawRoundRect(cx - dr * 0.85f, dy - dr, cx + dr * 0.85f, dy - dr * 0.62f, px(1.5f), px(1.5f), paint);
+                    canvas.drawRoundRect(cx - dr * 0.85f, dy + dr * 0.62f, cx + dr * 0.85f, dy + dr, px(1.5f), px(1.5f), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.6f));
+                    paint.setColor(0xFF28FF78);
+                    canvas.drawLine(cx - dr * 0.72f, dy - dr * 0.65f, cx - dr * 0.52f, dy + dr * 0.65f, paint);
+                    canvas.drawLine(cx + dr * 0.72f, dy - dr * 0.65f, cx + dr * 0.52f, dy + dr * 0.65f, paint);
+                    canvas.drawCircle(cx, dy, dr * 0.55f, paint);
+                    // Blazing white-emerald willpower chamber core
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFF38FF88);
+                    canvas.drawCircle(cx, dy, dr * 0.45f * flicker, paint);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx, dy, dr * 0.22f, paint);
+                } else if (dcType == 1) {
+                    // Type B: Fortress of Solitude Kryptonian Sunstone Crystal Cluster (3 Prismatic Shards)
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x34 << 24) | 0x0048D8FF);
+                    canvas.drawCircle(cx, dy, cw * 2.8f * flicker, paint);
+                    // Left & Right angled crystal spikes
+                    paint.setColor(0xBB38B8F0);
+                    flamePath.reset();
+                    flamePath.moveTo(cx - dr * 0.2f, dy + dr * 0.9f);
+                    flamePath.lineTo(cx - dr * 1.05f, dy - dr * 0.25f);
+                    flamePath.lineTo(cx - dr * 0.45f, dy - dr * 0.55f);
+                    flamePath.lineTo(cx + dr * 0.2f, dy + dr * 0.9f);
+                    flamePath.lineTo(cx + dr * 1.05f, dy - dr * 0.25f);
+                    flamePath.lineTo(cx + dr * 0.45f, dy - dr * 0.55f);
+                    flamePath.close();
+                    canvas.drawPath(flamePath, paint);
+                    // Central tall hexagonal ice-cyan Sunstone shard
+                    paint.setColor(0xEE88F0FF);
+                    flamePath.reset();
+                    flamePath.moveTo(cx, dy - dr * 1.25f);
+                    flamePath.lineTo(cx + dr * 0.48f, dy - dr * 0.45f);
+                    flamePath.lineTo(cx + dr * 0.36f, dy + dr * 0.95f);
+                    flamePath.lineTo(cx - dr * 0.36f, dy + dr * 0.95f);
+                    flamePath.lineTo(cx - dr * 0.48f, dy - dr * 0.45f);
+                    flamePath.close();
+                    canvas.drawPath(flamePath, paint);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx, dy - dr * 0.35f, dr * 0.24f * flicker, paint);
+                } else {
+                    // Type C: Gotham Mini Bat-Searchlight Beacon with Golden Spotlight Lens & Bat Silhouette
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x36 << 24) | 0x00FFE068);
+                    canvas.drawCircle(cx, dy, cw * 2.8f * flicker, paint);
+                    paint.setColor(0xEEFFE478);
+                    canvas.drawOval(rectF(cx - dr * 1.15f, dy - dr * 0.78f, cx + dr * 1.15f, dy + dr * 0.78f), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.4f));
+                    paint.setColor(0xFF283244);
+                    canvas.drawOval(rectF(cx - dr * 1.15f, dy - dr * 0.78f, cx + dr * 1.15f, dy + dr * 0.78f), paint);
+                    // Crisp dark Bat-wings emblem inside the golden searchlight lens
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xEE0A0E1A);
+                    flamePath.reset();
+                    flamePath.moveTo(cx, dy - dr * 0.32f);
+                    flamePath.lineTo(cx + dr * 0.78f, dy - dr * 0.25f);
+                    flamePath.lineTo(cx + dr * 0.42f, dy + dr * 0.28f);
+                    flamePath.lineTo(cx, dy + dr * 0.42f);
+                    flamePath.lineTo(cx - dr * 0.42f, dy + dr * 0.28f);
+                    flamePath.lineTo(cx - dr * 0.78f, dy - dr * 0.25f);
+                    flamePath.close();
+                    canvas.drawPath(flamePath, paint);
+                }
+                continue;
+            } else if (universeTheme == 6) {
+                // FORMULA 1 Top Sky: Cantilever Stadium Floodlight Rigs, FIA Digital Light Gantry Pods & Camera Strobe Flashes
+                float stY = candles[b + 1];
+                int f1Mode = i % 3;
+                if (f1Mode == 0) {
+                    // Type A: Suspended 2x3 Stadium LED Floodlight Truss with Downward Volumetric Spotlight Cone
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0x18C8EEFF);
+                    flamePath.reset();
+                    flamePath.moveTo(cx - cw * 1.5f, stY + px(4f));
+                    flamePath.lineTo(cx + cw * 1.5f, stY + px(4f));
+                    flamePath.lineTo(cx + cw * 4.0f, stY + ch * 1.40f);
+                    flamePath.lineTo(cx - cw * 4.0f, stY + ch * 1.40f);
+                    flamePath.close();
+                    canvas.drawPath(flamePath, paint);
+
+                    paint.setColor(0x2CA8E8FF);
+                    canvas.drawCircle(cx, stY + px(3f), cw * 2.8f * flicker, paint);
+                    paint.setColor(0xEE141A24);
+                    canvas.drawRoundRect(cx - cw * 1.65f, stY - px(4f), cx + cw * 1.65f, stY + px(7f), px(2.5f), px(2.5f), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.2f));
+                    paint.setColor(0x886888A8);
+                    canvas.drawRoundRect(cx - cw * 1.65f, stY - px(4f), cx + cw * 1.65f, stY + px(7f), px(2.5f), px(2.5f), paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    for (int rw = 0; rw < 2; rw++) {
+                        for (int cl = -1; cl <= 1; cl++) {
+                            paint.setColor(0xFFFFFFFF);
+                            canvas.drawCircle(cx + cl * cw * 0.92f, stY - px(0.8f) + rw * px(4.2f), cw * 0.30f, paint);
+                        }
+                    }
+                } else if (f1Mode == 1) {
+                    // Type B: FIA Digital Trackside Starting / Sector Marshal Light Pod (Twin Vertical Red/Green LEDs)
+                    boolean greenFlag = (((int) (t * 0.8f + i)) % 3 == 0);
+                    int ledCol = greenFlag ? 0xFF00E676 : 0xFFFF1801;
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x2E << 24) | (ledCol & 0xFFFFFF));
+                    canvas.drawCircle(cx, stY + ch * 0.28f, cw * 2.5f * flicker, paint);
+                    paint.setColor(0xEE10141E);
+                    canvas.drawRoundRect(cx - cw * 0.82f, stY - px(2f), cx + cw * 0.82f, stY + ch * 0.62f, px(3f), px(3f), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.2f));
+                    paint.setColor(0x88485870);
+                    canvas.drawRoundRect(cx - cw * 0.82f, stY - px(2f), cx + cw * 0.82f, stY + ch * 0.62f, px(3f), px(3f), paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(greenFlag ? 0xFF281818 : 0xFFFF1801);
+                    canvas.drawCircle(cx, stY + ch * 0.16f, cw * 0.42f, paint);
+                    paint.setColor(greenFlag ? 0xFF00E676 : 0xFF182820);
+                    canvas.drawCircle(cx, stY + ch * 0.44f, cw * 0.42f, paint);
+                } else {
+                    // Type C: Grandstand Telephoto Camera Lens & Strobe Flash Burst
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xCC18202C);
+                    canvas.drawRoundRect(cx - cw * 0.85f, stY - cw * 0.55f, cx + cw * 0.85f, stY + cw * 0.55f, px(2f), px(2f), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.3f));
+                    paint.setColor(0xFF90B4D8);
+                    canvas.drawCircle(cx, stY, cw * 0.42f, paint);
+                    float camWave = (float) Math.sin(t * 4.8f + i * 2.1f);
+                    if (camWave > 0.35f) {
+                        float fl = (camWave - 0.35f) / 0.65f;
+                        int fa = Math.min(255, Math.round(fl * fl * 255f));
+                        paint.setStyle(Paint.Style.FILL);
+                        paint.setColor((fa / 3 << 24) | 0x00B8F2FF);
+                        canvas.drawCircle(cx, stY, cw * (2.5f + fl * 2.4f), paint);
+                        paint.setColor((fa << 24) | 0x00FFFFFF);
+                        canvas.drawCircle(cx, stY, cw * (0.68f + fl * 0.55f), paint);
+                        paint.setStrokeWidth(px(1.5f));
+                        float rLen = cw * (2.3f + fl * 3.0f);
+                        canvas.drawLine(cx - rLen, stY, cx + rLen, stY, paint);
+                        canvas.drawLine(cx, stY - rLen, cx, stY + rLen, paint);
+                    }
+                    paint.setStyle(Paint.Style.FILL);
+                }
+                continue;
             }
+            // THEME 0 (HARRY POTTER): Sculpted Great Hall Floating Wax Taper Candle with Brass Holder & 3-Layer Flame
             paint.setColor((0x24 << 24) | rgbOnly);
             canvas.drawCircle(cx, cy - px(5f), cw * 2.1f * flicker, paint);
 
-            paint.setColor(0xD8EFE5CE);
             float left = cx - cw / 2f, right = cx + cw / 2f;
+            // Ivory beeswax taper body + shaded lower wax + dripping wax rivulets
+            paint.setColor(0xE6F4EBD6);
             canvas.drawRoundRect(left, cy, right, cy + ch, cw * 0.35f, cw * 0.35f, paint);
-            paint.setColor(0x55C8A870);
+            paint.setColor(0x66C8A870);
             canvas.drawRoundRect(left, cy + ch * 0.55f, right, cy + ch, cw * 0.35f, cw * 0.35f, paint);
+            paint.setColor(0xF0FFF8E8);
+            canvas.drawRoundRect(left, cy, left + cw * 0.28f, cy + ch * 0.48f, px(1f), px(1f), paint);
+            // Antique Hogwarts Brass Candle-Cup & Drip Saucer at bottom of taper
+            paint.setColor(0xFFD8A848);
+            canvas.drawRoundRect(left - px(2.0f), cy + ch - px(2.2f), right + px(2.0f), cy + ch + px(1.5f), px(1.5f), px(1.5f), paint);
+            canvas.drawCircle(cx, cy + ch + px(2.2f), cw * 0.28f, paint);
 
+            // Charred candle wick
             paint.setColor(0xAA2A2018);
             paint.setStrokeWidth(px(1.2f));
             canvas.drawLine(cx, cy, cx, cy - px(3f), paint);
 
+            // Sculpted swaying teardrop flame (outer amber -> inner white-gold + 4-point star glint)
             float sway = (float) Math.sin(t * 4.2f + candles[b + 6]) * px(2.0f);
-            float fw = cw * 0.62f;
+            float fw = cw * 0.66f;
             flamePath.reset();
             flamePath.moveTo(cx, cy - px(2f));
             flamePath.quadTo(cx - fw, cy - px(6f), cx + sway, flameTipY);
@@ -1811,7 +2178,7 @@ final class SkyView extends View {
             canvas.drawPath(flamePath, paint);
 
             paint.setColor(0xFFFFF8D8);
-            canvas.drawCircle(cx + sway * 0.3f, cy - px(5.0f), cw * 0.28f, paint);
+            canvas.drawCircle(cx + sway * 0.3f, cy - px(5.0f), cw * 0.30f, paint);
         }
         bitmapPaint.setAlpha(255);
 
@@ -1982,68 +2349,134 @@ final class SkyView extends View {
             int type = Math.round(ghosts[b + 6]);
             float dir = speedX >= 0 ? 1f : -1f;
             if (universeTheme == 1) {
-                // NARUTO Top Sky: Drifting Akatsuki Red Clouds & Itachi's Summoning Crows
+                // NARUTO Top Sky: Drifting Akatsuki Red Clouds, Itachi's Sharingan Crows & Paper-Bomb Kunai
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(0x78C81824);
+                paint.setColor(0x98C81824);
                 c.drawCircle(gx - px(10f * sc), gy, px(10f * sc), paint);
                 c.drawCircle(gx + px(2f * sc), gy - px(5f * sc), px(12f * sc), paint);
                 c.drawCircle(gx + px(14f * sc), gy + px(1f * sc), px(9f * sc), paint);
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(px(1.5f * sc));
-                paint.setColor(0xAAFFE8E8);
+                paint.setColor(0xCCFFE8E8);
                 c.drawArc(rectF(gx - px(18f * sc), gy - px(14f * sc), gx + px(22f * sc), gy + px(10f * sc)), 195, 150, false, paint);
-                drawBird(c, gx + dir * px(26f * sc), gy - px(8f * sc), t * 11f + g, px(14f * sc), 0xCC18080C);
+                drawBird(c, gx + dir * px(26f * sc), gy - px(8f * sc), t * 11f + g, px(14f * sc), 0xDD18080C);
                 paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0xFFFF1828); // Glowing red Sharingan eye on Itachi's crow
+                c.drawCircle(gx + dir * px(28f * sc), gy - px(9f * sc), px(1.6f * sc), paint);
                 continue;
             } else if (universeTheme == 2) {
-                // DEMON SLAYER Top Sky: Kasugai Crows & Glowing Wisteria Butterflies
+                // DEMON SLAYER Top Sky: Kasugai Crows & 4-Winged Glowing Wisteria Butterflies (Kocho Shinobu)
                 drawBird(c, gx, gy, t * 10f + g, px(18f * sc), 0xDD1A1024);
-                float bfFlap = (float) Math.abs(Math.sin(t * 20f + g)) * px(7f * sc);
+                float bfX = gx - dir * px(24f * sc);
+                float bfY = gy - px(2f * sc);
+                float bfFlap = (float) Math.abs(Math.sin(t * 20f + g)) * px(8.5f * sc);
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(0xBBDF88FF);
-                c.drawOval(gx - dir * px(22f * sc) - bfFlap, gy - px(6f * sc), gx - dir * px(22f * sc) + bfFlap, gy + px(4f * sc), paint);
+                paint.setColor(0x38D878FF);
+                c.drawCircle(bfX, bfY, px(13f * sc), paint);
+                // 4 sculpted butterfly wings (2 upper violet-pink wings + 2 lower lavender wings)
+                paint.setColor(0xE0E088FF);
+                c.drawOval(rectF(bfX - bfFlap - px(2f * sc), bfY - px(7f * sc), bfX, bfY + px(1f * sc)), paint);
+                c.drawOval(rectF(bfX, bfY - px(7f * sc), bfX + bfFlap + px(2f * sc), bfY + px(1f * sc)), paint);
+                paint.setColor(0xCCF8C8FF);
+                c.drawOval(rectF(bfX - bfFlap * 0.75f - px(1.5f * sc), bfY, bfX, bfY + px(6.5f * sc)), paint);
+                c.drawOval(rectF(bfX, bfY, bfX + bfFlap * 0.75f + px(1.5f * sc), bfY + px(6.5f * sc)), paint);
+                paint.setColor(0xFFFFFFFF);
+                c.drawCircle(bfX, bfY, px(1.8f * sc), paint);
                 continue;
             } else if (universeTheme == 3) {
-                // STAR WARS Top Sky: Dogfighting X-Wing Starfighters & TIE Fighters with Laser Bolts
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(px(2.0f * sc));
+                // STAR WARS Top Sky: Dogfighting X-Wing Starfighters & TIE Fighters with Glowing Ion Engines & Laser Bolts
                 if (g % 2 == 0) {
-                    // TIE Fighter: Central ball cockpit + Twin vertical solar wing panels
-                    paint.setColor(0xCCA8C0D8);
-                    c.drawLine(gx - px(10f * sc), gy - px(11f * sc), gx - px(10f * sc), gy + px(11f * sc), paint);
-                    c.drawLine(gx + px(10f * sc), gy - px(11f * sc), gx + px(10f * sc), gy + px(11f * sc), paint);
-                    c.drawLine(gx - px(10f * sc), gy, gx + px(10f * sc), gy, paint);
+                    // Imperial TIE Fighter: Twin hexagonal solar panels + central ball cockpit + dual green laser bolts
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(2.2f * sc));
+                    paint.setColor(0xFFD0DCE8);
+                    c.drawLine(gx - px(11f * sc), gy - px(12f * sc), gx - px(11f * sc), gy + px(12f * sc), paint);
+                    c.drawLine(gx + px(11f * sc), gy - px(12f * sc), gx + px(11f * sc), gy + px(12f * sc), paint);
+                    c.drawLine(gx - px(11f * sc), gy, gx + px(11f * sc), gy, paint);
                     paint.setStyle(Paint.Style.FILL);
-                    c.drawCircle(gx, gy, px(4.5f * sc), paint);
-                    paint.setColor(0xEE38FF68);
-                    c.drawLine(gx + dir * px(14f * sc), gy, gx + dir * px(32f * sc), gy, paint);
+                    paint.setColor(0xFF98ACC0);
+                    c.drawCircle(gx, gy, px(5.2f * sc), paint);
+                    paint.setColor(0xFF1A2432);
+                    c.drawCircle(gx, gy, px(2.8f * sc), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(2.0f * sc));
+                    paint.setColor(0xFF38FF68);
+                    c.drawLine(gx + dir * px(15f * sc), gy - px(2.5f * sc), gx + dir * px(36f * sc), gy - px(2.5f * sc), paint);
+                    c.drawLine(gx + dir * px(15f * sc), gy + px(2.5f * sc), gx + dir * px(36f * sc), gy + px(2.5f * sc), paint);
                 } else {
-                    // X-Wing Starfighter: S-Foils in Attack Position + Red Laser Bolt
-                    paint.setColor(0xDDD8E4F0);
-                    c.drawLine(gx - px(12f * sc), gy - px(7f * sc), gx + px(12f * sc), gy + px(7f * sc), paint);
-                    c.drawLine(gx - px(12f * sc), gy + px(7f * sc), gx + px(12f * sc), gy - px(7f * sc), paint);
-                    paint.setColor(0xEEFF3838);
-                    c.drawLine(gx + dir * px(14f * sc), gy, gx + dir * px(32f * sc), gy, paint);
+                    // Rebel X-Wing Starfighter: S-Foils in attack position + glowing pink ion engines + red laser bolts
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(2.0f * sc));
+                    paint.setColor(0xFFE4ECF8);
+                    c.drawLine(gx - px(13f * sc), gy - px(8f * sc), gx + px(13f * sc), gy + px(8f * sc), paint);
+                    c.drawLine(gx - px(13f * sc), gy + px(8f * sc), gx + px(13f * sc), gy - px(8f * sc), paint);
+                    c.drawLine(gx - dir * px(12f * sc), gy, gx + dir * px(16f * sc), gy, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFFF4878); // Glowing X-Wing ion engine nacelles
+                    c.drawCircle(gx - dir * px(6f * sc), gy - px(4f * sc), px(2.2f * sc), paint);
+                    c.drawCircle(gx - dir * px(6f * sc), gy + px(4f * sc), px(2.2f * sc), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setColor(0xFFFF2838);
+                    c.drawLine(gx + dir * px(18f * sc), gy - px(6f * sc), gx + dir * px(38f * sc), gy - px(6f * sc), paint);
+                    c.drawLine(gx + dir * px(18f * sc), gy + px(6f * sc), gx + dir * px(38f * sc), gy + px(6f * sc), paint);
                 }
                 paint.setStyle(Paint.Style.FILL);
                 continue;
             } else if (universeTheme == 4) {
-                // MCU Top Sky: Spinning Mjolnir Hammers & Stark Iron Legion Drones
-                paint.setStyle(Paint.Style.FILL);
-                paint.setColor(0xCCB0C4DE);
-                c.drawRoundRect(gx - px(9f * sc), gy - px(6f * sc), gx + px(9f * sc), gy + px(6f * sc), px(2f), px(2f), paint);
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(px(2.2f * sc));
-                paint.setColor(0xCCA87848);
-                c.drawLine(gx, gy + px(6f * sc), gx - dir * px(14f * sc), gy + px(14f * sc), paint);
-                paint.setColor(0xCC58E8FF);
-                c.drawLine(gx - dir * px(18f * sc), gy, gx - dir * px(34f * sc), gy, paint);
-                paint.setStyle(Paint.Style.FILL);
+                // MCU Top Sky: Thor's Mjolnir Hammer with Lightning Wake & Stark Iron Legion Repulsor Drones
+                if (g % 2 == 0) {
+                    // Thor's Mjolnir Hammer: Chamfered Uru metal head, leather grip, wrist strap & crackling lightning trail
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.8f * sc));
+                    paint.setColor(0xCC58E8FF);
+                    c.drawLine(gx - dir * px(14f * sc), gy, gx - dir * px(36f * sc), gy + (float) Math.sin(t * 22f + g) * px(5f * sc), paint);
+                    paint.setStrokeWidth(px(2.6f * sc));
+                    paint.setColor(0xFFB87840); // Leather-wrapped handle
+                    c.drawLine(gx, gy + px(5f * sc), gx - dir * px(15f * sc), gy + px(14f * sc), paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFD0DCE8); // Chamfered Uru Hammerhead
+                    c.drawRoundRect(gx - px(10f * sc), gy - px(6.5f * sc), gx + px(10f * sc), gy + px(6.5f * sc), px(2.5f * sc), px(2.5f * sc), paint);
+                    paint.setColor(0xFF48F0FF); // Glowing Asgardian rune core
+                    c.drawCircle(gx, gy, px(2.6f * sc), paint);
+                } else {
+                    // Stark Iron Man Repulsor Drone: Hot-Rod Red & Gold Fuselage + Blazing Cyan Arc Reactor & Jet Wake
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(2.4f * sc));
+                    paint.setColor(0xAA48F0FF);
+                    c.drawLine(gx - dir * px(10f * sc), gy, gx - dir * px(32f * sc), gy, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFE02028);
+                    c.drawOval(rectF(gx - px(12f * sc), gy - px(5.5f * sc), gx + px(12f * sc), gy + px(5.5f * sc)), paint);
+                    paint.setColor(0xFFFFC848);
+                    c.drawCircle(gx + dir * px(5f * sc), gy, px(3.5f * sc), paint);
+                    paint.setColor(0xFFFFFFFF);
+                    c.drawCircle(gx, gy, px(2.8f * sc), paint);
+                }
                 continue;
             } else if (universeTheme == 5) {
-                // DCU Top Sky: Gliding Gotham Bats & Golden Batarangs
-                drawBird(c, gx, gy, t * 14f + g, px(20f * sc), 0xDD101828);
-                drawBird(c, gx - dir * px(22f * sc), gy + px(8f * sc), t * 16f + g, px(13f * sc), 0xCCFFE068);
+                // DCU Top Sky: Gotham Batwing Jets with Twin Golden Afterburners & Green Lantern Willpower Constructs
+                if (g % 2 == 0) {
+                    // Gotham Batwing Jet Silhouette + Golden Afterburner Exhaust
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xCCFFE068);
+                    c.drawCircle(gx - dir * px(12f * sc), gy, px(3.4f * sc), paint);
+                    drawBird(c, gx, gy, t * 14f + g, px(21f * sc), 0xEE101828);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.4f * sc));
+                    paint.setColor(0xAAFFE068);
+                    c.drawArc(rectF(gx - px(14f * sc), gy - px(6f * sc), gx + px(14f * sc), gy + px(6f * sc)), 200, 140, false, paint);
+                } else {
+                    // Glowing Green Lantern Ring Construct & Golden Batarang
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(2.0f * sc));
+                    paint.setColor(0xCC28FF78);
+                    c.drawLine(gx - dir * px(8f * sc), gy, gx - dir * px(30f * sc), gy, paint);
+                    c.drawCircle(gx, gy, px(6.5f * sc), paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xFFFFFFFF);
+                    c.drawCircle(gx, gy, px(2.8f * sc), paint);
+                }
+                paint.setStyle(Paint.Style.FILL);
                 continue;
             } else if (universeTheme == 6) {
                 // FORMULA 1 Top Sky: High-Speed Quadcopter Recording Camera Drones with Gimbal Spotlight & Blinking REC Indicator

@@ -4,7 +4,7 @@
 
 **Universal Multi-Universe Animated Home Launcher & Cinema Story Screensaver for Android TV, Google TV, Foldables, Phones & Tablets**
 
-[![Version](https://img.shields.io/badge/version-7.1.0-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
+[![Version](https://img.shields.io/badge/version-7.1.1-d4af37.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Refresh Rate](https://img.shields.io/badge/Refresh_Rate-Dynamic_Up_to_120_FPS-00d2d3.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Size](https://img.shields.io/badge/APK_Size-560_KB-2ecc71.svg?style=flat-square)](https://github.com/revumukka/HomeOS/releases)
 [![Platform](https://img.shields.io/badge/Android-5.0%2B_(TV_%7C_Foldable_%7C_Phone_%7C_Tablet)-3ddc84.svg?style=flat-square)](https://github.com/revumukka/HomeOS)
@@ -19,7 +19,7 @@
 
 ## Overview
 
-**HomeScreen (`v7.1.0`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~560 KB` total APK size, zero external dependencies, zero trackers).
+**HomeScreen (`v7.1.1`)** replaces cluttered, ad-heavy stock launchers across **Android TV / Google TV**, **Foldables** (Samsung Galaxy Z Fold cover + inner display), **Phones**, and **Tablets** with an ultra-responsive, **dynamic up-to-120 FPS** procedural-canvas home screen (`~560 KB` total APK size, zero external dependencies, zero trackers).
 
 Every element—from twinkling sky constellations and floating candles to custom crest banners, vector icons, and the **344-scene animated saga stage** along the bottom horizon—is drawn procedurally in real time on Android's hardware-accelerated `Canvas` with **sub-microsecond `elapsedRealtimeNanos()` timing**, **frame-rate-independent exponential damping**, and **zero per-frame heap allocations**.
 
@@ -43,13 +43,21 @@ Switch seamlessly at any time via the **Theme Universe** icon button:
 
 ## Key Features
 
-- **v7.1.0 Formula 1 Theme Universe Overhaul (Stadium Floodlights, Camera Flashes, Recording Drones, Distinct Team Liveries & Faded Team Name Watermarks)**:
-  - **Formula 1 Top SkyView (`universeTheme = 6`)**: Features 4 cantilever Stadium Floodlight Banks (2×4 LED halogen arrays with downward volumetric spotlight cones), tiered Grandstand Tribunes, high-speed xenon **Camera Flashes** popping with 4-point and 8-point lens star-glints across the grandstands, and **Quadcopter Recording Camera Drones** with X-frame carbon arms, 4 spinning rotor blur discs, underslung 3-axis cinema gimbals, downward recording cones, and blinking red `REC ●` tally indicator lights.
+- **v7.1.1 Instant Horizontal Flick Paging for App Overflow + Iconic Sky Lights Across All 7 Themes (`Build 72`)**:
+  - **One-Finger Flick & Short-Swipe App Page Flipping**: Intercepts horizontal flicks even when starting directly on a clickable app tile, tracks raw-coordinate finger velocity (`VelocityTracker`), disables free-scroll fling interference, and guards page-dot state during smooth scroll transitions so a quick flick left or right immediately flips to the next/previous app page without needing an edge-to-edge drag.
+  - **Recognizable Iconic Sky Lights Across All 7 Theme Universes**:
+    - **Harry Potter (`Theme 1`)**: Sculpted beeswax Great Hall taper candles with melted wax rivulets, antique Hogwarts brass candle-cups & drip saucers, and 3-layer swaying flames.
+    - **Naruto (`Theme 2`)**: Traditional Konoha festival *Chōchin* paper lanterns with bamboo ribs, lacquered wood caps, central Uzumaki spiral crests, warm inner flame cores, and swaying golden silk tassels, plus Itachi's Sharingan crows.
+    - **Demon Slayer (`Theme 3`)**: Alternating Taisho pagoda-roofed paper *Chōchin* lanterns and illuminated 3-vine cascading Wisteria (*Fuji*) blossom chandeliers, plus 4-winged glowing Wisteria butterflies.
+    - **Star Wars (`Theme 4`)**: Floating ignited Lightsabers (metallic ribbed hilts + blazing Blue, Green, Purple & Crimson plasma blades with emitter cross-flares), illuminated Jedi Cube & Sith Pyramid Holocrons with gold filigree matrices, and Marksman-H training remotes.
+    - **MCU (`Theme 5`)**: Tony Stark Circular Arc Reactors (palladium ring + 8 copper coils + blazing cyan core), 3D isometric glowing Tesseract Cubes, Doctor Strange's Eye of Agamotto with emerald Time mandalas, and Infinity containment orbs, plus Thor's Mjolnir hammer with lightning wake & Stark Repulsor Drones.
+    - **DCU (`Theme 6`)**: Green Lantern Corps Oa Power Batteries with blazing emerald willpower chambers, Fortress of Solitude 3-shard Kryptonian Sunstone crystal clusters, and Gotham Bat-searchlight lenses with miniature Bat-emblems.
+    - **Formula 1 (`Theme 7`)**: Cantilever `2×3` stadium LED floodlight trusses with volumetric spotlight cones, FIA digital Red/Green starting & marshal light pods, telephoto camera strobe flashes, and quadcopter recording drones (`REC ●`).
   - **Formula 1 Bottom Story Stage (`44` Grand Prix Scenes)**: Renders a large faded **Constructor Team Name Watermark** (`SCUDERIA FERRARI`, `ORACLE RED BULL RACING`, `McLAREN FORMULA 1`, `MERCEDES-AMG PETRONAS`, `ASTON MARTIN ARAMCO`, `McLAREN HONDA MP4/4`, `LOTUS RENAULT 97T`, `RENAULT F1 TEAM`, `WILLIAMS FW14B`, `BRAWN GP`) and telemetry sub-banner in the bottom area, distinct multi-color team car liveries & silhouettes (open-cockpit 1980s MP4/4 & Lotus 97T vs. modern Halo SF-24/RB20/MCL38/W15/AMR24), per-car faded floating team/number callouts (`FERRARI #16`, `RED BULL #1`, `McLAREN #4`, `MERCEDES #44`, etc.), iconic circuits, a 1.8-second pit stop crew, victory donuts, and podium winning trophy lifts with champagne spray!
   - **Customizable Screensaver Trigger Time Across All Devices**: Choose your preferred inactivity timeout (`15 sec`, `30 sec`, `1 min`, `2 min`, `3 min`, `5 min`, `10 min`, `15 min`, `30 min`, or `Off`) directly in **App Settings**, available on **every device type and orientation** (Android TV, Foldables open or closed, Portrait & Landscape Phones, and Tablets).
   - **Full-Screen Expand & Swipe-Down Dismiss Bottom Sheets**: Both the **App Settings** sheet and the **All Apps Drawer** support dragging UP on the top handle bar/sheet (or tapping the top handle bar) to smoothly expand to **100% Full Screen**, and swiping DOWN at the top of the list/scroll view (or on the top bar) to slide down and dismiss.
   - **Settings Button Dropdown**: Tapping the **Settings** button opens the quick dropdown (`App Settings`, `Pin / Manage Apps`, `Next Story Scene`, `Start Screensaver`, `System Settings` / `TV settings`, `Privacy & Safety`)—replacing legacy `Sky Palette` and `Glow` options since each Theme Universe renders its own procedural story sky background.
-  - **Small About Section at the Top**: Displays app version (`HomeScreen v7.1.0 · Build 71`), creator credit, and quick **Invite Friends** + **Install on TV** action buttons.
+  - **Small About Section at the Top**: Displays app version (`HomeScreen v7.1.1 · Build 72`), creator credit, and quick **Invite Friends** + **Install on TV** action buttons.
   - **Custom Apps in a Row (Columns) & Apps in a Column (Rows Before Overflow)**: Interactive `[ − ]  Value  [ + ]` steppers let you customize columns per row (`2–6` on Phones/Foldables/Tablets, `2–8` on TV) and vertical rows per page before overflow (`1–6` in Portrait, `1–5` in Landscape/Unfolded & TV) with live real-time layout updates and a one-tap **Reset Grid** button.
   - **Save & Restore Layout**: One-tap **Save Layout** snapshots your pinned apps, posture row/column counts, active Theme Universe, Clock format, and HDMI input names to local storage *and* copies a portable `HOMESCREEN_LAYOUT_V1|...` backup string to the clipboard so you can restore or transfer your setup across devices with **Restore Layout**.
   - **Invite Friends & Install on TV Guide**: Share a pre-formatted invitation link via Android's native share sheet or open the interactive **Install on Android TV / Google TV** modal (Quick Share / LocalSend to TV, direct TV browser release URL, and wireless ADB command copy).
@@ -79,11 +87,11 @@ Switch seamlessly at any time via the **Theme Universe** icon button:
 
 ### Download Prebuilt APK
 Grab the latest signed universal APK from the [**Releases**](https://github.com/revumukka/HomeOS/releases) page:
-- `HomeScreen_Release_v7.1.0_71.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
+- `HomeScreen_Release_v7.1.1_72.apk` (Universal APK for Android TV, Google TV, Foldables, Phones & Tablets)
 
 ### Install via ADB
 ```sh
-adb install -r out/HomeScreen_Release_v7.1.0_71.apk
+adb install -r out/HomeScreen_Release_v7.1.1_72.apk
 ```
 
 ---
@@ -97,8 +105,8 @@ sh build.sh
 ```
 
 Output APKs are generated in `out/`:
-- `out/HomeScreen_Release_v7.1.0_71.apk`
-- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v7.1.0-b71.apk`
+- `out/HomeScreen_Release_v7.1.1_72.apk`
+- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v7.1.1-b72.apk`
 - `out/HomeScreen.apk`
 
 ---

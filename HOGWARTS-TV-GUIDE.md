@@ -1,6 +1,6 @@
 # HomeScreen — Multi-Universe Animated Home Launcher Guide
 
-**HomeScreen (`v7.1.0`)** is an ultra-lightweight (`~560 KB`), zero-dependency Android launcher for **Android TV**, **Google TV**, **Foldables**, **Phones**, and **Tablets** featuring **7 interactive Theme Universes** and **344 live procedural up-to-120 FPS story scenes**. Created by **Revanth Mukka** (`@revumukka`), vibe-coded from scratch with **Google Gemini Antigravity**.
+**HomeScreen (`v7.1.1`)** is an ultra-lightweight (`~560 KB`), zero-dependency Android launcher for **Android TV**, **Google TV**, **Foldables**, **Phones**, and **Tablets** featuring **7 interactive Theme Universes** and **344 live procedural up-to-120 FPS story scenes**. Created by **Revanth Mukka** (`@revumukka`), vibe-coded from scratch with **Google Gemini Antigravity**.
 
 ---
 

@@ -600,6 +600,24 @@ public class MainActivity extends Activity {
                         expandNotifications();
                     }
                     return true;
+                } else if (gestureDownY < screenH * 0.64f
+                        && appPager != null && pageDots.size() > 1
+                        && (gestureDownY < appPager.getTop() || gestureDownY > appPager.getBottom())
+                        && Math.abs(dx) > dp(24) && Math.abs(dx) > Math.abs(dy) * 1.2f) {
+                    gestureHandled = true;
+                    android.view.MotionEvent cancel = android.view.MotionEvent.obtain(ev);
+                    cancel.setAction(android.view.MotionEvent.ACTION_CANCEL);
+                    super.dispatchTouchEvent(cancel);
+                    cancel.recycle();
+                    int totalP = pageDots.size();
+                    int target = dx < 0 ? Math.min(totalP - 1, currentAppPage + 1) : Math.max(0, currentAppPage - 1);
+                    if (target != currentAppPage) {
+                        currentAppPage = target;
+                        updatePageDots(target);
+                        final int sw = getResources().getDisplayMetrics().widthPixels;
+                        appPager.smoothScrollTo(target * sw, 0);
+                    }
+                    return true;
                 } else if (gestureDownY >= screenH * 0.64f
                         && Math.abs(dx) > horizSlop && Math.abs(dx) > Math.abs(dy) * 1.25f && skyView != null) {
                     gestureHandled = true;
@@ -1286,37 +1304,114 @@ public class MainActivity extends Activity {
             final int pagerH = visibleRows * rowStepPx + dp(4);
             appPager = new android.widget.HorizontalScrollView(this) {
                 private float startX;
+                private float startY;
+                private long downTimeMs;
                 private int startPage;
+                private boolean hasDown;
+                private boolean snapping;
+                private android.view.VelocityTracker vTracker;
+
+                private void addRawMovement(android.view.MotionEvent ev) {
+                    if (vTracker == null) vTracker = android.view.VelocityTracker.obtain();
+                    android.view.MotionEvent rawEv = android.view.MotionEvent.obtain(
+                            ev.getDownTime(), ev.getEventTime(), ev.getActionMasked(),
+                            ev.getRawX(), ev.getRawY(), ev.getMetaState());
+                    vTracker.addMovement(rawEv);
+                    rawEv.recycle();
+                }
+
+                private void recordDown(android.view.MotionEvent ev) {
+                    startX = ev.getRawX();
+                    startY = ev.getRawY();
+                    downTimeMs = android.os.SystemClock.uptimeMillis();
+                    startPage = currentAppPage;
+                    hasDown = true;
+                    snapping = false;
+                    if (vTracker == null) vTracker = android.view.VelocityTracker.obtain();
+                    else vTracker.clear();
+                    addRawMovement(ev);
+                }
+
+                @Override
+                public void fling(int velocityX) {
+                    // Disable default free-scroll fling so page snapping controls the exact target page cleanly.
+                }
+
+                @Override
+                public boolean onInterceptTouchEvent(android.view.MotionEvent ev) {
+                    int act = ev.getActionMasked();
+                    if (act == android.view.MotionEvent.ACTION_DOWN) {
+                        recordDown(ev);
+                    } else if (act == android.view.MotionEvent.ACTION_MOVE && totalPages > 1) {
+                        if (!hasDown) recordDown(ev);
+                        else addRawMovement(ev);
+                        float dx = ev.getRawX() - startX;
+                        float dy = ev.getRawY() - startY;
+                        if (Math.abs(dx) > dp(8) && Math.abs(dx) > Math.abs(dy) * 1.05f) {
+                            return true;
+                        }
+                    }
+                    return super.onInterceptTouchEvent(ev);
+                }
+
                 @Override
                 public boolean onTouchEvent(android.view.MotionEvent ev) {
                     int act = ev.getActionMasked();
                     if (act == android.view.MotionEvent.ACTION_DOWN) {
-                        startX = ev.getRawX();
-                        startPage = currentAppPage;
+                        recordDown(ev);
+                    } else if (act == android.view.MotionEvent.ACTION_MOVE) {
+                        if (!hasDown) recordDown(ev);
+                        else addRawMovement(ev);
                     } else if ((act == android.view.MotionEvent.ACTION_UP || act == android.view.MotionEvent.ACTION_CANCEL)
                             && totalPages > 1) {
+                        addRawMovement(ev);
+                        float vx = 0f;
+                        if (vTracker != null) {
+                            vTracker.computeCurrentVelocity(1000);
+                            vx = vTracker.getXVelocity();
+                        }
                         float dx = ev.getRawX() - startX;
+                        long dt = Math.max(1L, android.os.SystemClock.uptimeMillis() - downTimeMs);
+                        float avgVx = (dx * 1000f) / dt;
+                        float effectiveVx = Math.abs(vx) > Math.abs(avgVx) ? vx : avgVx;
+
+                        super.onTouchEvent(ev);
+
                         int target = startPage;
-                        int flipThreshold = dp(34);
-                        if (dx < -flipThreshold && startPage < totalPages - 1) {
+                        int distThreshold = dp(22);
+                        int flickVelThreshold = dp(135);
+                        int minFlickDist = dp(10);
+                        if ((dx < -distThreshold || (effectiveVx < -flickVelThreshold && dx < -minFlickDist))
+                                && startPage < totalPages - 1) {
                             target = startPage + 1;
-                        } else if (dx > flipThreshold && startPage > 0) {
+                        } else if ((dx > distThreshold || (effectiveVx > flickVelThreshold && dx > minFlickDist))
+                                && startPage > 0) {
                             target = startPage - 1;
                         } else {
                             target = Math.max(0, Math.min(totalPages - 1, Math.round((float) getScrollX() / screenW)));
                         }
+                        hasDown = false;
+                        snapping = true;
                         currentAppPage = target;
                         updatePageDots(target);
                         final int scrollTarget = target * screenW;
+                        smoothScrollTo(scrollTarget, 0);
                         post(() -> smoothScrollTo(scrollTarget, 0));
                         return true;
                     }
                     return super.onTouchEvent(ev);
                 }
+
                 @Override
                 protected void onScrollChanged(int l, int t, int oldl, int oldt) {
                     super.onScrollChanged(l, t, oldl, oldt);
                     if (totalPages > 1 && screenW > 0) {
+                        if (snapping) {
+                            if (Math.abs(l - currentAppPage * screenW) <= dp(6)) {
+                                snapping = false;
+                            }
+                            return;
+                        }
                         int p = Math.max(0, Math.min(totalPages - 1, Math.round((float) l / screenW)));
                         if (p != currentAppPage) {
                             currentAppPage = p;
@@ -3282,7 +3377,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v7.1.0  \u00B7  Build 71");
+        appTitleTv.setText("HomeScreen v7.1.1  \u00B7  Build 72");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
@@ -4017,7 +4112,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v7.1.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 7 Theme Universes (including Formula 1!) and 344 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v7.1.1 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 7 Theme Universes (including Formula 1!) and 344 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -4028,7 +4123,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v7.1.0 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v7.1.1 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -4040,7 +4135,7 @@ public class MainActivity extends Activity {
 
     // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
     private void showInstallOnTvDialog() {
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v7.1.0_71.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v7.1.1_72.apk";
         List<String> options = Arrays.asList(
             "1. Share Download Link to TV (Quick Share / LocalSend)",
             "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",
