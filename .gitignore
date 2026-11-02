@@ -1,0 +1,6 @@
+out/
+key.jks
+*.apk
+!releases/*.apk
+.DS_Store
+.idea
