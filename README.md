@@ -1,25 +1,25 @@
 <div align="center">
 
-# HomeOS v3.3.0
+# HomeScreen v3.4.0
 
 ### Universal Multi-Universe Animated Home Launcher for Android TV, Google TV, Foldables & Tablets
 
-[![Version](https://img.shields.io/badge/version-v3.3.0_(Build_33)-FFD54F?style=for-the-badge)](releases/HomeOS_Release_v3.3.0_33.apk)
-[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeOS-Universal-TV-Foldable-Tablet-Release-v3.3.0-b33.apk)
+[![Version](https://img.shields.io/badge/version-v3.4.0_(Build_34)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v3.4.0_34.apk)
+[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v3.4.0-b34.apk)
 [![License](https://img.shields.io/badge/license-MIT-black?style=for-the-badge)](LICENSE)
 
 **Download Ready-to-Install Release APKs (`395 KB`):**
-[**⬇ Download `HomeOS_Release_v3.3.0_33.apk`**](releases/HomeOS_Release_v3.3.0_33.apk) · [**⬇ Download `HomeOS-Universal-TV-Foldable-Tablet-Release-v3.3.0-b33.apk`**](releases/HomeOS-Universal-TV-Foldable-Tablet-Release-v3.3.0-b33.apk)
+[**⬇ Download `HomeScreen_Release_v3.4.0_34.apk`**](releases/HomeScreen_Release_v3.4.0_34.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v3.4.0-b34.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v3.4.0-b34.apk)
 
-<img src="docs/home-screen.png" alt="HomeOS Multi-Universe Launcher" width="100%">
+<img src="docs/home-screen.png" alt="HomeScreen Multi-Universe Launcher" width="100%">
 
 </div>
 
 ---
 
-## ✨ What is HomeOS?
+## ✨ What is HomeScreen?
 
-**HomeOS** (built on the ultra-lightweight [TV Detox](https://github.com/Ansub/tv-detox) foundation) is a zero-bloat, 60 FPS procedural-canvas home screen launcher for **Android TV**, **Google TV**, **Foldables**, and **Tablets** (`389 KB` total APK size, zero external libraries, zero ads).
+**HomeScreen** (built on the ultra-lightweight [TV Detox](https://github.com/Ansub/tv-detox) foundation) is a zero-bloat, 60 FPS procedural-canvas home screen launcher for **Android TV**, **Google TV**, **Foldables**, and **Tablets** (`395 KB` total APK size, zero external libraries, zero ads).
 
 ### 🌌 6 Interactive Universe Themes (`248` Total Animated Story Scenes)
 Switch themes anytime from the top-right **3-Card Theme Swatch** icon or **Settings → Universe Theme**. Each theme transforms the entire home screen—sky architecture, floating particles, custom franchise typography, app card crests, and a `1.5x` bottom **Saga Theater** running at `0.5x` cinematic speed:
@@ -49,12 +49,12 @@ Switch themes anytime from the top-right **3-Card Theme Swatch** icon or **Setti
 ## 📲 Install on Android TV, Google TV, Foldables, or Tablets
 
 ### Option A: Direct APK Install (Phone / Tablet / Foldable / TV Browser or File Manager)
-Download [**`HomeOS_Release_v3.3.0_33.apk`**](releases/HomeOS_Release_v3.3.0_33.apk) directly onto your device and open it to install.
+Download [**`HomeScreen_Release_v3.4.0_34.apk`**](releases/HomeScreen_Release_v3.4.0_34.apk) directly onto your device and open it to install.
 
 ### Option B: Install over Wi-Fi via `adb`
 ```sh
 adb connect <YOUR_DEVICE_IP>:5555
-adb install -r releases/HomeOS_Release_v3.3.0_33.apk
+adb install -r releases/HomeScreen_Release_v3.4.0_34.apk
 adb shell cmd package set-home-activity com.ansub.tvhome/.MainActivity
 adb shell am start -n com.ansub.tvhome/.MainActivity
 ```

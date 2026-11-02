@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ansub.tvhome" android:versionCode="33" android:versionName="3.3.0"
+    package="com.ansub.tvhome" android:versionCode="34" android:versionName="3.4.0"
     android:installLocation="internalOnly">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
@@ -51,13 +51,13 @@
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
     <uses-feature android:name="android.software.live_tv" android:required="false" />
-    <application android:label="HomeOS" android:allowBackup="false"
+    <application android:label="HomeScreen" android:allowBackup="false"
         android:banner="@drawable/banner" android:icon="@drawable/icon" android:roundIcon="@drawable/icon"
         android:supportsRtl="true" android:resizeableActivity="true" android:hardwareAccelerated="true"
         android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen">
         <property android:name="android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE" android:value="false" />
         <activity android:name=".MainActivity"
-            android:label="HomeOS"
+            android:label="HomeScreen"
             android:exported="true"
             android:resizeableActivity="true"
             android:launchMode="singleTask" android:stateNotNeeded="true"

@@ -1,12 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The app icon (Google TV's apps row uses it, not the banner): the banner's house on a dark circle. -->
+<!-- HomeScreen Vector App Icon (used on pre-API 26 & circular icon slots) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp" android:height="48dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FF1C1C1E" android:pathData="M54,0a54,54 0,1 1,0 108a54,54 0,1 1,0 -108z" />
-    <group android:translateX="18" android:translateY="18">
-        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="4"
-            android:strokeLineCap="round" android:strokeLineJoin="round"
-            android:pathData="M11,35 L36,13.5 L61,35 M19,29 L19,61 L53,61 L53,29 M29,61 L29,45 L43,45 L43,61" />
-    </group>
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Midnight Cosmos Circle -->
+    <path
+        android:fillColor="#FF080B1E"
+        android:pathData="M54,2 A52,52 0 1,1 53.99,2 Z" />
+    <!-- Outer Golden Rim -->
+    <path
+        android:fillColor="#FF0D122C"
+        android:strokeColor="#FFFFD54F"
+        android:strokeWidth="3.2"
+        android:pathData="M54,8 A46,46 0 1,1 53.99,8 Z" />
+    <!-- Inner Filigree Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#55FFE082"
+        android:strokeWidth="1.2"
+        android:pathData="M54,13 A41,41 0 1,1 53.99,13 Z" />
+    <!-- 4-Point Starlight Sparkle -->
+    <path
+        android:fillColor="#FFFFF4D2"
+        android:pathData="M54,17 L56.4,23.6 L63,26 L56.4,28.4 L54,35 L51.6,28.4 L45,26 L51.6,23.6 Z" />
+    <!-- Flanking Turrets -->
+    <path
+        android:fillColor="#FF1C244B"
+        android:strokeColor="#FFFFE082"
+        android:strokeWidth="2.0"
+        android:strokeLineJoin="round"
+        android:pathData="M26,50 L31.5,37 L37,50 L37,78 L26,78 Z M71,50 L76.5,37 L82,50 L82,78 L71,78 Z" />
+    <!-- Main Central Home Gables -->
+    <path
+        android:fillColor="#FF141A38"
+        android:strokeColor="#FFFFF4D2"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M23,55 L54,30 L85,55 M33,47 L33,78 L75,78 L75,47" />
+    <!-- Glowing Golden Archway Portal -->
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M47,78 L47,62 A7,7 0 0,1 61,62 L61,78 Z" />
+    <!-- Golden Horizon Base Line -->
+    <path
+        android:strokeColor="#FFFFD54F"
+        android:strokeWidth="3.0"
+        android:strokeLineCap="round"
+        android:pathData="M22,78 L86,78" />
 </vector>

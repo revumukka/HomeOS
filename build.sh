@@ -35,20 +35,23 @@ cp out/base.apk out/unsigned.apk; (cd out/dex && zip -q ../unsigned.apk classes.
 
 # A signing key is made on first build. Keep key.jks: updates must be signed with the same key.
 # (Releases are signed with their own key: set KEYSTORE and KEYSTORE_PASS.)
-APP_NAME="HomeOS"
+APP_NAME="HomeScreen"
 VARIANT="Release"
-VERSION_NAME="3.3.0"
-VERSION_CODE="33"
+VERSION_NAME="3.4.0"
+VERSION_CODE="34"
 PLAY_APK="out/${APP_NAME}_${VARIANT}_v${VERSION_NAME}_${VERSION_CODE}.apk"
 UNIVERSAL_APK="out/${APP_NAME}-Universal-TV-Foldable-Tablet-${VARIANT}-v${VERSION_NAME}-b${VERSION_CODE}.apk"
+LEGACY_PLAY_APK="out/HomeOS_${VARIANT}_v${VERSION_NAME}_${VERSION_CODE}.apk"
 
 KS=${KEYSTORE:-key.jks}; PASS=${KEYSTORE_PASS:-tvhome123}
 [ -f "$KS" ] || keytool -genkeypair -keystore "$KS" -storepass "$PASS" -keypass "$PASS" -alias tvhome \
-  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=HomeOS, O=Ansub, C=US" >/dev/null 2>&1
+  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=HomeScreen, O=Ansub, C=US" >/dev/null 2>&1
 "$BT/apksigner" sign --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
   --ks "$KS" --ks-pass "pass:$PASS" --out out/tvhome.apk out/aligned.apk
 "$BT/apksigner" verify out/tvhome.apk
 cp out/tvhome.apk "$PLAY_APK"
 cp out/tvhome.apk "$UNIVERSAL_APK"
+cp out/tvhome.apk "$LEGACY_PLAY_APK"
 cp out/tvhome.apk "out/${APP_NAME}.apk"
+cp out/tvhome.apk "out/HomeOS.apk"
 echo "Built $PLAY_APK and $UNIVERSAL_APK"

@@ -1,11 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The house, kept inside the middle 66 of 108 that every icon shape shows. -->
+<!-- HomeScreen Luxury Crest: Golden Medallion, Enchanted Spire Home Silhouette, Glowing Portal & Starlight -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp" android:height="108dp"
-    android:viewportWidth="108" android:viewportHeight="108">
-    <group android:translateX="18" android:translateY="18">
-        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="4"
-            android:strokeLineCap="round" android:strokeLineJoin="round"
-            android:pathData="M11,35 L36,13.5 L61,35 M19,29 L19,61 L53,61 L53,29 M29,61 L29,45 L43,45 L43,61" />
-    </group>
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Golden Medallion Ring (within middle 66x66 safe zone: r=30 -> 24..84) -->
+    <path
+        android:fillColor="#FF0B0E24"
+        android:strokeColor="#FFFFD54F"
+        android:strokeWidth="2.4"
+        android:pathData="M54,24 A30,30 0 1,1 53.99,24 Z" />
+    <!-- Inner Subtle Gold Filigree Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#55FFE082"
+        android:strokeWidth="1.0"
+        android:pathData="M54,27.5 A26.5,26.5 0 1,1 53.99,27.5 Z" />
+
+    <!-- 4-Point Golden Starlight Sparkle at Top Crest -->
+    <path
+        android:fillColor="#FFFFF4D2"
+        android:pathData="M54,29 L55.6,33.4 L60,35 L55.6,36.6 L54,41 L52.4,36.6 L48,35 L52.4,33.4 Z" />
+    <!-- Tiny Left & Right Twinkling Stars -->
+    <path
+        android:fillColor="#CCFFE082"
+        android:pathData="M37,39 A1.4,1.4 0 1,1 36.99,39 Z M71,39 A1.4,1.4 0 1,1 70.99,39 Z" />
+
+    <!-- Left & Right Sleek Castle-Home Flanking Turrets -->
+    <path
+        android:fillColor="#FF1C244B"
+        android:strokeColor="#FFFFE082"
+        android:strokeWidth="1.6"
+        android:strokeLineJoin="round"
+        android:pathData="M35,52 L39,43 L43,52 L43,71 L35,71 Z M65,52 L69,43 L73,52 L73,71 L65,71 Z" />
+
+    <!-- Main Central Home Gables & Roof -->
+    <path
+        android:fillColor="#FF141A38"
+        android:strokeColor="#FFFFF4D2"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M33,55 L54,38 L75,55 M40,50 L40,71 L68,71 L68,50" />
+
+    <!-- Warm Glowing Golden Archway Door / Portal -->
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M49,71 L49,60 A5,5 0 0,1 59,60 L59,71 Z" />
+
+    <!-- Golden Horizon Base Line -->
+    <path
+        android:strokeColor="#FFFFD54F"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M32,71 L76,71" />
 </vector>

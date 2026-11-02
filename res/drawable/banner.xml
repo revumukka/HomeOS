@@ -1,10 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The tile Google TV shows in its apps row: a white house outline, drawn like LineIcon. -->
+<!-- HomeScreen 16:9 Android TV Banner (320x180dp) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="320dp" android:height="180dp"
-    android:viewportWidth="320" android:viewportHeight="180">
-    <path android:fillColor="#FF1C1C1E" android:pathData="M0,0h320v180h-320z" />
-    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="8"
-        android:strokeLineCap="round" android:strokeLineJoin="round"
-        android:pathData="M110,88 L160,45 L210,88 M126,76 L126,140 L194,140 L194,76 M146,140 L146,108 L174,108 L174,140" />
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <!-- Deep Midnight Royal Cosmos Background -->
+    <path
+        android:fillColor="#FF080B1E"
+        android:pathData="M0,0h320v180h-320z" />
+    <!-- Gold Border Frame -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#66FFD54F"
+        android:strokeWidth="2.5"
+        android:pathData="M12,12 L308,12 L308,168 L12,168 Z" />
+    <!-- Center Medallion Circle -->
+    <path
+        android:fillColor="#FF101636"
+        android:strokeColor="#FFFFD54F"
+        android:strokeWidth="3.2"
+        android:pathData="M160,26 A64,64 0 1,1 159.99,26 Z" />
+    <!-- 4-Point Starlight Sparkle -->
+    <path
+        android:fillColor="#FFFFF4D2"
+        android:pathData="M160,36 L163,44 L171,47 L163,50 L160,58 L157,50 L149,47 L157,44 Z" />
+    <!-- Flanking Turrets -->
+    <path
+        android:fillColor="#FF1C244B"
+        android:strokeColor="#FFFFE082"
+        android:strokeWidth="2.4"
+        android:strokeLineJoin="round"
+        android:pathData="M120,86 L128,68 L136,86 L136,126 L120,126 Z M184,86 L192,68 L200,86 L200,126 L184,126 Z" />
+    <!-- Central Home Gables -->
+    <path
+        android:fillColor="#FF141A38"
+        android:strokeColor="#FFFFF4D2"
+        android:strokeWidth="4.0"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M116,92 L160,56 L204,92 M130,81 L130,126 L190,126 L190,81" />
+    <!-- Glowing Golden Archway Portal -->
+    <path
+        android:fillColor="#FFFFD54F"
+        android:pathData="M150,126 L150,104 A10,10 0 0,1 170,104 L170,126 Z" />
+    <!-- Golden Horizon Base Line -->
+    <path
+        android:strokeColor="#FFFFD54F"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M114,126 L206,126" />
 </vector>
