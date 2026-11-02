@@ -189,6 +189,7 @@ public class MainActivity extends Activity {
     private FrameLayout root; // the page, inside a vertical scroller
     private SkyView skyView;
     private LinearLayout clockContainer;
+    private LinearLayout dateRowView;
     private Dialog activeDialog;
     private TextClock dateClockView, timeClockView;
     private TextView weatherView;
@@ -235,18 +236,53 @@ public class MainActivity extends Activity {
         }
     };
 
+    private int dp(float v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
+    private int sp(float v) {
+        return Math.round(v * getResources().getDisplayMetrics().scaledDensity);
+    }
+
+    private int getStatusBarTopInset() {
+        int inset = 0;
+        try {
+            int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resId > 0) inset = getResources().getDimensionPixelSize(resId);
+        } catch (Throwable ignored) {}
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 28 && getWindow() != null && getWindow().getDecorView() != null) {
+                android.view.WindowInsets wi = getWindow().getDecorView().getRootWindowInsets();
+                if (wi != null && wi.getDisplayCutout() != null) {
+                    inset = Math.max(inset, wi.getDisplayCutout().getSafeInsetTop());
+                }
+            }
+        } catch (Throwable ignored) {}
+        return Math.max(inset, dp(28));
+    }
+
     private float computeAdaptiveScale() {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         float sw = dm.widthPixels / 1920f;
         float sh = dm.heightPixels / 1080f;
-        // On 16:9 TVs sw == sh; on square/portrait Foldables or 16:10 Tablets, clamp so tiles & stage never clip
+        if (!isTvDevice() && dm.heightPixels > dm.widthPixels) {
+            // Portrait phone / cover screen: scale sky particles & details with real display density
+            return Math.max(0.68f, Math.max(sw * 1.32f, dm.density * 0.32f));
+        }
+        // On 16:9 TVs sw == sh; on square/unfolded Foldables or 16:10 Tablets, clamp so tiles & stage never clip
         return Math.max(0.42f, Math.min(sw, sh * 1.18f));
     }
 
     // Portrait/Outer-screen aware UI scale for Clock, Top-Right Quick Icons, and Utility Buttons
-    // so portrait foldable screens scale to a 1080p phone width instead of a shrunk 1920p TV width.
+    // so portrait foldable screens scale to native Android density instead of a shrunk 1920p TV width.
     private float computeUiScale() {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        if (!isTvDevice()) {
+            if (dm.heightPixels > dm.widthPixels) {
+                return Math.max(dm.density * 0.62f, dm.widthPixels / 720f);
+            }
+            return Math.max(scale * 1.12f, dm.density * 0.52f);
+        }
         if (dm.heightPixels > dm.widthPixels) {
             return Math.max(scale * 1.48f, Math.min(dm.widthPixels / 1080f, dm.heightPixels / 1680f));
         }
@@ -257,13 +293,17 @@ public class MainActivity extends Activity {
         return Math.round(v * uiScale);
     }
 
-    // Orientation-invariant, uniform scale for Settings UI (buttons, quick dock, dropdowns, and panels)
-    // across Foldable cover screens, inner unfolded screens, Tablets, and TVs without changing skyView animation sizes.
+    // Density-aware uniform scale for Settings UI (buttons, quick dock, dropdowns, and panels)
+    // across Foldable cover screens, inner unfolded screens, Tablets, and TVs.
     private float computeSettingsScale() {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         float longSide = Math.max(dm.widthPixels, dm.heightPixels) / 1920f;
         float shortSide = Math.min(dm.widthPixels, dm.heightPixels) / 1080f;
         float base = Math.min(longSide, shortSide);
+        if (!isTvDevice()) {
+            // Map 1080p TV spx() tokens directly to native Android phone/foldable dp/sp density
+            return Math.max(dm.density * 0.72f, base);
+        }
         if (dm.heightPixels > dm.widthPixels) {
             base = Math.min(base, dm.widthPixels / 1280f);
         }
@@ -359,7 +399,29 @@ public class MainActivity extends Activity {
         scale = computeAdaptiveScale();
         uiScale = computeUiScale();
         settingsScale = computeSettingsScale();
-        getWindow().setBackgroundDrawable(new ColorDrawable(0xFF060916));
+        Window win = getWindow();
+        win.setBackgroundDrawable(new ColorDrawable(0xFF060916));
+        if (!isTvDevice()) {
+            try {
+                win.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
+                        | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+                        | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+                win.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                win.setStatusBarColor(Color.TRANSPARENT);
+                win.setNavigationBarColor(Color.TRANSPARENT);
+                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    WindowManager.LayoutParams wlp = win.getAttributes();
+                    wlp.layoutInDisplayCutoutMode = android.os.Build.VERSION.SDK_INT >= 30
+                            ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                            : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                    win.setAttributes(wlp);
+                }
+                win.getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+            } catch (Throwable ignored) {}
+        }
 
         FrameLayout viewport = new FrameLayout(this);
         skyView = new SkyView(this, scale, wallpaper(), cinzelFont);
@@ -410,27 +472,28 @@ public class MainActivity extends Activity {
         shownLocale = java.util.Locale.getDefault();
         String day = Strings.datePattern();
         LinearLayout dateRow = new LinearLayout(this);
+        dateRowView = dateRow;
         dateRow.setOrientation(LinearLayout.HORIZONTAL);
         dateRow.setGravity(Gravity.CENTER_VERTICAL);
-        TextClock date = clock(day, day, px(36), 0xE6FFE8B0, themeFontFor(universeTheme()));
+        TextClock date = clock(day, day, px(36), 0xF0FFE8B0, themeFontFor(universeTheme()));
         dateClockView = date;
         date.setLetterSpacing(0.05f);
-        date.setShadowLayer(px(8), 0, px(2), 0xAA000000);
+        date.setShadowLayer(px(8), 0, px(2), 0xCC000000);
         dateRow.addView(date, new LinearLayout.LayoutParams(-2, -2));
 
-        weatherView = text(px(36), 0xE6FFE8B0, themeFontFor(universeTheme()));
+        weatherView = text(px(36), 0xF0FFE8B0, themeFontFor(universeTheme()));
         weatherView.setLetterSpacing(0.05f);
-        weatherView.setShadowLayer(px(8), 0, px(2), 0xAA000000);
+        weatherView.setShadowLayer(px(8), 0, px(2), 0xCC000000);
         LinearLayout.LayoutParams wp = new LinearLayout.LayoutParams(-2, -2);
-        wp.leftMargin = upx(16);
+        wp.leftMargin = isTvDevice() ? upx(16) : dp(10);
         dateRow.addView(weatherView, wp);
         setWeatherText(prefs().getString("weather_text", "66°F Cloudy"));
 
-        fancySyncView = text(upx(16), 0xEEFFE082, cinzelFont);
+        fancySyncView = text(isTvDevice() ? upx(16) : sp(11), 0xEEFFE082, cinzelFont);
         fancySyncView.setLetterSpacing(0.14f);
         fancySyncView.setText("|   FANCYLEDS SYNC");
         fancySyncView.setShadowLayer(px(8), 0, px(2), 0xAA000000);
-        fancySyncView.setVisibility(glowOn ? View.VISIBLE : View.GONE);
+        fancySyncView.setVisibility((glowOn && isTvDevice()) ? View.VISIBLE : View.GONE);
         LinearLayout.LayoutParams fp = new LinearLayout.LayoutParams(-2, -2);
         fp.leftMargin = upx(16);
         dateRow.addView(fancySyncView, fp);
@@ -448,13 +511,13 @@ public class MainActivity extends Activity {
         timeClockView = time;
         time.setLetterSpacing(0.04f);
         time.setIncludeFontPadding(false);
-        time.setPadding(upx(4), upx(2), upx(14), upx(12));
-        time.setShadowLayer(px(16), 0, px(4), 0x80D4942A);
+        time.setPadding(dp(4), dp(2), dp(8), dp(6));
+        time.setShadowLayer(dp(12), 0, dp(3), 0x99D4942A);
         // Wrap, not the default match_parent: the column must be as wide as the date, not just the time,
         // or "0:00" to "9:59" (one digit less) cuts a long date off.
         clock.addView(dateRow, new LinearLayout.LayoutParams(-2, -2));
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-2, -2);
-        tp.topMargin = upx(-12); // snug under the date + weather line
+        tp.topMargin = isTvDevice() ? upx(-12) : -dp(4); // snug under the date + weather line
         clock.addView(time, tp);
         root.addView(clock, at(px(MARGIN), px(38), -2, -2));
 
@@ -707,32 +770,23 @@ public class MainActivity extends Activity {
         uiScale = computeUiScale();
         settingsScale = computeSettingsScale();
         if (skyView != null) skyView.setScale(scale);
-        if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
-            FrameLayout.LayoutParams clp = (FrameLayout.LayoutParams) clockContainer.getLayoutParams();
-            clp.leftMargin = px(MARGIN);
-            clp.topMargin = px(38);
-            clockContainer.setLayoutParams(clp);
-        }
         if (weatherView != null && weatherView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-            ((LinearLayout.LayoutParams) weatherView.getLayoutParams()).leftMargin = upx(16);
+            ((LinearLayout.LayoutParams) weatherView.getLayoutParams()).leftMargin = isTvDevice() ? upx(16) : dp(10);
         }
         if (fancySyncView != null) {
-            fancySyncView.setTextSize(TypedValue.COMPLEX_UNIT_PX, upx(16));
+            fancySyncView.setTextSize(TypedValue.COMPLEX_UNIT_PX, isTvDevice() ? upx(16) : sp(11));
             if (fancySyncView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
                 ((LinearLayout.LayoutParams) fancySyncView.getLayoutParams()).leftMargin = upx(16);
             }
         }
         if (timeClockView != null) {
-            timeClockView.setPadding(upx(4), upx(2), upx(14), upx(12));
+            timeClockView.setPadding(dp(4), dp(2), dp(8), dp(6));
             if (timeClockView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-                ((LinearLayout.LayoutParams) timeClockView.getLayoutParams()).topMargin = upx(-12);
+                ((LinearLayout.LayoutParams) timeClockView.getLayoutParams()).topMargin = isTvDevice() ? upx(-12) : -dp(4);
             }
         }
         if (moveHint != null) {
-            moveHint.setTextSize(TypedValue.COMPLEX_UNIT_PX, upx(26));
-            if (moveHint.getLayoutParams() instanceof FrameLayout.LayoutParams) {
-                ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).leftMargin = px(MARGIN);
-            }
+            moveHint.setTextSize(TypedValue.COMPLEX_UNIT_PX, isTvDevice() ? upx(26) : sp(14));
         }
         applyThemeTypography(universeTheme());
         buildTiles();
@@ -862,17 +916,29 @@ public class MainActivity extends Activity {
         PackageManager pm = getPackageManager();
         int screenW = getResources().getDisplayMetrics().widthPixels;
         int screenH = getResources().getDisplayMetrics().heightPixels;
-        boolean isPortrait = screenH > screenW;
-        int m = isPortrait ? Math.max(upx(28), Math.round(screenW * 0.038f)) : px(MARGIN);
-        int g = isPortrait ? Math.max(upx(14), Math.round(screenW * 0.020f)) : px(GAP);
-        int topInset = isPortrait ? Math.round(screenH * 0.035f) : 0;
-        int clockTop = isPortrait ? (topInset + upx(12)) : px(38);
+        boolean tvMode = isTvDevice();
+        boolean isNarrowVertical = !tvMode && (screenW < screenH * 0.75f);
+        int m = isNarrowVertical ? dp(20) : (!tvMode ? dp(24) : px(MARGIN));
+        int g = isNarrowVertical ? dp(12) : (!tvMode ? dp(14) : px(GAP));
+        int topInset = !tvMode ? getStatusBarTopInset() : 0;
+        int clockTop = isNarrowVertical ? (topInset + dp(12)) : (!tvMode ? (topInset + dp(8)) : px(38));
         gapPx = g;
 
         if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
             FrameLayout.LayoutParams clp = (FrameLayout.LayoutParams) clockContainer.getLayoutParams();
-            clp.leftMargin = m;
-            clp.topMargin = clockTop;
+            if (isNarrowVertical) {
+                clp.width = -1;
+                clp.leftMargin = 0;
+                clp.topMargin = clockTop;
+                clockContainer.setGravity(Gravity.CENTER_HORIZONTAL);
+                if (dateRowView != null) dateRowView.setGravity(Gravity.CENTER);
+            } else {
+                clp.width = -2;
+                clp.leftMargin = m;
+                clp.topMargin = clockTop;
+                clockContainer.setGravity(Gravity.START);
+                if (dateRowView != null) dateRowView.setGravity(Gravity.CENTER_VERTICAL);
+            }
             clockContainer.setLayoutParams(clp);
         }
 
@@ -881,33 +947,29 @@ public class MainActivity extends Activity {
         for (String pkg : apps) if (launchIntent(pm, pkg) != null) launchable++;
 
         boolean store = !apps.contains(PLAY_STORE) && launchIntent(pm, PLAY_STORE) != null;
-        boolean tvMode = isTvDevice();
 
         if (!tvMode) {
             // Dual-Posture Continuity for Phones, Foldables & Tablets:
-            // - Folded Cover Screen / Vertical Phone (9:16, screenW < screenH * 0.72f):
-            //   4-column Sleek Squircle Medallion App Icons + crisp single-line labels underneath.
-            // - Unfolded Foldable Inner Screen / Tablet (screenW >= screenH * 0.72f):
-            //   Signature 16:9 Widescreen TV-Style Banner Cards (with emblem, title & lore subtitle inside),
-            //   proportioned so the entire grid sits cleanly in the upper sky above the castle.
-            // - Zero-Duplication Floating Command Trio below the grid:
-            //   [ Theme ]  ·  [ ︿ Whisper Chevron Handle ]  ·  [ Settings ]
-            boolean isNarrowVertical = screenW < screenH * 0.72f;
+            // - Folded Cover Screen / Vertical Phone (isNarrowVertical):
+            //   Centered Hero Clock + 4-column Native One UI / Pixel Squircle App Icons + crisp 13sp labels.
+            // - Unfolded Foldable Inner Screen / Tablet (!isNarrowVertical):
+            //   Signature 16:9 Widescreen Banner Cards (Left Icon Medallion + Right Title/Lore Subtitle).
             for (String pkg : apps) {
                 if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
             }
-            gridTop = clockTop + upx(148);
-            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - upx(40);
+            gridTop = isNarrowVertical ? (clockTop + dp(108)) : (clockTop + dp(100));
+            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).leftMargin = m;
+            ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - dp(28);
 
             if (isNarrowVertical) {
                 cols = 4;
                 int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-                int iconSize = Math.min(Math.round(w * 0.62f), upx(108));
-                int labelH = upx(48);
+                int iconSize = Math.min(dp(60), Math.round(w * 0.72f));
+                int labelH = dp(26);
                 int h = iconSize + labelH;
                 tileW = w;
                 tileH = h;
-                rowStepPx = h + Math.max(upx(14), g / 2);
+                rowStepPx = h + dp(16);
 
                 for (int i = 0; i < rowApps.size(); i++) {
                     String pkg = rowApps.get(i);
@@ -915,10 +977,7 @@ public class MainActivity extends Activity {
                     Drawable defaultIcon = null;
                     try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
-                    Drawable badge = SkyView.createThemeBanner(
-                            getResources(), pkg, label, iconSize, iconSize, uiScale,
-                            themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
-                    addMobileAppTile(root, pkg, label, badge, defaultIcon, gridX(i), gridY(i), w, h, iconSize);
+                    addMobileAppTile(root, pkg, label, null, defaultIcon, gridX(i), gridY(i), w, h, iconSize);
                 }
             } else {
                 // Unfolded Foldable Inner Screen & Tablet: Signature 16:9 Widescreen TV-Style Banner Cards
@@ -928,7 +987,7 @@ public class MainActivity extends Activity {
                 int h = w * 9 / 16;
                 int maxRowH = (Math.round(screenH * 0.38f) - (rowsCount - 1) * g) / rowsCount;
                 if (h > maxRowH) {
-                    h = Math.max(upx(110), maxRowH);
+                    h = Math.max(dp(76), maxRowH);
                 }
                 tileW = w;
                 tileH = h;
@@ -949,13 +1008,13 @@ public class MainActivity extends Activity {
             }
 
             int rows = Math.max(1, (launchable + cols - 1) / cols);
-            int bottomTop = gridTop + rows * rowStepPx + upx(14);
+            int bottomTop = gridTop + rows * rowStepPx + (isNarrowVertical ? dp(10) : dp(12));
 
-            // Easy 3-Button Control Row: [ Theme ]  [ + Add App ]  [ Settings ] + subtle Whisper Chevron below
-            int pillGap = Math.max(upx(10), g / 2);
-            int maxDockW = Math.min(screenW - 2 * m, upx(780));
+            // Native 3-Button Frosted Control Row: [ Theme ]  [ + Add App ]  [ Settings ] + All Apps Handle below
+            int pillGap = dp(10);
+            int maxDockW = Math.min(screenW - 2 * m, dp(520));
             int btnW = (maxDockW - 2 * pillGap) / 3;
-            int btnH = upx(54);
+            int btnH = dp(44);
             int dockStartX = (screenW - (3 * btnW + 2 * pillGap)) / 2;
 
             addTile(root, THEME_PICK, "Theme", null, LineIcon.THEMES, null, dockStartX, bottomTop, btnW, btnH);
@@ -963,10 +1022,10 @@ public class MainActivity extends Activity {
             addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null,
                     dockStartX + 2 * (btnW + pillGap), bottomTop, btnW, btnH);
 
-            int chevW = upx(72), chevH = upx(32);
-            addWhisperChevron(root, (screenW - chevW) / 2, bottomTop + btnH + upx(10), chevW, chevH);
+            int chevW = dp(138), chevH = dp(34);
+            addWhisperChevron(root, (screenW - chevW) / 2, bottomTop + btnH + dp(10), chevW, chevH);
 
-            root.setMinimumHeight(bottomTop + btnH + chevH + upx(20) + m);
+            root.setMinimumHeight(bottomTop + btnH + chevH + dp(24) + m);
             netIcon = null;
             glowIconView = null;
         } else {
@@ -1062,34 +1121,42 @@ public class MainActivity extends Activity {
         if (restore != null) restore.requestFocus();
     }
 
-    // Minimalist breathing golden double-chevron Whisper Handle (︿) that visually signals Swipe-Up for All Apps
-    // with zero text clutter and zero button duplication. Tapping it also opens the All Apps Drawer.
+    // Tactile Swipe-Up Handle ("︿ ALL APPS") for phones, foldables, and tablets.
     private void addWhisperChevron(ViewGroup parent, int x, int y, int w, int h) {
-        FrameLayout pill = new FrameLayout(this);
+        LinearLayout pill = new LinearLayout(this);
+        pill.setOrientation(LinearLayout.HORIZONTAL);
+        pill.setGravity(Gravity.CENTER);
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(h / 2f);
-        bg.setColor(0x24181210);
-        bg.setStroke(Math.max(1, upx(1)), 0x48F5D078);
+        bg.setColor(0x3812101C);
+        bg.setStroke(Math.max(1, dp(1)), 0x48F5D078);
         pill.setBackground(bg);
+        pill.setPadding(dp(14), 0, dp(14), 0);
 
         ImageView iv = new ImageView(this);
         LineIcon li = new LineIcon(LineIcon.CHEVRON_UP);
         li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
         iv.setImageDrawable(li);
-        int sz = Math.max(upx(20), Math.round(h * 0.46f));
-        FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(sz, sz);
-        ilp.gravity = Gravity.CENTER;
-        pill.addView(iv, ilp);
+        int sz = dp(15);
+        pill.addView(iv, new LinearLayout.LayoutParams(sz, sz));
+
+        TextView tv = text(sp(11.5f), 0xE6FFE8B0, cinzelFont != null ? cinzelFont : semibold);
+        tv.setText("ALL APPS");
+        tv.setLetterSpacing(0.10f);
+        tv.setSingleLine(true);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-2, -2);
+        tlp.leftMargin = dp(6);
+        pill.addView(tv, tlp);
 
         // Gentle breathing pulse on the chevron icon
-        ValueAnimator pulse = ValueAnimator.ofFloat(0.45f, 1.0f);
+        ValueAnimator pulse = ValueAnimator.ofFloat(0.55f, 1.0f);
         pulse.setDuration(1800);
         pulse.setRepeatCount(ValueAnimator.INFINITE);
         pulse.setRepeatMode(ValueAnimator.REVERSE);
         pulse.addUpdateListener(a -> {
             float v = (float) a.getAnimatedValue();
             iv.setAlpha(v);
-            iv.setTranslationY(-upx(2) * (v - 0.45f));
+            iv.setTranslationY(-dp(1.5f) * (v - 0.55f));
         });
         pulse.start();
 
@@ -1098,8 +1165,8 @@ public class MainActivity extends Activity {
         pill.setContentDescription("All Apps");
         pill.setOnClickListener(v -> showAllAppsDrawer(false));
         pill.setOnFocusChangeListener((v, has) -> {
-            bg.setStroke(Math.max(1, upx(has ? 2 : 1)), has ? 0xEEFFE082 : 0x48F5D078);
-            lift(v, bg, has, 0x24181210, 0x44382A18, h / 2, h / 2);
+            bg.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? 0xEEFFE082 : 0x48F5D078);
+            lift(v, bg, has, 0x3812101C, 0x55382A18, h / 2, h / 2);
         });
 
         FrameLayout wrap = new FrameLayout(this);
@@ -1109,8 +1176,8 @@ public class MainActivity extends Activity {
         tiles.add(pill);
     }
 
-    // Sleek Phone / Foldable / Tablet Home Screen App Icon Tile:
-    // Squircle medallion icon badge + crisp single-line app name label underneath with open transparent sky around it.
+    // Native Phone / Foldable Cover Screen App Icon Tile:
+    // Full-bleed One UI / Pixel style squircle app icon + crisp 13sp single-line label underneath.
     private void addMobileAppTile(ViewGroup parent, final String key, String label, Drawable badge, Drawable appIcon,
                                   int x, int y, int w, int h, int iconSize) {
         LinearLayout cell = new LinearLayout(this);
@@ -1124,47 +1191,41 @@ public class MainActivity extends Activity {
         final FrameLayout iconBox = new FrameLayout(this);
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(badgeRadius);
-        bg.setColor(0xFF18141E);
+        bg.setColor(0x480E101E);
         iconBox.setBackground(bg);
         iconBox.setClipToOutline(true);
+        iconBox.setElevation(dp(4));
 
-        if (badge != null) {
+        if (appIcon != null) {
+            ImageView iconIv = new ImageView(this);
+            iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            iconIv.setImageDrawable(appIcon);
+            FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(-1, -1);
+            ilp.gravity = Gravity.CENTER;
+            iconBox.addView(iconIv, ilp);
+        } else if (badge != null) {
             ImageView iv = new ImageView(this);
             iv.setScaleType(ImageView.ScaleType.FIT_XY);
             iv.setImageDrawable(badge);
             iconBox.addView(iv, new FrameLayout.LayoutParams(-1, -1));
         }
-        if (appIcon != null) {
-            int d = Math.max(1, Math.round(iconSize * 0.72f));
-            ImageView iconIv = new ImageView(this);
-            iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            iconIv.setImageDrawable(appIcon);
-            GradientDrawable medBg = new GradientDrawable();
-            medBg.setShape(GradientDrawable.OVAL);
-            medBg.setColor(0xFF0C0914);
-            iconIv.setBackground(medBg);
-            iconIv.setClipToOutline(true);
-            FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(d, d);
-            ilp.gravity = Gravity.CENTER;
-            iconBox.addView(iconIv, ilp);
-        }
 
         final GradientDrawable border = new GradientDrawable();
         border.setCornerRadius(badgeRadius);
         border.setColor(Color.TRANSPARENT);
-        border.setStroke(Math.max(1, upx(2)), 0x55F5D078);
+        border.setStroke(Math.max(1, dp(1)), 0x38FFE082);
         iconBox.setForeground(border);
         cell.addView(iconBox, new LinearLayout.LayoutParams(iconSize, iconSize));
 
-        final TextView titleView = text(upx(17), 0xF5FFF4D2, semibold);
+        final TextView titleView = text(sp(13f), 0xF8FFF8EC, semibold);
         titleView.setText(label);
         titleView.setIncludeFontPadding(false);
         titleView.setSingleLine(true);
         titleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
         titleView.setGravity(Gravity.CENTER_HORIZONTAL);
-        titleView.setShadowLayer(px(8), 0, px(2), 0xDD000000);
+        titleView.setShadowLayer(dp(4), 0, dp(1.5f), 0xEE000000);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(w, -2);
-        tlp.topMargin = upx(7);
+        tlp.topMargin = dp(6);
         cell.addView(titleView, tlp);
 
         final int houseCol = SkyView.themeAccentFor(key);
@@ -1179,12 +1240,12 @@ public class MainActivity extends Activity {
             }
             iconBox.animate().cancel();
             iconBox.animate().scaleX(has ? 1.08f : 1f).scaleY(has ? 1.08f : 1f)
-                    .translationY(has ? -upx(4) : 0)
+                    .translationY(has ? -dp(3) : 0)
                     .setDuration(FOCUS_MS).setInterpolator(FOCUS_EASE).withLayer().start();
             if (!key.equals(movingKey)) {
-                border.setStroke(Math.max(1, upx(has ? 3 : 2)), has ? focusBorderCol : 0x55F5D078);
+                border.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? focusBorderCol : 0x38FFE082);
             }
-            titleView.setTextColor(has ? 0xFFFFF8E4 : 0xF5FFF4D2);
+            titleView.setTextColor(has ? 0xFFFFFFFF : 0xF8FFF8EC);
         });
 
         cell.setOnClickListener(v -> open(key));
@@ -1257,16 +1318,17 @@ public class MainActivity extends Activity {
                 card.addView(iconIv, ilp);
             }
         } else {
-            // Compact dark-gold capsule pill for bottom utility tiles, scaled uniformly with pill height h and auto-fitted to width w.
-            bg.setColor(0x28181210);
+            // Compact dark-gold capsule pill for bottom utility tiles, scaled with native dp/sp on phones/foldables.
+            boolean mobilePill = !isTvDevice();
+            bg.setColor(mobilePill ? 0x4212101C : 0x28181210);
             LinearLayout inner = new LinearLayout(this);
             boolean pill = lineIcon != null;
             inner.setOrientation(pill ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
             inner.setGravity(Gravity.CENTER);
-            int padX = pill ? Math.max(px(8), Math.round(h * 0.20f)) : px(14);
+            int padX = pill ? (mobilePill ? dp(10) : Math.max(px(8), Math.round(h * 0.20f))) : px(14);
             inner.setPadding(padX, 0, padX, 0);
             ImageView iv = new ImageView(this);
-            int size = pill ? Math.max(px(16), Math.round(h * 0.42f)) : px(64);
+            int size = pill ? (mobilePill ? dp(17) : Math.max(px(16), Math.round(h * 0.42f))) : px(64);
             if (lineIcon != null) {
                 LineIcon li = new LineIcon(lineIcon);
                 li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
@@ -1276,15 +1338,15 @@ public class MainActivity extends Activity {
                 iv.setImageDrawable(appIcon);
             }
             inner.addView(iv, new LinearLayout.LayoutParams(size, size));
-            int gapX = pill ? Math.max(px(5), Math.round(h * 0.14f)) : 0;
-            int textPx = pill ? Math.max(px(12), Math.round(h * 0.30f)) : px(15);
-            TextView t = text(textPx, 0xF2FFF4D2, cinzelFont != null ? cinzelFont : semibold);
+            int gapX = pill ? (mobilePill ? dp(6) : Math.max(px(5), Math.round(h * 0.14f))) : 0;
+            int textPx = pill ? (mobilePill ? sp(13f) : Math.max(px(12), Math.round(h * 0.30f))) : px(15);
+            TextView t = text(textPx, 0xF5FFF4D2, mobilePill ? semibold : (cinzelFont != null ? cinzelFont : semibold));
             t.setText(label);
             if (pill && label != null) {
-                float availW = w - 2 * padX - size - gapX - px(4);
+                float availW = w - 2 * padX - size - gapX - (mobilePill ? dp(4) : px(4));
                 float measured = t.getPaint().measureText(label);
                 if (availW > 0 && measured > availW) {
-                    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(px(10), textPx * (availW / measured)));
+                    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(mobilePill ? sp(10.5f) : px(10), textPx * (availW / measured)));
                 }
             }
             t.setSingleLine(true);
@@ -1501,8 +1563,14 @@ public class MainActivity extends Activity {
         Typeface tf = themeFontFor(theme);
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         boolean isPortrait = dm.heightPixels > dm.widthPixels;
-        int datePx = isPortrait ? (theme == 0 ? upx(32) : upx(24)) : (theme == 0 ? px(36) : px(26));
-        int timePx = isPortrait ? (theme == 0 ? upx(118) : upx(92)) : (theme == 0 ? px(144) : px(108));
+        int datePx, timePx;
+        if (!isTvDevice()) {
+            datePx = isPortrait ? (theme == 0 ? sp(18.5f) : sp(14.5f)) : (theme == 0 ? sp(17.5f) : sp(14f));
+            timePx = isPortrait ? (theme == 0 ? sp(74f) : sp(60f)) : (theme == 0 ? sp(66f) : sp(52f));
+        } else {
+            datePx = isPortrait ? (theme == 0 ? upx(32) : upx(24)) : (theme == 0 ? px(36) : px(26));
+            timePx = isPortrait ? (theme == 0 ? upx(118) : upx(92)) : (theme == 0 ? px(144) : px(108));
+        }
         if (dateClockView != null) {
             dateClockView.setTypeface(tf);
             dateClockView.setTextSize(TypedValue.COMPLEX_UNIT_PX, datePx);
@@ -2345,8 +2413,8 @@ public class MainActivity extends Activity {
         showAllAppsDrawer(false);
     }
 
-    // Full-screen / Bottom-Sheet Searchable All Apps Drawer triggered by Swipe-Up or the Whisper Chevron.
-    // Includes a one-tap "★ Pin Apps" toggle chip in the header so users can pin/unpin multiple apps in seconds!
+    // Native Phone / Foldable / Tablet Searchable All Apps Bottom Sheet triggered by Swipe-Up or the All Apps Handle.
+    // Built with true Android dp() & sp() dimensions so icons, typography, and touch targets feel 100% native.
     private void showAllAppsDrawer(final boolean startInPinMode) {
         if (activeDialog != null && activeDialog.isShowing()) {
             try { activeDialog.dismiss(); } catch (Exception ignored) {}
@@ -2377,101 +2445,110 @@ public class MainActivity extends Activity {
 
         int screenW = getResources().getDisplayMetrics().widthPixels;
         int screenH = getResources().getDisplayMetrics().heightPixels;
-        int drawerCols = (screenW < screenH * 0.65f) ? 4 : 5;
 
         LinearLayout sheet = new LinearLayout(this);
         sheet.setOrientation(LinearLayout.VERTICAL);
-        sheet.setPadding(spx(28), spx(18), spx(28), spx(24));
+        sheet.setPadding(dp(20), dp(14), dp(20), dp(20));
         GradientDrawable sheetBg = new GradientDrawable();
-        float topRad = spx(36);
+        float topRad = dp(28);
         sheetBg.setCornerRadii(new float[] {topRad, topRad, topRad, topRad, 0, 0, 0, 0});
-        sheetBg.setColor(0xF4100D18);
-        sheetBg.setStroke(Math.max(1, spx(2)), 0x55F5D078);
+        sheetBg.setColor(0xF60B0E1A);
+        sheetBg.setStroke(Math.max(1, dp(1)), 0x44F5D078);
         sheet.setBackground(sheetBg);
 
         // Top drag handle pill
         View handle = new View(this);
         GradientDrawable hBg = new GradientDrawable();
-        hBg.setCornerRadius(spx(4));
+        hBg.setCornerRadius(dp(3));
         hBg.setColor(0x66FFE8B0);
         handle.setBackground(hBg);
-        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(spx(64), spx(6));
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(dp(42), dp(5));
         hlp.gravity = Gravity.CENTER_HORIZONTAL;
-        hlp.bottomMargin = spx(14);
+        hlp.bottomMargin = dp(14);
         sheet.addView(handle, hlp);
 
-        // Header row: Title + One-Tap "★ Pin Apps" / "✓ Done" toggle pill
+        // Header row: Title + App Count + One-Tap "★ Edit Home" / "✓ Done" toggle pill
         LinearLayout headerRow = new LinearLayout(this);
         headerRow.setOrientation(LinearLayout.HORIZONTAL);
         headerRow.setGravity(Gravity.CENTER_VERTICAL);
-        final TextView headTitle = text(spx(24), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
-        headTitle.setText(pinMode[0] ? "TAP APPS TO PIN / UNPIN" : ("ALL APPS  \u00B7  " + allPkgs.size()));
-        headTitle.setLetterSpacing(0.08f);
+        final TextView headTitle = text(sp(20f), 0xFFFFF4D2, semibold);
+        headTitle.setSingleLine(true);
+        headTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
         headerRow.addView(headTitle, new LinearLayout.LayoutParams(0, -2, 1f));
 
-        final TextView pinToggleBtn = text(spx(16), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        final TextView pinToggleBtn = text(sp(13f), 0xFFFFF4D2, semibold);
         final GradientDrawable pinBtnBg = new GradientDrawable();
-        pinBtnBg.setCornerRadius(spx(20));
+        pinBtnBg.setCornerRadius(dp(18));
         final Runnable updatePinHeader = () -> {
-            headTitle.setText(pinMode[0] ? "TAP APPS TO PIN / UNPIN" : ("ALL APPS  \u00B7  " + filteredPkgs.size()));
-            pinToggleBtn.setText(pinMode[0] ? "\u2713 DONE" : "\u2605 PIN APPS");
-            pinToggleBtn.setTextColor(pinMode[0] ? 0xFF141018 : 0xFFFFE8A8);
-            pinBtnBg.setColor(pinMode[0] ? 0xFFFFD54F : 0x28FFFFFF);
-            pinBtnBg.setStroke(Math.max(1, spx(1)), pinMode[0] ? 0xFFFFF4D2 : 0x55F5D078);
+            headTitle.setText(pinMode[0] ? "Tap Apps to Pin / Unpin" : ("All Apps  \u00B7  " + filteredPkgs.size()));
+            pinToggleBtn.setText(pinMode[0] ? "\u2713 Done" : "\u2605 Edit Home");
+            pinToggleBtn.setTextColor(pinMode[0] ? 0xFF100D18 : 0xFFFFE8A8);
+            pinBtnBg.setColor(pinMode[0] ? 0xFFFFD54F : 0x22FFFFFF);
+            pinBtnBg.setStroke(Math.max(1, dp(1)), pinMode[0] ? 0xFFFFF4D2 : 0x48F5D078);
         };
         updatePinHeader.run();
         pinToggleBtn.setBackground(pinBtnBg);
-        pinToggleBtn.setPadding(spx(18), spx(8), spx(18), spx(8));
+        pinToggleBtn.setPadding(dp(16), dp(8), dp(16), dp(8));
         headerRow.addView(pinToggleBtn, new LinearLayout.LayoutParams(-2, -2));
 
         LinearLayout.LayoutParams hrlp = new LinearLayout.LayoutParams(-1, -2);
-        hrlp.bottomMargin = spx(14);
+        hrlp.bottomMargin = dp(14);
         sheet.addView(headerRow, hrlp);
 
-        // Search bar with LineIcon.SEARCH
+        // Modern 48dp Pill Search Bar with Search Icon & One-Tap Clear Button
         LinearLayout searchBox = new LinearLayout(this);
         searchBox.setOrientation(LinearLayout.HORIZONTAL);
         searchBox.setGravity(Gravity.CENTER_VERTICAL);
-        searchBox.setPadding(spx(18), spx(8), spx(18), spx(8));
+        searchBox.setMinimumHeight(dp(48));
+        searchBox.setPadding(dp(16), dp(4), dp(12), dp(4));
         GradientDrawable sBg = new GradientDrawable();
-        sBg.setCornerRadius(spx(28));
-        sBg.setColor(0x28FFFFFF);
-        sBg.setStroke(Math.max(1, spx(1)), 0x44F5D078);
+        sBg.setCornerRadius(dp(24));
+        sBg.setColor(0x1EFFFFFF);
+        sBg.setStroke(Math.max(1, dp(1)), 0x38F5D078);
         searchBox.setBackground(sBg);
 
         ImageView sIcon = new ImageView(this);
         LineIcon searchLi = new LineIcon(LineIcon.SEARCH);
         searchLi.setColorFilter(0xCCFFE8B0, android.graphics.PorterDuff.Mode.SRC_IN);
         sIcon.setImageDrawable(searchLi);
-        searchBox.addView(sIcon, new LinearLayout.LayoutParams(spx(24), spx(24)));
+        searchBox.addView(sIcon, new LinearLayout.LayoutParams(dp(20), dp(20)));
 
         final EditText searchInput = new EditText(this);
-        searchInput.setHint("Search installed apps\u2026");
-        searchInput.setHintTextColor(0x77FFE8B0);
-        searchInput.setTextColor(0xFFFFF4D2);
-        searchInput.setTextSize(TypedValue.COMPLEX_UNIT_PX, spx(20));
+        searchInput.setHint("Search apps\u2026");
+        searchInput.setHintTextColor(0x78FFE8B0);
+        searchInput.setTextColor(0xFFFFFFFF);
+        searchInput.setTextSize(TypedValue.COMPLEX_UNIT_PX, sp(16f));
         searchInput.setSingleLine(true);
-        searchInput.setBackground( null);
+        searchInput.setBackground(null);
         searchInput.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-        searchInput.setPadding(spx(14), spx(6), spx(10), spx(6));
+        searchInput.setPadding(dp(12), dp(6), dp(8), dp(6));
         searchBox.addView(searchInput, new LinearLayout.LayoutParams(0, -2, 1f));
 
+        final TextView clearBtn = text(sp(14f), 0xCCFFE8B0, semibold);
+        clearBtn.setText("\u2715");
+        clearBtn.setGravity(Gravity.CENTER);
+        clearBtn.setPadding(dp(10), dp(6), dp(10), dp(6));
+        clearBtn.setVisibility(View.GONE);
+        clearBtn.setOnClickListener(v -> searchInput.setText(""));
+        searchBox.addView(clearBtn, new LinearLayout.LayoutParams(-2, -2));
+
         LinearLayout.LayoutParams sblp = new LinearLayout.LayoutParams(-1, -2);
-        sblp.bottomMargin = spx(18);
+        sblp.bottomMargin = dp(14);
         sheet.addView(searchBox, sblp);
 
-        // Spacious Vertical Scroll List of all installed apps (clean icon + full app name + pin status)
+        // Native Mobile Vertical Scroll List of all installed apps (48dp squircle icon + 16.5sp app name + interactive pin pill)
         final ListView list = new ListView(this);
         list.setDivider(new ColorDrawable(Color.TRANSPARENT));
-        list.setDividerHeight(spx(10));
+        list.setDividerHeight(dp(8));
         list.setVerticalScrollBarEnabled(false);
         list.setOverScrollMode(View.OVER_SCROLL_NEVER);
         GradientDrawable listSel = new GradientDrawable();
-        listSel.setCornerRadius(spx(22));
-        listSel.setColor(0x28FFE8B0);
+        listSel.setCornerRadius(dp(18));
+        listSel.setColor(0x24FFE8B0);
         list.setSelector(listSel);
 
-        final int rowIconSize = spx(56);
+        final int rowIconSize = dp(48);
+        final int rowIconRadius = dp(13);
         final BaseAdapter adapter = new BaseAdapter() {
             @Override public int getCount() { return filteredPkgs.size(); }
             @Override public Object getItem(int pos) { return filteredPkgs.get(pos); }
@@ -2491,57 +2568,71 @@ public class MainActivity extends Activity {
                     row = new LinearLayout(MainActivity.this);
                     row.setOrientation(LinearLayout.HORIZONTAL);
                     row.setGravity(Gravity.CENTER_VERTICAL);
-                    row.setPadding(spx(18), spx(12), spx(18), spx(12));
-                    GradientDrawable rowBg = new GradientDrawable();
-                    rowBg.setCornerRadius(spx(22));
-                    rowBg.setColor(0x18FFFFFF);
-                    rowBg.setStroke(Math.max(1, spx(1)), 0x26F5D078);
-                    row.setBackground(rowBg);
+                    row.setMinimumHeight(dp(66));
+                    row.setPadding(dp(14), dp(9), dp(14), dp(9));
 
                     FrameLayout box = new FrameLayout(MainActivity.this);
                     GradientDrawable bBg = new GradientDrawable();
-                    bBg.setCornerRadius(Math.round(rowIconSize * 0.26f));
-                    bBg.setColor(0xFF14101E);
-                    bBg.setStroke(Math.max(1, spx(1)), 0x44F5D078);
+                    bBg.setCornerRadius(rowIconRadius);
+                    bBg.setColor(0x380E101E);
                     box.setBackground(bBg);
+                    box.setClipToOutline(true);
 
                     iconIv = new ImageView(MainActivity.this);
                     iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    int pad = Math.round(rowIconSize * 0.12f);
-                    iconIv.setPadding(pad, pad, pad, pad);
                     box.addView(iconIv, new FrameLayout.LayoutParams(rowIconSize, rowIconSize));
                     row.addView(box, new LinearLayout.LayoutParams(rowIconSize, rowIconSize));
 
-                    nameTv = text(spx(21), 0xF5FFF4D2, semibold);
+                    nameTv = text(sp(16.5f), 0xFAFFFFFF, semibold);
                     nameTv.setSingleLine(true);
                     nameTv.setEllipsize(android.text.TextUtils.TruncateAt.END);
                     nameTv.setGravity(Gravity.CENTER_VERTICAL);
                     LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(0, -2, 1f);
-                    nlp.leftMargin = spx(18);
+                    nlp.leftMargin = dp(16);
+                    nlp.rightMargin = dp(10);
                     row.addView(nameTv, nlp);
 
-                    badgeTv = text(spx(15), 0xFFFFE082, cinzelFont != null ? cinzelFont : semibold);
+                    badgeTv = text(sp(12.5f), 0xFFFFE082, semibold);
                     badgeTv.setGravity(Gravity.CENTER);
-                    badgeTv.setPadding(spx(12), spx(6), spx(12), spx(6));
+                    badgeTv.setPadding(dp(12), dp(6), dp(12), dp(6));
                     row.addView(badgeTv, new LinearLayout.LayoutParams(-2, -2));
                 }
-                String pkg = filteredPkgs.get(pos);
+                final String pkg = filteredPkgs.get(pos);
                 String lbl = filteredLabels.get(pos);
-                boolean pinned = rowApps.contains(pkg);
-                nameTv.setText(lbl);
-                nameTv.setTextColor(pinned ? 0xFFFFF4D2 : 0xE6FFF4D2);
+                final boolean pinned = rowApps.contains(pkg);
 
+                GradientDrawable rowBg = new GradientDrawable();
+                rowBg.setCornerRadius(dp(18));
+                rowBg.setColor(pinned ? 0x1E282014 : 0x12FFFFFF);
+                rowBg.setStroke(Math.max(1, dp(1)), pinned ? 0x44FFD54F : 0x1EFFFFFF);
+                row.setBackground(rowBg);
+
+                nameTv.setText(lbl);
+                nameTv.setTextColor(pinned ? 0xFFFFF8E8 : 0xF2FFFFFF);
+
+                GradientDrawable badgeBg = new GradientDrawable();
+                badgeBg.setCornerRadius(dp(14));
                 if (pinned) {
                     badgeTv.setVisibility(View.VISIBLE);
-                    badgeTv.setText("\u2605 PINNED");
+                    badgeTv.setText(pinMode[0] ? "\u2605 Pinned" : "\u2605 On Home");
                     badgeTv.setTextColor(0xFFFFD54F);
-                } else if (pinMode[0]) {
-                    badgeTv.setVisibility(View.VISIBLE);
-                    badgeTv.setText("+ PIN");
-                    badgeTv.setTextColor(0x99FFE8B0);
+                    badgeBg.setColor(0x26FFD54F);
+                    badgeBg.setStroke(Math.max(1, dp(1)), 0x55FFD54F);
                 } else {
-                    badgeTv.setVisibility(View.GONE);
+                    badgeTv.setVisibility(View.VISIBLE);
+                    badgeTv.setText("+ Pin");
+                    badgeTv.setTextColor(pinMode[0] ? 0xFFE6FFE8 : 0x99FFE8B0);
+                    badgeBg.setColor(pinMode[0] ? 0x22FFFFFF : 0x10FFFFFF);
+                    badgeBg.setStroke(Math.max(1, dp(1)), pinMode[0] ? 0x44F5D078 : 0x24FFFFFF);
                 }
+                badgeTv.setBackground(badgeBg);
+                badgeTv.setOnClickListener(v -> {
+                    if (rowApps.contains(pkg)) rowApps.remove(pkg);
+                    else rowApps.add(pkg);
+                    saveRow();
+                    buildTiles();
+                    notifyDataSetChanged();
+                });
 
                 Drawable ic = iconCache.get(pkg);
                 if (ic == null) {
@@ -2609,6 +2700,7 @@ public class MainActivity extends Activity {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String q = s == null ? "" : s.toString().trim().toLowerCase(java.util.Locale.ROOT);
+                clearBtn.setVisibility(q.isEmpty() ? View.GONE : View.VISIBLE);
                 filteredLabels.clear();
                 filteredPkgs.clear();
                 for (int i = 0; i < allLabels.size(); i++) {
@@ -2629,16 +2721,17 @@ public class MainActivity extends Activity {
         sheet.addView(list, new LinearLayout.LayoutParams(-1, 0, 1f));
         d.setContentView(sheet);
 
-        int sheetH = Math.round(screenH * 0.86f);
+        int sheetW = !isTvDevice() ? Math.min(screenW, dp(620)) : screenW;
+        int sheetH = Math.round(screenH * 0.88f);
         Window win = d.getWindow();
         win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        win.setGravity(Gravity.BOTTOM);
-        win.setDimAmount(0.58f);
+        win.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        win.setDimAmount(0.62f);
         win.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
                 | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        win.setLayout(screenW, sheetH);
+        win.setLayout(sheetW, sheetH);
         d.show();
-        win.setLayout(screenW, sheetH);
+        win.setLayout(sheetW, sheetH);
     }
 
     private void openAppInfo(String pkg) {

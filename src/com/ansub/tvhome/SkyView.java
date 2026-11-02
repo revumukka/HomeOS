@@ -587,11 +587,18 @@ final class SkyView extends View {
             stars[b + 5] = (i % 8 == 0) ? 1f : 0f;
         }
 
-        float[] cxNorm = {
+        boolean isPortrait = h > w;
+        float[] cxNorm = isPortrait ? new float[] {
+            0.09f, 0.16f, 0.84f, 0.91f, 0.12f, 0.88f, 0.10f, 0.22f, 0.34f,
+            0.46f, 0.58f, 0.70f, 0.82f, 0.91f, 0.17f, 0.39f, 0.63f, 0.85f
+        } : new float[] {
             0.36f, 0.41f, 0.45f, 0.49f, 0.53f, 0.57f, 0.61f, 0.65f, 0.70f,
             0.39f, 0.47f, 0.55f, 0.63f, 0.74f, 0.79f, 0.84f, 0.89f, 0.94f
         };
-        float[] cyNorm = {
+        float[] cyNorm = isPortrait ? new float[] {
+            0.06f, 0.11f, 0.11f, 0.06f, 0.60f, 0.61f, 0.68f, 0.63f, 0.71f,
+            0.65f, 0.72f, 0.64f, 0.69f, 0.66f, 0.75f, 0.77f, 0.75f, 0.73f
+        } : new float[] {
             0.07f, 0.16f, 0.06f, 0.18f, 0.08f, 0.17f, 0.07f, 0.19f, 0.14f,
             0.22f, 0.23f, 0.21f, 0.22f, 0.19f, 0.22f, 0.17f, 0.21f, 0.16f
         };
@@ -611,9 +618,11 @@ final class SkyView extends View {
             candles[b + 6] = i * 2.3f;
         }
 
-        // Initialize 5 Hogwarts House Ghosts gliding among the top candles (y = 0.07..0.22)
-        float[] gxNorm = {0.38f, 0.52f, 0.66f, 0.78f, 0.90f};
-        float[] gyNorm = {0.11f, 0.18f, 0.09f, 0.20f, 0.14f};
+        // Initialize 5 Hogwarts House Ghosts gliding among the candles
+        float[] gxNorm = isPortrait ? new float[] {0.16f, 0.34f, 0.52f, 0.70f, 0.86f}
+                                    : new float[] {0.38f, 0.52f, 0.66f, 0.78f, 0.90f};
+        float[] gyNorm = isPortrait ? new float[] {0.64f, 0.70f, 0.62f, 0.72f, 0.66f}
+                                    : new float[] {0.11f, 0.18f, 0.09f, 0.20f, 0.14f};
         float[] gSpeedX = {px(24f), -px(20f), px(28f), -px(22f), px(18f)};
         float[] gScale = {1.05f, 0.95f, 1.00f, 1.08f, 0.88f};
         for (int g = 0; g < GHOST_COUNT; g++) {
@@ -639,6 +648,81 @@ final class SkyView extends View {
             sparks[b + 3] = -px(6.5f + (i % 5) * 2.5f);
             sparks[b + 4] = px(1.6f + (i % 3) * 1.1f);
             sparks[b + 5] = i * 0.9f;
+        }
+    }
+
+    // Preserves natural 16:9 architectural proportions of horizon towers/castles on tall portrait phone screens
+    private static float skyY(int w, int h, float yFrac) {
+        if (h <= w || yFrac < 0.55f) return h * yFrac;
+        float groundFrac = 0.900f;
+        float refH = w * 0.65f;
+        return h * groundFrac + (yFrac - groundFrac) * refH;
+    }
+
+    private static float getStageScale(int w, int h) {
+        if (h > w) {
+            return Math.min(2.10f, Math.max(1.75f, (h / (float) Math.max(1, w)) * 1.12f));
+        }
+        return 1.50f;
+    }
+
+    private void drawStoryCaptionAndDots(Canvas c, int w, int h, String title, int scene, int count,
+                                         int aBase, int textRgb, int activeDotCol, int idleDotCol, float defaultDotStep) {
+        boolean isPortrait = h > w;
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextAlign(Paint.Align.CENTER);
+        if (cinzelFont != null) paint.setTypeface(cinzelFont);
+        paint.setColor((Math.round(aBase * 0.90f) << 24) | (textRgb & 0x00FFFFFF));
+
+        if (!isPortrait) {
+            paint.setTextSize(px(15.0f));
+            paint.setLetterSpacing(0.18f);
+            c.drawText(title != null ? title : "", w * 0.5f, h * 0.976f, paint);
+            paint.setLetterSpacing(0f);
+
+            for (int i = 0; i < count; i++) {
+                float dx = w * 0.5f + (i - (count - 1) / 2f) * defaultDotStep;
+                float dy = h * 0.946f;
+                paint.setColor(i == scene ? activeDotCol : idleDotCol);
+                c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.5f), paint);
+            }
+        } else {
+            // Portrait Phone / Foldable Cover Screen: crisp mobile-scaled 2-line caption & responsive dot bar
+            float textSize = Math.max(px(16.0f), w * 0.0255f);
+            paint.setTextSize(textSize);
+            paint.setLetterSpacing(0.08f);
+            String raw = title != null ? title : "";
+            int dash = raw.indexOf(" \u2014 ");
+            if (dash < 0) dash = raw.indexOf(" - ");
+            float maxLineW = w * 0.88f;
+            if (dash > 0) {
+                String line1 = raw.substring(0, dash).trim();
+                String line2 = raw.substring(dash + 3).trim();
+                float m2 = paint.measureText(line2) * 1.10f;
+                if (m2 > maxLineW && m2 > 0) {
+                    paint.setTextSize(Math.max(w * 0.019f, textSize * (maxLineW / m2)));
+                }
+                c.drawText(line1, w * 0.5f, h * 0.944f, paint);
+                c.drawText(line2, w * 0.5f, h * 0.965f, paint);
+            } else {
+                float m = paint.measureText(raw) * 1.10f;
+                if (m > maxLineW && m > 0) {
+                    paint.setTextSize(Math.max(w * 0.019f, textSize * (maxLineW / m)));
+                }
+                c.drawText(raw, w * 0.5f, h * 0.958f, paint);
+            }
+            paint.setLetterSpacing(0f);
+
+            float maxDotsSpan = w * 0.78f;
+            float step = count > 1 ? Math.min(Math.max(defaultDotStep, w * 0.014f), maxDotsSpan / (count - 1)) : 0f;
+            float rActive = Math.max(px(3.2f), w * 0.0050f);
+            float rIdle = Math.max(px(1.6f), w * 0.0024f);
+            float dy = h * 0.918f;
+            for (int i = 0; i < count; i++) {
+                float dx = w * 0.5f + (i - (count - 1) / 2f) * step;
+                paint.setColor(i == scene ? activeDotCol : idleDotCol);
+                c.drawCircle(dx, dy, i == scene ? rActive : rIdle, paint);
+            }
         }
     }
 
@@ -730,13 +814,13 @@ final class SkyView extends View {
                 stage.lineTo(0, groundY);
                 stage.lineTo(w * 0.66f, groundY);
                 // Hokage Monument Mountain Cliffside on right (0.68..1.00)
-                stage.lineTo(w * 0.70f, h * 0.83f);
-                stage.lineTo(w * 0.74f, h * 0.75f); // First Hokage Peak
-                stage.lineTo(w * 0.77f, h * 0.77f); // Second Hokage Peak
-                stage.lineTo(w * 0.81f, h * 0.73f); // Third Hokage Peak
-                stage.lineTo(w * 0.85f, h * 0.71f); // Fourth Hokage Peak
-                stage.lineTo(w * 0.90f, h * 0.74f); // Fifth/Sixth/Seventh Hokage Cliff
-                stage.lineTo(w * 0.95f, h * 0.81f);
+                stage.lineTo(w * 0.70f, skyY(w, h, 0.83f));
+                stage.lineTo(w * 0.74f, skyY(w, h, 0.75f)); // First Hokage Peak
+                stage.lineTo(w * 0.77f, skyY(w, h, 0.77f)); // Second Hokage Peak
+                stage.lineTo(w * 0.81f, skyY(w, h, 0.73f)); // Third Hokage Peak
+                stage.lineTo(w * 0.85f, skyY(w, h, 0.71f)); // Fourth Hokage Peak
+                stage.lineTo(w * 0.90f, skyY(w, h, 0.74f)); // Fifth/Sixth/Seventh Hokage Cliff
+                stage.lineTo(w * 0.95f, skyY(w, h, 0.81f));
                 stage.lineTo(w, groundY);
                 stage.lineTo(w, h);
                 stage.close();
@@ -759,7 +843,7 @@ final class SkyView extends View {
                 p.setColor(0x40FF9858);
                 for (int hf = 0; hf < 5; hf++) {
                     float fx = w * (0.73f + hf * 0.042f);
-                    float fy = h * (0.78f - (hf % 2) * 0.02f);
+                    float fy = skyY(w, h, 0.78f - (hf % 2) * 0.02f);
                     c.drawLine(fx, fy - px(12f), fx + px(6f), fy - px(4f), p);
                     c.drawLine(fx + px(6f), fy - px(4f), fx + px(2f), fy + px(6f), p);
                 }
@@ -781,15 +865,15 @@ final class SkyView extends View {
                 stage.lineTo(0, groundY);
                 stage.lineTo(w * 0.68f, groundY);
                 // Multi-tiered Infinity Castle / Butterfly Mansion Pagoda on right (0.70..0.96)
-                stage.lineTo(w * 0.72f, h * 0.85f);
-                stage.lineTo(w * 0.69f, h * 0.84f); // Lower eaves left
-                stage.lineTo(w * 0.75f, h * 0.79f);
-                stage.lineTo(w * 0.71f, h * 0.78f); // Mid eaves left
-                stage.lineTo(w * 0.82f, h * 0.69f); // Pagoda Spire Peak
-                stage.lineTo(w * 0.93f, h * 0.78f); // Mid eaves right
-                stage.lineTo(w * 0.89f, h * 0.79f);
-                stage.lineTo(w * 0.95f, h * 0.84f); // Lower eaves right
-                stage.lineTo(w * 0.92f, h * 0.85f);
+                stage.lineTo(w * 0.72f, skyY(w, h, 0.85f));
+                stage.lineTo(w * 0.69f, skyY(w, h, 0.84f)); // Lower eaves left
+                stage.lineTo(w * 0.75f, skyY(w, h, 0.79f));
+                stage.lineTo(w * 0.71f, skyY(w, h, 0.78f)); // Mid eaves left
+                stage.lineTo(w * 0.82f, skyY(w, h, 0.69f)); // Pagoda Spire Peak
+                stage.lineTo(w * 0.93f, skyY(w, h, 0.78f)); // Mid eaves right
+                stage.lineTo(w * 0.89f, skyY(w, h, 0.79f));
+                stage.lineTo(w * 0.95f, skyY(w, h, 0.84f)); // Lower eaves right
+                stage.lineTo(w * 0.92f, skyY(w, h, 0.85f));
                 stage.lineTo(w, groundY);
                 stage.lineTo(w, h);
                 stage.close();
@@ -812,7 +896,7 @@ final class SkyView extends View {
                 p.setColor(0x78FFAE48);
                 for (int pw = 0; pw < 4; pw++) {
                     float wx = w * (0.78f + pw * 0.022f);
-                    c.drawRect(wx, h * 0.81f, wx + px(6f), h * 0.84f, p);
+                    c.drawRect(wx, skyY(w, h, 0.81f), wx + px(6f), skyY(w, h, 0.84f), p);
                 }
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(px(1.6f));
@@ -844,13 +928,13 @@ final class SkyView extends View {
                 stage.lineTo(0, groundY);
                 stage.lineTo(w * 0.68f, groundY);
                 // Jedi Temple / Imperial Citadel Spires on right (0.70..0.96)
-                stage.lineTo(w * 0.72f, h * 0.75f);
-                stage.lineTo(w * 0.74f, h * 0.86f);
-                stage.lineTo(w * 0.80f, h * 0.86f);
-                stage.lineTo(w * 0.82f, h * 0.68f); // Central Ziggurat Spire
-                stage.lineTo(w * 0.84f, h * 0.86f);
-                stage.lineTo(w * 0.90f, h * 0.86f);
-                stage.lineTo(w * 0.92f, h * 0.75f);
+                stage.lineTo(w * 0.72f, skyY(w, h, 0.75f));
+                stage.lineTo(w * 0.74f, skyY(w, h, 0.86f));
+                stage.lineTo(w * 0.80f, skyY(w, h, 0.86f));
+                stage.lineTo(w * 0.82f, skyY(w, h, 0.68f)); // Central Ziggurat Spire
+                stage.lineTo(w * 0.84f, skyY(w, h, 0.86f));
+                stage.lineTo(w * 0.90f, skyY(w, h, 0.86f));
+                stage.lineTo(w * 0.92f, skyY(w, h, 0.75f));
                 stage.lineTo(w * 0.94f, groundY);
                 stage.lineTo(w, groundY);
                 stage.lineTo(w, h);
@@ -859,9 +943,9 @@ final class SkyView extends View {
 
                 // Hovering Wedge-Shaped Imperial Star Destroyer Silhouette over right horizon
                 Path isd = new Path();
-                isd.moveTo(w * 0.66f, h * 0.66f);
-                isd.lineTo(w * 0.80f, h * 0.63f);
-                isd.lineTo(w * 0.78f, h * 0.69f);
+                isd.moveTo(w * 0.66f, skyY(w, h, 0.66f));
+                isd.lineTo(w * 0.80f, skyY(w, h, 0.63f));
+                isd.lineTo(w * 0.78f, skyY(w, h, 0.69f));
                 isd.close();
                 p.setColor(0x661C2838);
                 c.drawPath(isd, p);
@@ -891,16 +975,16 @@ final class SkyView extends View {
                 stage.lineTo(0, groundY);
                 stage.lineTo(w * 0.68f, groundY);
                 // Avengers / Stark Tower Skyline on right (0.70..0.96)
-                stage.lineTo(w * 0.72f, h * 0.79f);
-                stage.lineTo(w * 0.76f, h * 0.79f);
+                stage.lineTo(w * 0.72f, skyY(w, h, 0.79f));
+                stage.lineTo(w * 0.76f, skyY(w, h, 0.79f));
                 stage.lineTo(w * 0.76f, groundY);
                 stage.lineTo(w * 0.79f, groundY);
-                stage.lineTo(w * 0.80f, h * 0.67f); // Slanted Avengers Tower Roof
-                stage.lineTo(w * 0.87f, h * 0.72f); // Stark Landing Pad Ledge
-                stage.lineTo(w * 0.84f, h * 0.75f);
+                stage.lineTo(w * 0.80f, skyY(w, h, 0.67f)); // Slanted Avengers Tower Roof
+                stage.lineTo(w * 0.87f, skyY(w, h, 0.72f)); // Stark Landing Pad Ledge
+                stage.lineTo(w * 0.84f, skyY(w, h, 0.75f));
                 stage.lineTo(w * 0.84f, groundY);
-                stage.lineTo(w * 0.89f, h * 0.77f);
-                stage.lineTo(w * 0.94f, h * 0.77f);
+                stage.lineTo(w * 0.89f, skyY(w, h, 0.77f));
+                stage.lineTo(w * 0.94f, skyY(w, h, 0.77f));
                 stage.lineTo(w * 0.94f, groundY);
                 stage.lineTo(w, groundY);
                 stage.lineTo(w, h);
@@ -911,7 +995,7 @@ final class SkyView extends View {
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(px(2.0f));
                 p.setColor(0x8848E8FF);
-                c.drawCircle(w * 0.82f, h * 0.73f, px(9f), p);
+                c.drawCircle(w * 0.82f, skyY(w, h, 0.73f), px(9f), p);
                 c.drawLine(0, groundY, w, groundY, p);
             } else if (universeTheme == 5) {
                 // DCU SKY: The Bat-Signal Beam in the Upper-Right Gotham Clouds + Wayne Tower & Daily Planet Skyline
@@ -920,7 +1004,7 @@ final class SkyView extends View {
                 p.setStyle(Paint.Style.FILL);
                 p.setColor(0x18FFE888);
                 Path cone = new Path();
-                cone.moveTo(w * 0.76f, h * 0.72f);
+                cone.moveTo(w * 0.76f, skyY(w, h, 0.72f));
                 cone.lineTo(mx - mr * 0.9f, my + mr * 0.3f);
                 cone.lineTo(mx + mr * 0.9f, my - mr * 0.3f);
                 cone.close();
@@ -953,15 +1037,15 @@ final class SkyView extends View {
                 stage.lineTo(0, groundY);
                 stage.lineTo(w * 0.68f, groundY);
                 // Gotham Wayne Tower & Metropolis Daily Planet Skyline on right (0.70..0.96)
-                stage.lineTo(w * 0.70f, h * 0.74f);
-                stage.lineTo(w * 0.73f, h * 0.67f); // Wayne Tower Deco Spire
-                stage.lineTo(w * 0.76f, h * 0.74f);
+                stage.lineTo(w * 0.70f, skyY(w, h, 0.74f));
+                stage.lineTo(w * 0.73f, skyY(w, h, 0.67f)); // Wayne Tower Deco Spire
+                stage.lineTo(w * 0.76f, skyY(w, h, 0.74f));
                 stage.lineTo(w * 0.76f, groundY);
-                stage.lineTo(w * 0.81f, h * 0.76f);
-                stage.lineTo(w * 0.87f, h * 0.76f); // Daily Planet Roof
+                stage.lineTo(w * 0.81f, skyY(w, h, 0.76f));
+                stage.lineTo(w * 0.87f, skyY(w, h, 0.76f)); // Daily Planet Roof
                 stage.lineTo(w * 0.87f, groundY);
-                stage.lineTo(w * 0.91f, h * 0.79f);
-                stage.lineTo(w * 0.95f, h * 0.79f);
+                stage.lineTo(w * 0.91f, skyY(w, h, 0.79f));
+                stage.lineTo(w * 0.95f, skyY(w, h, 0.79f));
                 stage.lineTo(w * 0.95f, groundY);
                 stage.lineTo(w, groundY);
                 stage.lineTo(w, h);
@@ -972,8 +1056,8 @@ final class SkyView extends View {
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(px(1.8f));
                 p.setColor(0x88FFE078);
-                c.drawCircle(w * 0.84f, h * 0.72f, px(11f), p);
-                c.drawLine(w * 0.82f, h * 0.72f, w * 0.86f, h * 0.72f, p);
+                c.drawCircle(w * 0.84f, skyY(w, h, 0.72f), px(11f), p);
+                c.drawLine(w * 0.82f, skyY(w, h, 0.72f), w * 0.86f, skyY(w, h, 0.72f), p);
                 c.drawLine(0, groundY, w, groundY, p);
             } else {
             // Full Moon in upper right sky
@@ -1006,22 +1090,22 @@ final class SkyView extends View {
             stage.moveTo(0, h);
             stage.lineTo(0, groundY);
             stage.lineTo(w * 0.34f, groundY);
-            stage.lineTo(w * 0.38f, h * 0.922f);
-            stage.lineTo(w * 0.66f, h * 0.922f);
+            stage.lineTo(w * 0.38f, skyY(w, h, 0.922f));
+            stage.lineTo(w * 0.66f, skyY(w, h, 0.922f));
             // Taller Hogwarts Castle silhouette on far right (x = 0.68..0.98)
-            stage.lineTo(w * 0.70f, h * 0.86f);
-            stage.lineTo(w * 0.715f, h * 0.76f); // West Turret
-            stage.lineTo(w * 0.73f, h * 0.86f);
-            stage.lineTo(w * 0.755f, h * 0.85f);
-            stage.lineTo(w * 0.772f, h * 0.68f); // Tall Astronomy Tower Peak
-            stage.lineTo(w * 0.79f, h * 0.85f);
-            stage.lineTo(w * 0.812f, h * 0.82f);
-            stage.lineTo(w * 0.826f, h * 0.73f); // Grand Staircase Tower
-            stage.lineTo(w * 0.84f, h * 0.83f);
-            stage.lineTo(w * 0.88f, h * 0.83f);  // Great Hall Crest
-            stage.lineTo(w * 0.896f, h * 0.75f); // Bell Tower
-            stage.lineTo(w * 0.912f, h * 0.86f);
-            stage.lineTo(w * 0.95f, h * 0.89f);
+            stage.lineTo(w * 0.70f, skyY(w, h, 0.86f));
+            stage.lineTo(w * 0.715f, skyY(w, h, 0.76f)); // West Turret
+            stage.lineTo(w * 0.73f, skyY(w, h, 0.86f));
+            stage.lineTo(w * 0.755f, skyY(w, h, 0.85f));
+            stage.lineTo(w * 0.772f, skyY(w, h, 0.68f)); // Tall Astronomy Tower Peak
+            stage.lineTo(w * 0.79f, skyY(w, h, 0.85f));
+            stage.lineTo(w * 0.812f, skyY(w, h, 0.82f));
+            stage.lineTo(w * 0.826f, skyY(w, h, 0.73f)); // Grand Staircase Tower
+            stage.lineTo(w * 0.84f, skyY(w, h, 0.83f));
+            stage.lineTo(w * 0.88f, skyY(w, h, 0.83f));  // Great Hall Crest
+            stage.lineTo(w * 0.896f, skyY(w, h, 0.75f)); // Bell Tower
+            stage.lineTo(w * 0.912f, skyY(w, h, 0.86f));
+            stage.lineTo(w * 0.95f, skyY(w, h, 0.89f));
             stage.lineTo(w, groundY);
             stage.lineTo(w, h);
             stage.close();
@@ -1053,7 +1137,8 @@ final class SkyView extends View {
                 {0.894f, 0.79f}, {0.894f, 0.82f}
             };
             for (float[] wp : winPts) {
-                c.drawRoundRect(wp[0] * w, wp[1] * h, wp[0] * w + px(3.5f), wp[1] * h + px(7.5f), px(1.5f), px(1.5f), p);
+                float wy = skyY(w, h, wp[1]);
+                c.drawRoundRect(wp[0] * w, wy, wp[0] * w + px(3.5f), wy + px(7.5f), px(1.5f), px(1.5f), p);
             }
             }
 
@@ -1585,30 +1670,14 @@ final class SkyView extends View {
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
 
-        // Expanded stage baseline & scale multiplier (1.5x larger actors!)
         float groundY = h * 0.900f;
+        drawStoryCaptionAndDots(c, w, h, CHAPTER_TITLES[scene], scene, SCENE_COUNT, aBase,
+                0x00F5D488, 0xEEFFE082, 0x42F5D078, px(7.8f));
 
-        // Chapter Title Caption at Bottom Center
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextAlign(Paint.Align.CENTER);
-        if (cinzelFont != null) paint.setTypeface(cinzelFont);
-        paint.setTextSize(px(15.0f));
-        paint.setLetterSpacing(0.18f);
-        paint.setColor((Math.round(aBase * 0.88f) << 24) | 0x00F5D488);
-        c.drawText(CHAPTER_TITLES[scene], w * 0.5f, h * 0.976f, paint);
-        paint.setLetterSpacing(0f);
-
-        // 56 Compact Progress Dots right above the scene title
-        for (int i = 0; i < SCENE_COUNT; i++) {
-            float dx = w * 0.5f + (i - (SCENE_COUNT - 1) / 2f) * px(7.8f);
-            float dy = h * 0.946f;
-            paint.setColor(i == scene ? 0xEEFFE082 : 0x42F5D078);
-            c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.4f), paint);
-        }
-
-        // Scale the bottom story animations to 1.5x anchored on the stage groundY baseline
+        // Scale the bottom story animations anchored on the stage groundY baseline
         c.save();
-        c.scale(1.50f, 1.50f, w * 0.45f, groundY);
+        float stScale = getStageScale(w, h);
+        c.scale(stScale, stScale, w * 0.45f, groundY);
 
         switch (scene) {
             case 0: {
@@ -2648,25 +2717,12 @@ final class SkyView extends View {
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
-
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextAlign(Paint.Align.CENTER);
-        if (cinzelFont != null) paint.setTypeface(cinzelFont);
-        paint.setTextSize(px(15.0f));
-        paint.setLetterSpacing(0.18f);
-        paint.setColor((Math.round(aBase * 0.90f) << 24) | 0x00FF9848);
-        c.drawText(NARUTO_TITLES[scene], w * 0.5f, h * 0.976f, paint);
-        paint.setLetterSpacing(0f);
-
-        for (int i = 0; i < count; i++) {
-            float dx = w * 0.5f + (i - (count - 1) / 2f) * px(10.5f);
-            float dy = h * 0.946f;
-            paint.setColor(i == scene ? 0xEEFF6828 : 0x42FF9848);
-            c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.5f), paint);
-        }
+        drawStoryCaptionAndDots(c, w, h, NARUTO_TITLES[scene], scene, count, aBase,
+                0x00FF9848, 0xEEFF6828, 0x42FF9848, px(10.5f));
 
         c.save();
-        c.scale(1.50f, 1.50f, w * 0.45f, groundY);
+        float stScale = getStageScale(w, h);
+        c.scale(stScale, stScale, w * 0.45f, groundY);
         switch (scene) {
             case 0: // Naruto on Hokage Rock overlooking Konoha
                 drawNarutoUzumaki(c, w * 0.46f, groundY - px(58f), t, aBase, 0, 1.35f);
@@ -3364,25 +3420,12 @@ final class SkyView extends View {
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
-
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextAlign(Paint.Align.CENTER);
-        if (cinzelFont != null) paint.setTypeface(cinzelFont);
-        paint.setTextSize(px(15.0f));
-        paint.setLetterSpacing(0.18f);
-        paint.setColor((Math.round(aBase * 0.90f) << 24) | 0x00D898FF);
-        c.drawText(DEMON_SLAYER_TITLES[scene], w * 0.5f, h * 0.976f, paint);
-        paint.setLetterSpacing(0f);
-
-        for (int i = 0; i < count; i++) {
-            float dx = w * 0.5f + (i - (count - 1) / 2f) * px(10.5f);
-            float dy = h * 0.946f;
-            paint.setColor(i == scene ? 0xEE48E8FF : 0x42D898FF);
-            c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.5f), paint);
-        }
+        drawStoryCaptionAndDots(c, w, h, DEMON_SLAYER_TITLES[scene], scene, count, aBase,
+                0x00D898FF, 0xEE48E8FF, 0x42D898FF, px(10.5f));
 
         c.save();
-        c.scale(1.50f, 1.50f, w * 0.45f, groundY);
+        float stScale = getStageScale(w, h);
+        c.scale(stScale, stScale, w * 0.45f, groundY);
         switch (scene) {
             case 0: // Tanjiro & Nezuko in the Snow
                 for (int sn = 0; sn < 10; sn++) {
@@ -3981,25 +4024,12 @@ final class SkyView extends View {
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
-
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextAlign(Paint.Align.CENTER);
-        if (cinzelFont != null) paint.setTypeface(cinzelFont);
-        paint.setTextSize(px(15.0f));
-        paint.setLetterSpacing(0.18f);
-        paint.setColor((Math.round(aBase * 0.90f) << 24) | 0x0068C8FF);
-        c.drawText(STAR_WARS_TITLES[scene], w * 0.5f, h * 0.976f, paint);
-        paint.setLetterSpacing(0f);
-
-        for (int i = 0; i < count; i++) {
-            float dx = w * 0.5f + (i - (count - 1) / 2f) * px(10.5f);
-            float dy = h * 0.946f;
-            paint.setColor(i == scene ? 0xEE38B8FF : 0x4268C8FF);
-            c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.5f), paint);
-        }
+        drawStoryCaptionAndDots(c, w, h, STAR_WARS_TITLES[scene], scene, count, aBase,
+                0x0068C8FF, 0xEE38B8FF, 0x4268C8FF, px(10.5f));
 
         c.save();
-        c.scale(1.50f, 1.50f, w * 0.45f, groundY);
+        float stScale = getStageScale(w, h);
+        c.scale(stScale, stScale, w * 0.45f, groundY);
         switch (scene) {
             case 0: // Tatooine — Luke Skywalker & Twin Binary Suns
                 paint.setColor((aBase * 3 / 4 << 24) | 0x00FFB838);
@@ -4511,25 +4541,12 @@ final class SkyView extends View {
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
-
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextAlign(Paint.Align.CENTER);
-        if (cinzelFont != null) paint.setTypeface(cinzelFont);
-        paint.setTextSize(px(15.0f));
-        paint.setLetterSpacing(0.18f);
-        paint.setColor((Math.round(aBase * 0.90f) << 24) | 0x00C898FF);
-        c.drawText(MCU_TITLES[scene], w * 0.5f, h * 0.976f, paint);
-        paint.setLetterSpacing(0f);
-
-        for (int i = 0; i < count; i++) {
-            float dx = w * 0.5f + (i - (count - 1) / 2f) * px(10.5f);
-            float dy = h * 0.946f;
-            paint.setColor(i == scene ? 0xEE58E8FF : 0x42C898FF);
-            c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.5f), paint);
-        }
+        drawStoryCaptionAndDots(c, w, h, MCU_TITLES[scene], scene, count, aBase,
+                0x00C898FF, 0xEE58E8FF, 0x42C898FF, px(10.5f));
 
         c.save();
-        c.scale(1.50f, 1.50f, w * 0.45f, groundY);
+        float stScale = getStageScale(w, h);
+        c.scale(stScale, stScale, w * 0.45f, groundY);
         switch (scene) {
             case 0: // Iron Man Mark LXXXV Flight & Repulsor Beam
                 float imX = w * (0.28f + p * 0.26f), imY = h * 0.77f + (float) Math.sin(t * 5f) * px(10f);
@@ -5152,25 +5169,12 @@ final class SkyView extends View {
         float fade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
-
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextAlign(Paint.Align.CENTER);
-        if (cinzelFont != null) paint.setTypeface(cinzelFont);
-        paint.setTextSize(px(15.0f));
-        paint.setLetterSpacing(0.18f);
-        paint.setColor((Math.round(aBase * 0.90f) << 24) | 0x00FFE082);
-        c.drawText(DCU_TITLES[scene], w * 0.5f, h * 0.976f, paint);
-        paint.setLetterSpacing(0f);
-
-        for (int i = 0; i < count; i++) {
-            float dx = w * 0.5f + (i - (count - 1) / 2f) * px(10.5f);
-            float dy = h * 0.946f;
-            paint.setColor(i == scene ? 0xEEFFE068 : 0x4268B8FF);
-            c.drawCircle(dx, dy, i == scene ? px(3.0f) : px(1.5f), paint);
-        }
+        drawStoryCaptionAndDots(c, w, h, DCU_TITLES[scene], scene, count, aBase,
+                0x00FFE082, 0xEEFFE068, 0x4268B8FF, px(10.5f));
 
         c.save();
-        c.scale(1.50f, 1.50f, w * 0.45f, groundY);
+        float stScale = getStageScale(w, h);
+        c.scale(stScale, stScale, w * 0.45f, groundY);
         switch (scene) {
             case 0: // Gotham Cathedral — The Dark Knight on Gargoyle + Bat-Signal + Flock of Bats
                 // Glowing Gotham Bat-Signal Spotlight in the Sky

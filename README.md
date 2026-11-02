@@ -1,15 +1,15 @@
 <div align="center">
 
-# HomeScreen v3.4.0
+# HomeScreen v4.0.0
 
-### Universal Multi-Universe Animated Home Launcher for Android TV, Google TV, Foldables & Tablets
+### Universal Multi-Universe Animated Home Launcher for Android TV, Google TV, Foldables, Phones & Tablets
 
-[![Version](https://img.shields.io/badge/version-v3.4.0_(Build_34)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v3.4.0_34.apk)
-[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v3.4.0-b34.apk)
+[![Version](https://img.shields.io/badge/version-v4.0.0_(Build_40)-FFD54F?style=for-the-badge)](releases/HomeScreen_Release_v4.0.0_40.apk)
+[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Phones_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.0.0-b40.apk)
 [![License](https://img.shields.io/badge/license-MIT-black?style=for-the-badge)](LICENSE)
 
-**Download Ready-to-Install Release APKs (`395 KB`):**
-[**⬇ Download `HomeScreen_Release_v3.4.0_34.apk`**](releases/HomeScreen_Release_v3.4.0_34.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v3.4.0-b34.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v3.4.0-b34.apk)
+**Download Ready-to-Install Release APKs (`400 KB`):**
+[**⬇ Download `HomeScreen_Release_v4.0.0_40.apk`**](releases/HomeScreen_Release_v4.0.0_40.apk) · [**⬇ Download `HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.0.0-b40.apk`**](releases/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.0.0-b40.apk)
 
 <img src="docs/home-screen.png" alt="HomeScreen Multi-Universe Launcher" width="100%">
 
@@ -49,12 +49,12 @@ Switch themes anytime from the top-right **3-Card Theme Swatch** icon or **Setti
 ## 📲 Install on Android TV, Google TV, Foldables, or Tablets
 
 ### Option A: Direct APK Install (Phone / Tablet / Foldable / TV Browser or File Manager)
-Download [**`HomeScreen_Release_v3.4.0_34.apk`**](releases/HomeScreen_Release_v3.4.0_34.apk) directly onto your device and open it to install.
+Download [**`HomeScreen_Release_v4.0.0_40.apk`**](releases/HomeScreen_Release_v4.0.0_40.apk) directly onto your device and open it to install.
 
 ### Option B: Install over Wi-Fi via `adb`
 ```sh
 adb connect <YOUR_DEVICE_IP>:5555
-adb install -r releases/HomeScreen_Release_v3.4.0_34.apk
+adb install -r releases/HomeScreen_Release_v4.0.0_40.apk
 adb shell cmd package set-home-activity com.ansub.tvhome/.MainActivity
 adb shell am start -n com.ansub.tvhome/.MainActivity
 ```
@@ -65,9 +65,9 @@ Requires Java 17 and Android SDK (`platforms;android-34` and `build-tools;34.0.0
 ./build.sh
 ```
 Produces 4-byte `zipalign`ed, v1/v2/v3 signed release APKs in `out/`:
-- `out/HomeOS_Release_v2.4.0_25.apk`
-- `out/HomeOS-Universal-TV-Foldable-Tablet-Release-v2.4.0-b25.apk`
-- `out/HomeOS.apk`
+- `out/HomeScreen_Release_v4.0.0_40.apk`
+- `out/HomeScreen-Universal-TV-Foldable-Tablet-Release-v4.0.0-b40.apk`
+- `out/HomeScreen.apk`
 
 ---
 
