@@ -6667,6 +6667,25 @@ final class HogwartsSkyView extends View {
         return 0xFFE8B848;
     }
 
+    static boolean isCustomIconPackApp(String pkg) {
+        if (pkg == null) return false;
+        String k = pkg.toLowerCase();
+        return k.contains("youtube") || k.contains("surfshark")
+                || k.contains("oumi") || k.contains("vidhub") || k.contains("hulu")
+                || k.contains("plex") || k.contains("hotstar") || k.contains("disney");
+    }
+
+    static float getCardContentScale(int w, int h) {
+        float base = w / 324f;
+        return w < 280 ? Math.max(base, Math.min(w, h) / 205f) : Math.max(0.45f, base);
+    }
+
+    static float getMedallionRadius(int w, int h) {
+        float cs = getCardContentScale(w, h);
+        float er = Math.min(24f * cs, h * 0.22f);
+        return er * 1.15f;
+    }
+
     static Drawable createHogwartsBanner(Resources res, String pkg, String label,
                                          int w, int h, float scale,
                                          Typeface harryFont, Typeface cinzelFont) {
@@ -6677,12 +6696,15 @@ final class HogwartsSkyView extends View {
                                          int w, int h, float scale,
                                          Typeface harryFont, Typeface cinzelFont, int theme,
                                          Drawable defaultIcon, int slotIndex) {
-        Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        int bw = Math.max(1, w), bh = Math.max(1, h);
+        Bitmap bm = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888);
+        if (res != null) bm.setDensity(res.getDisplayMetrics().densityDpi);
         Canvas c = new Canvas(bm);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
         p.setDither(true);
 
-        float cardScale = Math.max(0.35f, w / 324f);
+        float cardScale = Math.max(0.35f, bw / 324f);
+        float contentScale = getCardContentScale(bw, bh);
         String k = pkg == null ? "" : pkg.toLowerCase();
         int packSlot = -1;
         if (k.contains("youtube")) packSlot = 0;
@@ -6838,8 +6860,8 @@ final class HogwartsSkyView extends View {
         };
         for (float[] cn : corners) c.drawCircle(cn[0], cn[1], 2.2f * cardScale, p);
 
-        float cx = w * 0.5f, cy = h * 0.34f;
-        float er = 24f * cardScale;
+        float cx = bw * 0.5f, cy = bh * 0.34f;
+        float er = Math.min(24f * contentScale, bh * 0.22f);
 
         p.setShader(new RadialGradient(cx, cy, er * 1.9f,
                 new int[] {0x48FFD878, 0x00FFD878}, null, Shader.TileMode.CLAMP));
@@ -6847,26 +6869,42 @@ final class HogwartsSkyView extends View {
         p.setShader(null);
 
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(2.2f * cardScale);
+        p.setStrokeWidth(2.2f * contentScale);
         p.setColor(0xFFFFE498);
 
         if (!useCustomPackIcon && defaultIcon != null) {
-            // Fallback from the 5-app custom icon pack to the device's default application icon
+            // Fallback from the 5-app custom icon pack to the device's default application icon.
+            // MainActivity.addTile also overlays a hardware-accelerated circular ImageView inside this medallion.
             float ir = er * 1.15f;
             p.setStyle(Paint.Style.FILL);
-            p.setColor(0x6608060C);
+            p.setColor(0x8808060C);
             c.drawCircle(cx, cy, ir, p);
-            c.save();
-            Path clip = new Path();
-            clip.addCircle(cx, cy, ir, Path.Direction.CW);
-            c.clipPath(clip);
-            defaultIcon.setBounds(Math.round(cx - ir), Math.round(cy - ir), Math.round(cx + ir), Math.round(cy + ir));
-            defaultIcon.draw(c);
-            c.restore();
+            try {
+                c.save();
+                Path clip = new Path();
+                clip.addCircle(cx, cy, ir, Path.Direction.CW);
+                c.clipPath(clip);
+                if (defaultIcon instanceof BitmapDrawable) {
+                    Bitmap ib = ((BitmapDrawable) defaultIcon).getBitmap();
+                    if (ib != null) {
+                        if (android.os.Build.VERSION.SDK_INT >= 26 && ib.getConfig() == Bitmap.Config.HARDWARE) {
+                            Bitmap sw = ib.copy(Bitmap.Config.ARGB_8888, false);
+                            if (sw != null) ib = sw;
+                        }
+                        c.drawBitmap(ib, null, new RectF(cx - ir, cy - ir, cx + ir, cy + ir), p);
+                    }
+                } else {
+                    defaultIcon.setBounds(Math.round(cx - ir), Math.round(cy - ir), Math.round(cx + ir), Math.round(cy + ir));
+                    defaultIcon.draw(c);
+                }
+                c.restore();
+            } catch (Throwable ignored) {
+                try { c.restore(); } catch (Throwable ignored2) {}
+            }
             p.setStyle(Paint.Style.STROKE);
-            p.setStrokeWidth(1.8f * cardScale);
+            p.setStrokeWidth(1.8f * contentScale);
             p.setColor(0xCCFFE498);
-            c.drawCircle(cx, cy, ir + 1.4f * cardScale, p);
+            c.drawCircle(cx, cy, ir + 1.4f * contentScale, p);
         } else if (emblemType >= 101 && emblemType <= 105) {
             // NARUTO Custom Vector Emblems: Sharingan, Konoha Leaf, Rasengan Shuriken, Uzumaki Spiral, Akatsuki Cloud
             if (emblemType == 101) { // Sharingan Eye
@@ -7100,31 +7138,35 @@ final class HogwartsSkyView extends View {
         p.setStyle(Paint.Style.FILL);
         p.setTextAlign(Paint.Align.CENTER);
         if (harryFont != null) p.setTypeface(harryFont);
-        float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * cardScale;
+        float titleSize = (theme == 0 ? 44f : (theme == 2 ? 32f : 28f)) * contentScale;
         p.setTextSize(titleSize);
-        float maxTextW = w - 36f * cardScale;
+        float maxTextW = bw - 34f * cardScale;
         if (label != null && maxTextW > 0) {
             float measured = p.measureText(label);
-            if (measured > maxTextW) p.setTextSize(Math.max(14f * cardScale, titleSize * (maxTextW / measured)));
+            if (measured > maxTextW) p.setTextSize(Math.max(13f * cardScale, titleSize * (maxTextW / measured)));
         }
         p.setColor(0xFFFFF4D2);
         p.setShadowLayer(10f * cardScale, 0, 2f * cardScale, 0xCC000000);
-        c.drawText(label != null ? label : "", cx, h * 0.74f, p);
+        c.drawText(label != null ? label : "", cx, bh * 0.74f, p);
 
         if (cinzelFont != null) p.setTypeface(cinzelFont);
-        p.setTextSize(11.5f * cardScale);
-        p.setLetterSpacing(0.18f);
+        String subText = houseSub;
+        if (bw < 260 && subText != null) {
+            int pipe = subText.indexOf('|');
+            if (pipe > 0) subText = subText.substring(0, pipe).trim();
+        }
+        float subSize = 11.5f * contentScale;
+        p.setTextSize(subSize);
+        p.setLetterSpacing(bw < 260 ? 0.10f : 0.18f);
+        if (subText != null && maxTextW > 0) {
+            float subMeasured = p.measureText(subText) * (bw < 260 ? 1.12f : 1.22f);
+            if (subMeasured > maxTextW) p.setTextSize(Math.max(9f * cardScale, subSize * (maxTextW / subMeasured)));
+        }
         p.setColor(0xB8F5D488);
         p.setShadowLayer(4f * cardScale, 0, 1f * cardScale, 0xAA000000);
-        c.drawText(houseSub, cx, h * 0.88f, p);
+        c.drawText(subText != null ? subText : "", cx, bh * 0.88f, p);
 
-        if (android.os.Build.VERSION.SDK_INT >= 26) {
-            Bitmap hw = bm.copy(Bitmap.Config.HARDWARE, false);
-            if (hw != null) {
-                bm.recycle();
-                bm = hw;
-            }
-        }
+        // Keep bm as ARGB_8888 (never copy to Bitmap.Config.HARDWARE) so ImageView renders it on all OEMs (including Samsung One UI).
         return new BitmapDrawable(res, bm);
     }
 }

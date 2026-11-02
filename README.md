@@ -1,15 +1,15 @@
 <div align="center">
 
-# HomeOS v2.1.0
+# HomeOS v2.2.0
 
 ### Universal Multi-Universe Animated Home Launcher for Android TV, Google TV, Foldables & Tablets
 
-[![Version](https://img.shields.io/badge/version-v2.1.0_(Build_22)-FFD54F?style=for-the-badge)](releases/HomeOS_Release_v2.1.0_22.apk)
-[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeOS-Universal-TV-Foldable-Tablet-Release-v2.1.0-b22.apk)
+[![Version](https://img.shields.io/badge/version-v2.2.0_(Build_23)-FFD54F?style=for-the-badge)](releases/HomeOS_Release_v2.2.0_23.apk)
+[![Platform](https://img.shields.io/badge/Android_TV_%7C_Foldables_%7C_Tablets-API_21--34-00E5FF?style=for-the-badge&logo=android&logoColor=white)](releases/HomeOS-Universal-TV-Foldable-Tablet-Release-v2.2.0-b23.apk)
 [![License](https://img.shields.io/badge/license-MIT-black?style=for-the-badge)](LICENSE)
 
 **Download Ready-to-Install Release APKs (`391 KB`):**
-[**⬇ Download `HomeOS_Release_v2.1.0_22.apk`**](releases/HomeOS_Release_v2.1.0_22.apk) · [**⬇ Download `HomeOS-Universal-TV-Foldable-Tablet-Release-v2.1.0-b22.apk`**](releases/HomeOS-Universal-TV-Foldable-Tablet-Release-v2.1.0-b22.apk)
+[**⬇ Download `HomeOS_Release_v2.2.0_23.apk`**](releases/HomeOS_Release_v2.2.0_23.apk) · [**⬇ Download `HomeOS-Universal-TV-Foldable-Tablet-Release-v2.2.0-b23.apk`**](releases/HomeOS-Universal-TV-Foldable-Tablet-Release-v2.2.0-b23.apk)
 
 <img src="docs/home-screen.png" alt="HomeOS Multi-Universe Launcher" width="100%">
 
@@ -49,12 +49,12 @@ Switch themes anytime from the top-right **3-Card Theme Swatch** icon or **Setti
 ## 📲 Install on Android TV, Google TV, Foldables, or Tablets
 
 ### Option A: Direct APK Install (Phone / Tablet / Foldable / TV Browser or File Manager)
-Download [**`HomeOS_Release_v2.1.0_22.apk`**](releases/HomeOS_Release_v2.1.0_22.apk) directly onto your device and open it to install.
+Download [**`HomeOS_Release_v2.2.0_23.apk`**](releases/HomeOS_Release_v2.2.0_23.apk) directly onto your device and open it to install.
 
 ### Option B: Install over Wi-Fi via `adb`
 ```sh
 adb connect <YOUR_DEVICE_IP>:5555
-adb install -r releases/HomeOS_Release_v2.1.0_22.apk
+adb install -r releases/HomeOS_Release_v2.2.0_23.apk
 adb shell cmd package set-home-activity com.ansub.tvhome/.MainActivity
 adb shell am start -n com.ansub.tvhome/.MainActivity
 ```
@@ -65,8 +65,8 @@ Requires Java 17 and Android SDK (`platforms;android-34` and `build-tools;34.0.0
 ./build.sh
 ```
 Produces 4-byte `zipalign`ed, v1/v2/v3 signed release APKs in `out/`:
-- `out/HomeOS_Release_v2.1.0_22.apk`
-- `out/HomeOS-Universal-TV-Foldable-Tablet-Release-v2.1.0-b22.apk`
+- `out/HomeOS_Release_v2.2.0_23.apk`
+- `out/HomeOS-Universal-TV-Foldable-Tablet-Release-v2.2.0-b23.apk`
 - `out/HomeOS.apk`
 
 ---
@@ -81,5 +81,5 @@ Produces 4-byte `zipalign`ed, v1/v2/v3 signed release APKs in `out/`:
 
 ## 📄 Credits & License
 - Original **TV Detox** foundation by [Ansub Khan](https://github.com/Ansub/tv-detox).
-- **HomeOS v2.1.0** Multi-Universe Saga Theater, Bespoke Character Engine, FancyLEDs Ambilight Sync, and Universal TV/Foldable/Tablet Adaptive Architecture by **Revanth Mukka** ([@revumukka](https://github.com/revumukka)).
+- **HomeOS v2.2.0** Multi-Universe Saga Theater, Bespoke Character Engine, FancyLEDs Ambilight Sync, and Universal TV/Foldable/Tablet Adaptive Architecture by **Revanth Mukka** ([@revumukka](https://github.com/revumukka)).
 - Released under the [MIT License](LICENSE).

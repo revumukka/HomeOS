@@ -192,7 +192,7 @@ public class MainActivity extends Activity {
     private TextView weatherView;
     private TextView fancySyncView;
     private long lastWeatherFetch = 0L;
-    private int tileW, tileH, rowStepPx, gridTop, cols = PER_ROW; // app grid geometry, set by buildTiles
+    private int tileW, tileH, rowStepPx, gapPx, gridTop, cols = PER_ROW; // app grid geometry, set by buildTiles
     private final List<View> tiles = new ArrayList<>();
     private final List<View> chrome = new ArrayList<>();
     private final Map<View, ValueAnimator> lifts = new WeakHashMap<>(); // a running focus fade per tile
@@ -247,7 +247,11 @@ public class MainActivity extends Activity {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         float longSide = Math.max(dm.widthPixels, dm.heightPixels) / 1920f;
         float shortSide = Math.min(dm.widthPixels, dm.heightPixels) / 1080f;
-        return Math.max(0.55f, Math.min(longSide, shortSide));
+        float base = Math.min(longSide, shortSide);
+        if (dm.heightPixels > dm.widthPixels) {
+            base = Math.min(base, dm.widthPixels / 1380f);
+        }
+        return Math.max(0.58f, base);
     }
 
     private int spx(int v) {
@@ -469,7 +473,7 @@ public class MainActivity extends Activity {
             for (String p : saved.split("[,\\s]+")) {
                 if (!p.isEmpty() && !out.contains(p) && launchIntent(pm, p) != null) out.add(p);
             }
-            return out;
+            if (!out.isEmpty()) return out;
         }
         // Primary 5-app custom icon pack slots (pick at most 1 installed package per slot first)
         String[][] iconPackSlots = {
@@ -762,7 +766,19 @@ public class MainActivity extends Activity {
 
         PackageManager pm = getPackageManager();
         int screenW = getResources().getDisplayMetrics().widthPixels;
-        int m = px(MARGIN), g = px(GAP);
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        boolean isPortrait = screenH > screenW;
+        int m = isPortrait ? Math.max(px(28), Math.round(screenW * 0.032f)) : px(MARGIN);
+        int g = isPortrait ? Math.max(px(12), Math.round(screenW * 0.015f)) : px(GAP);
+        int topInset = isPortrait ? Math.round(screenH * 0.032f) : 0;
+        gapPx = g;
+
+        if (clockContainer != null && clockContainer.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams clp = (FrameLayout.LayoutParams) clockContainer.getLayoutParams();
+            clp.leftMargin = m;
+            clp.topMargin = px(38) + topInset;
+            clockContainer.setLayoutParams(clp);
+        }
 
         List<String> apps = appList(pm);
         int launchable = 0;
@@ -780,19 +796,24 @@ public class MainActivity extends Activity {
         cols = Math.max(5, Math.min(PER_ROW, Math.max(topCols, bottomCount)));
 
         int w = (screenW - 2 * m - g * (cols - 1)) / cols;
-        int h = w * 9 / 16;
-        int bottomH = Math.max(spx(50), px(52));
-        int maxBottomColW = (screenW - 2 * m - Math.max(0, bottomCount - 1) * g) / Math.max(1, bottomCount);
-        int bottomW = Math.max(w, Math.min(spx(230), maxBottomColW));
+        int h;
+        if (isPortrait) {
+            float cardAspect = Math.min(0.92f, Math.max(0.68f, 0.5625f * ((float) screenH / Math.max(1, screenW)) * 0.80f));
+            h = Math.round(w * cardAspect);
+        } else {
+            h = w * 9 / 16;
+        }
+        int bottomW = w;
+        int bottomH = isPortrait ? Math.max(px(52), Math.round(w * 0.26f)) : px(52);
         tileW = w;
         tileH = h;
         rowStepPx = Math.max(px(ROW_STEP), h + px(22));
 
         int rows = Math.max(1, (launchable + cols - 1) / cols);
-        gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * rowStepPx);
+        gridTop = Math.max(px(GRID_MIN_TOP) + topInset, px(ROW1_TOP) + topInset - (rows - 1) * rowStepPx);
         int bottomTop = gridTop + rows * rowStepPx + px(6);
         ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - px(46);
-        root.setMinimumHeight(bottomTop + bottomH + px(MARGIN));
+        root.setMinimumHeight(bottomTop + bottomH + m);
 
         for (String pkg : apps) {
             if (launchIntent(pm, pkg) != null) rowApps.add(pkg);
@@ -805,10 +826,10 @@ public class MainActivity extends Activity {
             try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
             Drawable banner = HogwartsSkyView.createHogwartsBanner(
                     getResources(), pkg, label, w, h, scale, themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
-            addTile(root, pkg, label, banner, null, null, gridX(i), gridY(i), w, h);
+            addTile(root, pkg, label, banner, null, defaultIcon, gridX(i), gridY(i), w, h);
         }
 
-        // Compact bottom row: uniform width & height across TV, Foldable cover/inner screens, and Tablets.
+        // Compact bottom row: aligned column-for-column with the 5 app cards above (bottomW == w).
         int col = 0;
         int bottomRowW = bottomCount * bottomW + (bottomCount - 1) * g;
         int bottomStartX = (screenW - bottomRowW) / 2;
@@ -822,14 +843,14 @@ public class MainActivity extends Activity {
         // Top-right quick toggles dock (icon-only): Glow On/Off, Theme Picker, Bluetooth, Sound, Picture, Wi-Fi.
         List<Integer> quick = quickList();
         int totalTopItems = quick.size() + 3; // Glow toggle + Theme picker + quick items + Wi-Fi
-        float dockScale = Math.max(scale, Math.min(settingsScale, screenW / 1450f));
+        float dockScale = isPortrait ? Math.max(scale, Math.min(settingsScale, screenW / 1600f)) : scale;
         int itemW = Math.round(56 * dockScale), itemH = Math.round(50 * dockScale);
         int ig = Math.round(6 * dockScale), dockPad = Math.round(8 * dockScale);
         int gridRight = (screenW + (cols * w + (cols - 1) * g)) / 2;
         int dockW = totalTopItems * itemW + (totalTopItems - 1) * ig + 2 * dockPad;
         int dockH = itemH + 2 * dockPad;
-        int dockX = Math.max(px(MARGIN), gridRight - dockW);
-        int dockY = Math.max(px(20), px(58) - dockPad);
+        int dockX = Math.max(m, gridRight - dockW);
+        int dockY = Math.max(px(20), px(58) - dockPad) + topInset;
         int iconY = dockY + dockPad;
         View dock = new View(this);
         GradientDrawable dockBg = new GradientDrawable();
@@ -872,33 +893,62 @@ public class MainActivity extends Activity {
         if (banner != null) {
             bg.setColor(0xFF1E1A1C);
             ImageView iv = new ImageView(this);
-            iv.setImageDrawable(fit(banner, w, h));
+            iv.setScaleType(ImageView.ScaleType.FIT_XY);
+            iv.setImageDrawable(banner);
             card.addView(iv, new FrameLayout.LayoutParams(-1, -1));
+            if (appIcon != null && !HogwartsSkyView.isCustomIconPackApp(key)) {
+                // Hardware-accelerated circular medallion ImageView for fallback device-default app icons
+                float ir = HogwartsSkyView.getMedallionRadius(w, h);
+                int d = Math.max(1, Math.round(ir * 2f));
+                ImageView iconIv = new ImageView(this);
+                iconIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                iconIv.setImageDrawable(appIcon);
+                GradientDrawable medBg = new GradientDrawable();
+                medBg.setShape(GradientDrawable.OVAL);
+                medBg.setColor(0xFF0C0914);
+                iconIv.setBackground(medBg);
+                iconIv.setClipToOutline(true);
+                FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(d, d);
+                ilp.leftMargin = Math.round(w * 0.5f - ir);
+                ilp.topMargin = Math.round(h * 0.34f - ir);
+                card.addView(iconIv, ilp);
+            }
         } else {
-            // Compact dark-gold capsule pill for bottom utility tiles, scaled uniformly with pill height h.
+            // Compact dark-gold capsule pill for bottom utility tiles, scaled uniformly with pill height h and auto-fitted to width w.
             bg.setColor(0x28181210);
             LinearLayout inner = new LinearLayout(this);
             boolean pill = lineIcon != null;
             inner.setOrientation(pill ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
             inner.setGravity(Gravity.CENTER);
-            int padX = pill ? Math.max(px(10), Math.round(h * 0.24f)) : px(14);
+            int padX = pill ? Math.max(px(8), Math.round(h * 0.20f)) : px(14);
             inner.setPadding(padX, 0, padX, 0);
             ImageView iv = new ImageView(this);
-            int size = pill ? Math.max(px(18), Math.round(h * 0.42f)) : px(64);
+            int size = pill ? Math.max(px(16), Math.round(h * 0.42f)) : px(64);
             if (lineIcon != null) {
                 LineIcon li = new LineIcon(lineIcon);
                 li.setColorFilter(0xFFFFE498, android.graphics.PorterDuff.Mode.SRC_IN);
                 iv.setImageDrawable(li);
-            } else if (appIcon != null) iv.setImageDrawable(fit(appIcon, size, size));
+            } else if (appIcon != null) {
+                iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                iv.setImageDrawable(appIcon);
+            }
             inner.addView(iv, new LinearLayout.LayoutParams(size, size));
-            int textPx = pill ? Math.max(px(13), Math.round(h * 0.30f)) : px(15);
+            int gapX = pill ? Math.max(px(5), Math.round(h * 0.14f)) : 0;
+            int textPx = pill ? Math.max(px(12), Math.round(h * 0.30f)) : px(15);
             TextView t = text(textPx, 0xF2FFF4D2, cinzelFont != null ? cinzelFont : semibold);
             t.setText(label);
+            if (pill && label != null) {
+                float availW = w - 2 * padX - size - gapX - px(4);
+                float measured = t.getPaint().measureText(label);
+                if (availW > 0 && measured > availW) {
+                    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, Math.max(px(10), textPx * (availW / measured)));
+                }
+            }
             t.setSingleLine(true);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-            if (pill) lp.leftMargin = Math.max(px(6), Math.round(h * 0.16f));
+            if (pill) lp.leftMargin = gapX;
             else lp.topMargin = px(10);
             inner.addView(t, lp);
             card.addView(inner, new FrameLayout.LayoutParams(-1, -1));
@@ -1918,7 +1968,7 @@ public class MainActivity extends Activity {
         String title = replaceIndex < 0 ? Strings.t("Add an app")
                 : String.format(Strings.t("Replace %s"), labelOf(rowApps.get(replaceIndex)));
         final int iconSz = spx(44);
-        panel(title, new ArrayList<>(byLabel.keySet()), pos -> fit(pm.getApplicationIcon(pkgs.get(pos)), iconSz, iconSz),
+        panel(title, new ArrayList<>(byLabel.keySet()), pos -> pm.getApplicationIcon(pkgs.get(pos)),
                 iconSz, -1, null, which -> {
             if (replaceIndex < 0) rowApps.add(pkgs.get(which));
             else rowApps.set(replaceIndex, pkgs.get(which));
@@ -1946,9 +1996,10 @@ public class MainActivity extends Activity {
         int rowStart = row * cols;
         int countInRow = Math.min(cols, Math.max(1, rowApps.size() - rowStart));
         int screenW = getResources().getDisplayMetrics().widthPixels;
-        int rowW = countInRow * tileW + (countInRow - 1) * px(GAP);
+        int g = gapPx > 0 ? gapPx : px(GAP);
+        int rowW = countInRow * tileW + (countInRow - 1) * g;
         int startX = (screenW - rowW) / 2;
-        return startX + col * (tileW + px(GAP));
+        return startX + col * (tileW + g);
     }
 
     private int gridY(int i) {
