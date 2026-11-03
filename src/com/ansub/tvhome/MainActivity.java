@@ -982,6 +982,10 @@ public class MainActivity extends Activity {
         if (f == null && !tiles.isEmpty()) tiles.get(0).requestFocus();
         HomeButton.onHomeResumed(this); // back on this home screen: Home comes here again
         HomeButton.ensureBound(this);
+        if (!prefs().getBoolean("onboarding_v9_done", false) && !isTvDevice()) {
+            prefs().edit().putBoolean("onboarding_v9_done", true).apply();
+            getWindow().getDecorView().postDelayed(this::showUniverseOnboardingShowcase, 450);
+        }
         // Only counted as opened once it has stayed up a moment, so a crash right after opening still
         // counts as a failed launch.
         getWindow().getDecorView().postDelayed(homeOk, 1500);
@@ -3294,6 +3298,238 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) {}
     }
 
+    private boolean isDefaultLauncherActive() {
+        try {
+            Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+            ResolveInfo ri = getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
+            if (ri != null && ri.activityInfo != null && getPackageName().equals(ri.activityInfo.packageName)) {
+                return true;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    private void requestDefaultHomeLauncher() {
+        if (isTvDevice()) {
+            showInstallOnTvDialog();
+            return;
+        }
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                android.app.role.RoleManager rm = (android.app.role.RoleManager) getSystemService(Context.ROLE_SERVICE);
+                if (rm != null && rm.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)
+                        && !rm.isRoleHeld(android.app.role.RoleManager.ROLE_HOME)) {
+                    Intent roleIntent = rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME);
+                    startActivityForResult(roleIntent, 901);
+                    return;
+                }
+            }
+        } catch (Throwable ignored) {}
+        try {
+            startActivity(new Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            return;
+        } catch (Throwable ignored) {}
+        try {
+            startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Throwable ignored) {}
+    }
+
+    // v9.0.0 Interactive "Choose Your Universe" Onboarding & Default-Launcher Conversion Showcase:
+    // Live-morphs the 120 FPS SkyView & Story Stage behind a translucent glass card as the user taps
+    // Universe cards, offers 1-tap Grid Density presets, and converts users to Default Home Launcher.
+    private void showUniverseOnboardingShowcase() {
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+        }
+        final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        activeDialog = d;
+
+        final boolean tvMode = isTvDevice();
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        final boolean isNarrowVertical = !tvMode && (screenH > screenW * 1.15f);
+
+        LinearLayout sheet = new LinearLayout(this);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(dp(20), dp(14), dp(20), dp(18));
+        GradientDrawable sheetBg = new GradientDrawable();
+        float topRad = dp(28);
+        if (tvMode) sheetBg.setCornerRadius(dp(24));
+        else sheetBg.setCornerRadii(new float[] {topRad, topRad, topRad, topRad, 0, 0, 0, 0});
+        sheetBg.setColor(0xE80A0D18);
+        sheetBg.setStroke(Math.max(1, dp(1)), 0x55FFD54F);
+        sheet.setBackground(sheetBg);
+
+        FrameLayout handle = null;
+        if (!tvMode) {
+            handle = createDragHandleBox();
+            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(22));
+            hlp.bottomMargin = dp(4);
+            sheet.addView(handle, hlp);
+        }
+
+        // Header Row
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout titleCol = new LinearLayout(this);
+        titleCol.setOrientation(LinearLayout.VERTICAL);
+        TextView headTitle = text(sp(19f), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        headTitle.setText("Choose Your Universe");
+        titleCol.addView(headTitle);
+        TextView subTitle = text(sp(12f), 0xCCFFE8B0, regular);
+        subTitle.setText("Tap any world to preview its 120 FPS sky & stories live");
+        titleCol.addView(subTitle);
+        headerRow.addView(titleCol, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView doneBtn = createSettingsPillButton("Start \u2192", true, v -> d.dismiss());
+        headerRow.addView(doneBtn, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout.LayoutParams hrlp = new LinearLayout.LayoutParams(-1, -2);
+        hrlp.bottomMargin = dp(12);
+        sheet.addView(headerRow, hrlp);
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
+
+        // 1. Live Interactive Universe Cards
+        final List<LinearLayout> cardViews = new ArrayList<>();
+        final String[] loreSubtitles = {
+            "80 Scenes  \u00B7  Great Hall Candles, Hedwig & Patronus",
+            "44 Scenes  \u00B7  Hokage Rock, Sharingan Moon & Kurama",
+            "44 Scenes  \u00B7  Wisteria Moon, Infinity Castle & Sun Breathing",
+            "44 Scenes  \u00B7  Hyperspace, X-Wing Dogfights & Twin Suns",
+            "44 Scenes  \u00B7  Avengers Tower, Sling-Ring Portals & Arc Reactors",
+            "44 Scenes  \u00B7  Gotham Bat-Signal, Krypton & Speed Force",
+            "44 Scenes  \u00B7  Floodlit Grand Prix Tracks, Team Cars & Podiums"
+        };
+
+        final Runnable refreshSelectionUI = () -> {
+            int cur = universeTheme();
+            for (int i = 0; i < cardViews.size(); i++) {
+                boolean sel = (i == cur);
+                int col = UNIVERSE_THEME_COLORS[Math.max(0, Math.min(UNIVERSE_THEME_COLORS.length - 1, i))];
+                GradientDrawable cBg = new GradientDrawable();
+                cBg.setCornerRadius(dp(18));
+                cBg.setColor(sel ? blend(col, 0xFF101424, 0.76f) : 0x16FFFFFF);
+                cBg.setStroke(Math.max(1, dp(sel ? 2 : 1)), sel ? col : 0x24FFFFFF);
+                cardViews.get(i).setBackground(cBg);
+            }
+        };
+
+        int badgeSz = dp(42);
+        for (int i = 0; i < UNIVERSE_THEMES.length; i++) {
+            final int themeIdx = i;
+            LinearLayout uCard = new LinearLayout(this);
+            uCard.setOrientation(LinearLayout.HORIZONTAL);
+            uCard.setGravity(Gravity.CENTER_VERTICAL);
+            uCard.setPadding(dp(14), dp(10), dp(14), dp(10));
+            uCard.setFocusable(true);
+
+            ImageView iv = new ImageView(this);
+            iv.setImageDrawable(createThemeRowIcon(themeIdx, badgeSz));
+            uCard.addView(iv, new LinearLayout.LayoutParams(badgeSz, badgeSz));
+
+            LinearLayout tCol = new LinearLayout(this);
+            tCol.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams tclp = new LinearLayout.LayoutParams(0, -2, 1f);
+            tclp.leftMargin = dp(12);
+            TextView uName = text(sp(15.5f), 0xFFFFF8E8, themeFontFor(themeIdx));
+            uName.setText(UNIVERSE_THEMES[themeIdx]);
+            tCol.addView(uName);
+            TextView uDesc = text(sp(11.5f), 0xCCFFE8B0, regular);
+            uDesc.setText(i < loreSubtitles.length ? loreSubtitles[i] : "44 Live Scenes");
+            tCol.addView(uDesc);
+            uCard.addView(tCol, tclp);
+
+            TextView pickPill = text(sp(11.5f), 0xFFFFD54F, semibold);
+            pickPill.setText("Preview");
+            uCard.addView(pickPill, new LinearLayout.LayoutParams(-2, -2));
+
+            uCard.setOnClickListener(v -> {
+                getSharedPreferences(PREFS, 0).edit().putInt(PREF_THEME, themeIdx).apply();
+                if (skyView != null) skyView.setUniverseTheme(themeIdx);
+                applyThemeTypography(themeIdx);
+                buildTiles();
+                refreshSelectionUI.run();
+            });
+
+            cardViews.add(uCard);
+            LinearLayout.LayoutParams uclp = new LinearLayout.LayoutParams(-1, -2);
+            uclp.bottomMargin = dp(8);
+            content.addView(uCard, uclp);
+        }
+        refreshSelectionUI.run();
+
+        // 2. One-Tap Grid Density Preset Row
+        LinearLayout presetCard = createSettingsSectionCard();
+        TextView presetTitle = text(sp(14f), 0xFFFFE8A8, semibold);
+        presetTitle.setText("Quick Grid Density Preset");
+        presetCard.addView(presetTitle);
+
+        LinearLayout presetRow = new LinearLayout(this);
+        presetRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams prlp = new LinearLayout.LayoutParams(-1, -2);
+        prlp.topMargin = dp(8);
+
+        final String colsKey = tvMode ? PREF_COLS_TV : (isNarrowVertical ? PREF_COLS_PORTRAIT : PREF_COLS_LANDSCAPE);
+        final String rowsKey = tvMode ? PREF_ROWS_TV : (isNarrowVertical ? PREF_ROWS_PORTRAIT : PREF_ROWS_LANDSCAPE);
+        int[][] presets = isNarrowVertical
+                ? new int[][] {{3, 3}, {4, 4}, {5, 5}}
+                : new int[][] {{3, 2}, {4, 2}, {5, 3}};
+        String[] presetNames = {"Cozy", "Balanced", "Dense"};
+        for (int p = 0; p < 3; p++) {
+            final int cVal = presets[p][0], rVal = presets[p][1];
+            TextView pBtn = createSettingsPillButton(presetNames[p] + " (" + cVal + "\u00D7" + rVal + ")", false, v -> {
+                prefs().edit().putInt(colsKey, cVal).putInt(rowsKey, rVal).apply();
+                buildTiles();
+                Toast.makeText(this, "Applied " + cVal + "\u00D7" + rVal + " Grid!", Toast.LENGTH_SHORT).show();
+            });
+            LinearLayout.LayoutParams pblp = new LinearLayout.LayoutParams(0, -2, 1f);
+            if (p > 0) pblp.leftMargin = dp(6);
+            presetRow.addView(pBtn, pblp);
+        }
+        presetCard.addView(presetRow, prlp);
+        content.addView(presetCard, createCardMarginParams());
+
+        // 3. High-Conversion Default Home Launcher CTA Card
+        LinearLayout ctaCard = createSettingsSectionCard();
+        boolean isDef = isDefaultLauncherActive();
+        TextView ctaBtn = createSettingsPillButton(
+                isDef ? "\u2713 HomeScreen is Your Default Launcher" : "\uD83C\uDFE0 Set HomeScreen as Default Launcher",
+                !isDef,
+                v -> requestDefaultHomeLauncher());
+        ctaCard.addView(ctaBtn, new LinearLayout.LayoutParams(-1, -2));
+        content.addView(ctaCard, createCardMarginParams());
+
+        sheet.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
+
+        int sheetW = tvMode ? Math.min(screenW - dp(48), dp(680)) : Math.min(screenW, dp(640));
+        int sheetH = tvMode ? Math.round(screenH * 0.84f) : Math.round(screenH * 0.72f);
+        if (!tvMode) {
+            View host = wrapInInteractiveBottomSheet(
+                    d, sheet, sheetBg, handle,
+                    sheetW, sheetH, screenH,
+                    dp(20), dp(14), dp(18),
+                    dp(96), true,
+                    () -> scroll.getScrollY() <= 2);
+            d.setContentView(host);
+        } else {
+            d.setContentView(sheet);
+        }
+
+        Window win = d.getWindow();
+        win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        win.setGravity(tvMode ? Gravity.CENTER : (Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        win.setDimAmount(0.28f); // Low dim so the live 120 FPS sky & stage shine behind the showcase!
+        int winH = tvMode ? sheetH : screenH;
+        win.setLayout(sheetW, winH);
+        d.show();
+        win.setLayout(sheetW, winH);
+    }
+
     // v8.0.0 Interactive Story Director HUD & 344-Scene Cinema Jukebox:
     // Lets users browse and search all 344 scenes across every Theme Universe, jump directly to any scene,
     // pin/lock their favorite scene as a continuous non-fading live diorama, and adjust story playback speed.
@@ -3695,11 +3931,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v8.0.0  \u00B7  Build 80");
+        appTitleTv.setText("HomeScreen v9.0.0  \u00B7  Build 90");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("7 Theme Universes \u00B7 344 Story Jukebox \u00B7 Dynamic 120 FPS \u00B7 Zero Ads");
+        appSubTv.setText("7 Theme Universes \u00B7 344 Story Jukebox \u00B7 Live Onboarding \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -3739,6 +3975,14 @@ public class MainActivity extends Activity {
                     showStoryJukeboxDialog();
                 });
         aboutCard.addView(jukeboxActionRow);
+        View onboardingActionRow = createSettingsActionRow(
+                "\u2728 Universe Showcase & Default Launcher Setup",
+                isDefaultLauncherActive() ? "Default Active" : "Setup",
+                v -> {
+                    d.dismiss();
+                    showUniverseOnboardingShowcase();
+                });
+        aboutCard.addView(onboardingActionRow);
         content.addView(aboutCard, createCardMarginParams());
 
         // -----------------------------------------------------------------
