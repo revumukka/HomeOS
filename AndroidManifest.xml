@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ansub.tvhome" android:versionCode="72" android:versionName="7.1.1"
+    package="com.ansub.tvhome" android:versionCode="73" android:versionName="7.1.2"
     android:installLocation="internalOnly">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
@@ -17,6 +17,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <!-- Granted via ADB on Google TV / TCL TVs so HomeButton can self-heal its Accessibility bind after standby/updates -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- Android 11+ only shows apps a home screen asks to see: TV apps and normal apps. -->
     <queries>
         <intent>
@@ -89,11 +92,13 @@
             </intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/home_button" />
         </service>
-        <receiver android:name=".HomeButton$BootReceiver" android:exported="true">
+        <receiver android:name=".HomeButton$BootReceiver" android:exported="true" android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.USER_PRESENT" />
             </intent-filter>
         </receiver>
     </application>

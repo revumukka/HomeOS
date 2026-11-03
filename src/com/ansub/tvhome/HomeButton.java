@@ -28,6 +28,7 @@ public class HomeButton extends AccessibilityService {
     // Debounce duplicate events until the activity resumes.
     private static long lastOpened = -500;
     private static volatile boolean bound = false;
+    private static volatile boolean wakeReceiverRegistered = false;
 
     @Override
     protected void onServiceConnected() {
@@ -41,9 +42,76 @@ public class HomeButton extends AccessibilityService {
         return super.onUnbind(intent);
     }
 
-    // Play Store & Play Protect compliant: never mutate Settings.Secure programmatically.
+    private static boolean isTvDevice(Context c) {
+        try {
+            android.app.UiModeManager um = (android.app.UiModeManager) c.getSystemService(Context.UI_MODE_SERVICE);
+            return (um != null && um.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION)
+                    || c.getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static void registerWakeReceiver(final Context app) {
+        if (wakeReceiverRegistered) return;
+        wakeReceiverRegistered = true;
+        try {
+            android.content.IntentFilter filter = new android.content.IntentFilter();
+            filter.addAction(Intent.ACTION_SCREEN_ON);
+            filter.addAction(Intent.ACTION_DREAMING_STOPPED);
+            filter.addAction(Intent.ACTION_USER_PRESENT);
+            app.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    ensureBound(app);
+                }
+            }, filter);
+        } catch (Throwable ignored) {}
+    }
+
+    private static void writeServiceEnabled(ContentResolver cr) {
+        try {
+            String cur = Settings.Secure.getString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (cur == null || cur.trim().isEmpty() || cur.contains("HomeKeyService")) {
+                Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, SERVICE_ID);
+            } else if (!cur.contains(SERVICE_ID)) {
+                Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, cur + ":" + SERVICE_ID);
+            }
+            Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+        } catch (Throwable ignored) {}
+    }
+
+    private static void toggleAndBind(final ContentResolver cr) {
+        try {
+            Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, "");
+            Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 0);
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                try {
+                    Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, SERVICE_ID);
+                    Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+                } catch (Throwable ignored) {}
+            }, 400);
+        } catch (Throwable ignored) {}
+    }
+
+    // TCL's background manager only binds the accessibility service once our process is running.
+    // With WRITE_SECURE_SETTINGS granted via ADB on TV, re-trigger the bind automatically on boot/wake/update/launch.
     static void ensureBound(final Context c) {
-        // Accessibility service binding is managed strictly by Android OS after explicit user opt-in.
+        if (c == null || !isTvDevice(c)) return;
+        final Context app = c.getApplicationContext() != null ? c.getApplicationContext() : c;
+        registerWakeReceiver(app);
+        final ContentResolver cr = app.getContentResolver();
+        writeServiceEnabled(cr);
+        if (bound) return;
+        Handler h = new Handler(Looper.getMainLooper());
+        h.postDelayed(() -> {
+            if (bound) return;
+            toggleAndBind(cr);
+        }, 600);
+        h.postDelayed(() -> {
+            if (bound) return;
+            toggleAndBind(cr);
+        }, 2600);
     }
 
     public static class BootReceiver extends BroadcastReceiver {
@@ -52,19 +120,20 @@ public class HomeButton extends AccessibilityService {
             if (intent == null) return;
             String act = intent.getAction();
             if (!Intent.ACTION_BOOT_COMPLETED.equals(act)
+                    && !"android.intent.action.LOCKED_BOOT_COMPLETED".equals(act)
                     && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(act)
-                    && !"android.intent.action.QUICKBOOT_POWERON".equals(act)) {
+                    && !"android.intent.action.QUICKBOOT_POWERON".equals(act)
+                    && !Intent.ACTION_USER_PRESENT.equals(act)) {
                 return;
             }
-            try {
-                android.app.UiModeManager um = (android.app.UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
-                boolean isTv = (um != null && um.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION)
-                        || context.getPackageManager().hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK);
-                if (isTv) {
+            if (!isTvDevice(context)) return;
+            ensureBound(context);
+            if (!Intent.ACTION_USER_PRESENT.equals(act)) {
+                try {
                     context.startActivity(new Intent(context, MainActivity.class)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
-                }
-            } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {}
+            }
         }
     }
 

@@ -116,7 +116,15 @@ home_opens_me() {
   return 1
 }
 
-# Make it the default home: the role (Android 10+) and the classic way.
+# Make it the default home: the role (Android 10+), classic way, and Google TV HomeButton accessibility interceptor.
+sh_tv pm grant com.ansub.tvhome android.permission.WRITE_SECURE_SETTINGS >/dev/null 2>&1 || true
+sh_tv cmd appops set com.ansub.tvhome APP_AUTO_START allow >/dev/null 2>&1 || true
+sh_tv cmd appops set com.ansub.tvhome SYSTEM_ALERT_WINDOW allow >/dev/null 2>&1 || true
+sh_tv cmd appops set com.ansub.tvhome RUN_IN_BACKGROUND allow >/dev/null 2>&1 || true
+sh_tv cmd appops set com.ansub.tvhome RUN_ANY_IN_BACKGROUND allow >/dev/null 2>&1 || true
+sh_tv dumpsys deviceidle whitelist +com.ansub.tvhome >/dev/null 2>&1 || true
+sh_tv settings put secure enabled_accessibility_services com.ansub.tvhome/com.ansub.tvhome.HomeButton >/dev/null 2>&1 || true
+sh_tv settings put secure accessibility_enabled 1 >/dev/null 2>&1 || true
 if [ "$(sh_tv getprop ro.build.version.sdk)" -ge 29 ]; then
   sh_tv cmd role add-role-holder --user 0 android.app.role.HOME com.ansub.tvhome >/dev/null 2>&1 || true
 fi
