@@ -2451,9 +2451,48 @@ public class MainActivity extends Activity {
         } else {
             i = launchIntent(getPackageManager(), key);
             if (i == null) return;
+            recordAppLaunch(key);
+            View tView = tile(key);
+            if (tView != null && skyView != null) {
+                int[] loc = new int[2];
+                tView.getLocationOnScreen(loc);
+                skyView.onUserTouch(loc[0] + tView.getWidth() * 0.5f, loc[1] + tView.getHeight() * 0.5f, true);
+            }
         }
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try { startActivity(i); } catch (Exception ignored) {}
+    }
+
+    private int getAppLaunchCount(String pkg) {
+        if (pkg == null || pkg.isEmpty()) return 0;
+        return prefs().getInt("launch_cnt_" + pkg, 0);
+    }
+
+    private void recordAppLaunch(String pkg) {
+        if (pkg == null || pkg.isEmpty()) return;
+        int next = getAppLaunchCount(pkg) + 1;
+        prefs().edit().putInt("launch_cnt_" + pkg, next).apply();
+    }
+
+    private void sortHomeAppsByMostUsed() {
+        if (rowApps.size() <= 1) return;
+        final Map<String, Integer> origIdx = new HashMap<>();
+        for (int idx = 0; idx < rowApps.size(); idx++) {
+            origIdx.put(rowApps.get(idx), idx);
+        }
+        Collections.sort(rowApps, (a, b) -> {
+            int ca = getAppLaunchCount(a);
+            int cb = getAppLaunchCount(b);
+            if (ca != cb) return Integer.compare(cb, ca);
+            Integer ia = origIdx.get(a);
+            Integer ib = origIdx.get(b);
+            return Integer.compare(ia != null ? ia : 0, ib != null ? ib : 0);
+        });
+        saveRow();
+        currentAppPage = 0;
+        buildTiles();
+        String topLabel = labelOf(rowApps.get(0));
+        Toast.makeText(this, "\u26A1 Sorted Home Grid by Most Used (Top: " + topLabel + ")", Toast.LENGTH_SHORT).show();
     }
 
     // Live TV apps an HDMI tile can open, in order. Droidlogic (Amlogic) TVs ship Live TV under their
@@ -3137,8 +3176,57 @@ public class MainActivity extends Activity {
         searchBox.addView(clearBtn, new LinearLayout.LayoutParams(-2, -2));
 
         LinearLayout.LayoutParams sblp = new LinearLayout.LayoutParams(-1, -2);
-        sblp.bottomMargin = dp(14);
+        sblp.bottomMargin = dp(10);
         sheet.addView(searchBox, sblp);
+
+        // v13.0.0: Smart Usage Intelligence — "⚡ Most Played Quick Bar" at the top of All Apps Drawer
+        List<String> frequentPkgs = new ArrayList<>(allPkgs);
+        Collections.sort(frequentPkgs, (a, b) -> Integer.compare(getAppLaunchCount(b), getAppLaunchCount(a)));
+        LinearLayout freqStrip = new LinearLayout(this);
+        freqStrip.setOrientation(LinearLayout.HORIZONTAL);
+        freqStrip.setGravity(Gravity.CENTER_VERTICAL);
+        int shownFreq = 0;
+        for (String fPkg : frequentPkgs) {
+            if (shownFreq >= 5) break;
+            int cnt = getAppLaunchCount(fPkg);
+            if (cnt <= 0 && shownFreq >= 4 && !rowApps.contains(fPkg)) continue;
+            final String targetPkg = fPkg;
+            LinearLayout chip = new LinearLayout(this);
+            chip.setOrientation(LinearLayout.VERTICAL);
+            chip.setGravity(Gravity.CENTER_HORIZONTAL);
+            chip.setPadding(dp(6), dp(6), dp(6), dp(6));
+            GradientDrawable cBg = new GradientDrawable();
+            cBg.setCornerRadius(dp(14));
+            cBg.setColor(0x18FFFFFF);
+            cBg.setStroke(Math.max(1, dp(1)), cnt > 0 ? 0x55FFD54F : 0x24FFFFFF);
+            chip.setBackground(cBg);
+            ImageView fIv = new ImageView(this);
+            try {
+                fIv.setImageDrawable(pm.getApplicationIcon(fPkg));
+            } catch (Exception ignored) {}
+            chip.addView(fIv, new LinearLayout.LayoutParams(dp(36), dp(36)));
+            TextView fTv = text(sp(10.5f), 0xFFFFF4D2, semibold);
+            fTv.setText(cnt > 0 ? ("\u26A1 " + cnt + "\u00D7") : labelOf(fPkg));
+            fTv.setSingleLine(true);
+            fTv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            fTv.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams ftLp = new LinearLayout.LayoutParams(-1, -2);
+            ftLp.topMargin = dp(3);
+            chip.addView(fTv, ftLp);
+            chip.setOnClickListener(v -> {
+                d.dismiss();
+                open(targetPkg);
+            });
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, -2, 1f);
+            if (shownFreq > 0) clp.leftMargin = dp(6);
+            freqStrip.addView(chip, clp);
+            shownFreq++;
+        }
+        if (shownFreq > 0) {
+            LinearLayout.LayoutParams fslp = new LinearLayout.LayoutParams(-1, -2);
+            fslp.bottomMargin = dp(12);
+            sheet.addView(freqStrip, fslp);
+        }
 
         // Native Mobile Vertical Scroll List of all installed apps (48dp squircle icon + 16.5sp app name + interactive pin pill)
         final ListView list = new ListView(this);
@@ -3991,11 +4079,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v12.0.0  \u00B7  Build 120");
+        appTitleTv.setText("HomeScreen v13.0.0  \u00B7  Build 130");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 3D Tilt & Touch Physics \u00B7 120 FPS");
+        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Smart App Intelligence \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4180,6 +4268,11 @@ public class MainActivity extends Activity {
         TextView gridHintTv = text(sp(11.5f), 0x99FFE8B0, regular);
         gridHintTv.setText("Extra pinned apps automatically flow onto swipeable pages.");
         resetGridRow.addView(gridHintTv, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView sortMostUsedBtn = createSettingsPillButton("\u26A1 Sort by Usage", true, v -> sortHomeAppsByMostUsed());
+        LinearLayout.LayoutParams smuLp = new LinearLayout.LayoutParams(-2, -2);
+        smuLp.rightMargin = dp(6);
+        resetGridRow.addView(sortMostUsedBtn, smuLp);
 
         TextView resetGridBtn = createSettingsPillButton("Reset Grid", false, v -> {
             prefs().edit().remove(colsPrefKey).remove(rowsPrefKey).apply();
