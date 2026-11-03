@@ -167,7 +167,11 @@ final class SkyView extends View {
     private int lockedSceneIndex = 0;
     private int lastRenderedSceneIndex = 0;
     private float storySpeedMultiplier = 1.0f;
-    // Active Theme Universe: 0 = Harry Potter, 1 = Naruto, 2 = Demon Slayer, 3 = Star Wars, 4 = MCU, 5 = DCU, 6 = Formula 1
+    // v11.0.0 Living Weather & Sky Mood Engine:
+    // 0 = Auto (Follows Live Weather), 1 = Clear Starfield, 2 = Rainstorm, 3 = Winter Snowfall, 4 = Thunderstorm, 5 = Aurora Borealis
+    private int weatherMood = 0;
+    private int liveWeatherMood = 1;
+    // Active Theme Universe: 0 = Harry Potter, 1 = Naruto, 2 = Demon Slayer, 3 = Star Wars, 4 = MCU, 5 = DCU, 6 = Formula 1, 7 = Cyberpunk 2099
     private int universeTheme = 0;
 
     private static final String[] NARUTO_TITLES = {
@@ -791,6 +795,30 @@ final class SkyView extends View {
 
     void setStorySpeedMultiplier(float mult) {
         this.storySpeedMultiplier = Math.max(0.25f, Math.min(3.0f, mult));
+        invalidate();
+    }
+
+    int getWeatherMood() {
+        return weatherMood;
+    }
+
+    void setWeatherMood(int mood) {
+        this.weatherMood = Math.max(0, Math.min(5, mood));
+        invalidate();
+    }
+
+    void setLiveWeatherCondition(String raw) {
+        if (raw == null) return;
+        String s = raw.toLowerCase(java.util.Locale.ROOT);
+        if (s.contains("storm") || s.contains("thunder")) {
+            liveWeatherMood = 4;
+        } else if (s.contains("snow") || s.contains("blizzard") || s.contains("flurr") || s.contains("ice")) {
+            liveWeatherMood = 3;
+        } else if (s.contains("rain") || s.contains("drizzle") || s.contains("shower")) {
+            liveWeatherMood = 2;
+        } else {
+            liveWeatherMood = 1;
+        }
         invalidate();
     }
 
@@ -2446,6 +2474,9 @@ final class SkyView extends View {
         // 4. INTERACTIVE WOW TWISTS: Marauder's Map Footsteps, Lumos Wand Burst & Golden Snitch Companion
         drawInteractiveMagic(canvas, t);
 
+        // 4B. LIVING WEATHER & SKY MOOD ENGINE (Rainstorm, Winter Snowfall, Thunderstorm Lightning, Solar Aurora)
+        drawWeatherAtmosphere(canvas, w, h, t);
+
         // 5. EXPANDED BOTTOM STAGE (y = 576..1080): 24 Iconic Harry Potter Scenes
         drawStoryLoop(canvas, w, h, t);
 
@@ -2607,6 +2638,104 @@ final class SkyView extends View {
         c.drawLine(sx - px(4f), sy, sx - px(18f), sy - px(5f) + flap, paint);
         c.drawLine(sx + px(4f), sy, sx + px(18f), sy - px(5f) + flap, paint);
         paint.setStyle(Paint.Style.FILL);
+    }
+
+    /**
+     * v11.0.0 Living Weather & Sky Mood Engine:
+     * Renders zero-allocation 120 FPS procedural weather particles across the sky & stage:
+     * - Mode 2 (Rainstorm) & Mode 4 (Thunderstorm): Diagonal wind-driven rain streaks + wet stage ripples (+ forked sky lightning in Mode 4)
+     * - Mode 3 (Winter Snowfall): Gently swaying multi-depth crystalline snowflakes
+     * - Mode 5 (Aurora Borealis): Shimmering emerald, cyan & violet northern lights curtains across the upper sky
+     */
+    private void drawWeatherAtmosphere(Canvas c, int w, int h, float t) {
+        int activeMood = (weatherMood == 0) ? liveWeatherMood : weatherMood;
+        if (activeMood <= 1) return;
+
+        float groundY = h * 0.900f;
+        if (activeMood == 2 || activeMood == 4) {
+            // Rainstorm / Thunderstorm: 42 diagonal wind-driven rain streaks + stage puddle ripples
+            int rainRgb = (universeTheme == 7) ? 0x0000F0FF : 0x00A8DCFF;
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            for (int i = 0; i < 42; i++) {
+                float speed = px(580f + (i % 5) * 95f);
+                float rx = ((i * 173.7f + w * 1.4f - t * speed * 0.22f) % (w * 1.15f)) - w * 0.08f;
+                float ry = ((i * 97.3f + t * speed) % (groundY + px(20f)));
+                float len = px(16f + (i % 4) * 5.5f);
+                int ra = 65 + (i % 4) * 28;
+                paint.setStrokeWidth(px(i % 3 == 0 ? 1.6f : 1.1f));
+                paint.setColor((ra << 24) | rainRgb);
+                c.drawLine(rx, ry, rx - len * 0.24f, ry + len, paint);
+            }
+            // Wet stage splash ripples along groundY
+            for (int r = 0; r < 10; r++) {
+                float rp = ((t * 1.9f + r * 0.17f) % 1.0f);
+                float sx = w * (0.14f + ((r * 0.077f) % 0.72f));
+                int sa = Math.round((1f - rp) * 110f);
+                paint.setStrokeWidth(px(1.2f));
+                paint.setColor((sa << 24) | rainRgb);
+                float radX = px(4f + rp * 16f), radY = px(1.2f + rp * 3.8f);
+                c.drawOval(rectF(sx - radX, groundY - radY, sx + radX, groundY + radY), paint);
+            }
+            if (activeMood == 4) {
+                // Periodic Thunderstorm Lightning Bolt & Sky Sheet Flash
+                float flashCycle = (t * 0.55f) % 4.0f;
+                if (flashCycle < 0.22f) {
+                    float fl = 1f - (flashCycle / 0.22f);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((Math.round(fl * 42f) << 24) | 0x00D8F0FF);
+                    c.drawRect(0, 0, w, h, paint);
+                    int boltSlot = ((int) (t * 0.55f / 4.0f)) % 3;
+                    float bx = w * (0.28f + boltSlot * 0.22f);
+                    drawLightningStreak(c, bx, px(12f), bx + px(28f), h * 0.58f,
+                            t, 990 + boltSlot, 0x0068C8FF, 0x00B8F4FF, 0x00FFFFFF, px(3.4f), Math.round(fl * 240f), true);
+                }
+            }
+            paint.setStyle(Paint.Style.FILL);
+        } else if (activeMood == 3) {
+            // Winter Snowfall: 40 gently swaying multi-depth snowflakes
+            paint.setStyle(Paint.Style.FILL);
+            for (int i = 0; i < 40; i++) {
+                float fallSpd = px(42f + (i % 5) * 16f);
+                float sy = (i * 83.5f + t * fallSpd) % (groundY + px(12f));
+                float sway = (float) Math.sin(t * (1.2f + (i % 4) * 0.35f) + i * 1.7f) * px(18f);
+                float sx = ((i * 149.3f) % w) + sway;
+                if (sx < 0) sx += w;
+                float sr = px(1.8f + (i % 4) * 1.05f);
+                int sa = 110 + (i % 4) * 34;
+                paint.setColor((sa << 24) | 0x00F4FAFF);
+                c.drawCircle(sx, sy, sr, paint);
+                if (i % 5 == 0) {
+                    paint.setColor(((sa / 3) << 24) | 0x00A8E4FF);
+                    c.drawCircle(sx, sy, sr * 2.2f, paint);
+                }
+            }
+        } else if (activeMood == 5) {
+            // Solar Aurora Borealis: Shimmering emerald, cyan & violet northern lights ribbons across the upper sky
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            int[] auroraCols = {0x0000FF9D, 0x0000E5FF, 0x00B388FF};
+            for (int band = 0; band < 3; band++) {
+                int col = auroraCols[band];
+                float baseY = h * (0.11f + band * 0.055f);
+                actorPath.reset();
+                for (int seg = 0; seg <= 16; seg++) {
+                    float frac = seg / 16f;
+                    float ax = frac * w;
+                    float ay = baseY + (float) Math.sin(frac * Math.PI * 3.0 + t * (0.9f + band * 0.25f) + band * 1.4f) * px(22f);
+                    if (seg == 0) actorPath.moveTo(ax, ay);
+                    else actorPath.lineTo(ax, ay);
+                }
+                int aa = Math.round(36f + 16f * (float) Math.sin(t * 1.4f + band));
+                paint.setStrokeWidth(px(26f - band * 4f));
+                paint.setColor((aa << 24) | col);
+                c.drawPath(actorPath, paint);
+                paint.setStrokeWidth(px(6f));
+                paint.setColor(((aa * 3 / 2) << 24) | col);
+                c.drawPath(actorPath, paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+        }
     }
 
     /**

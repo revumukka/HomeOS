@@ -678,6 +678,7 @@ public class MainActivity extends Activity {
         FrameLayout viewport = new FrameLayout(this);
         skyView = new SkyView(this, scale, 0, cinzelFont);
         skyView.setUniverseTheme(universeTheme());
+        skyView.setWeatherMood(prefs().getInt("weather_mood", 0));
         skyView.setStorySpeedMultiplier(prefs().getFloat("story_speed", 1.0f));
         if (prefs().getBoolean("story_locked", false)) {
             skyView.jumpToScene(prefs().getInt("story_locked_idx", 0), true);
@@ -767,6 +768,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-2, -2);
         tp.topMargin = isTvDevice() ? upx(-12) : -dp(4); // snug under the date + weather line
         clock.addView(time, tp);
+        clock.setClickable(true);
+        clock.setOnClickListener(v -> showWeatherAndClockStudio());
         root.addView(clock, at(px(MARGIN), px(38), -2, -2));
 
         moveHint = text(upx(26), 0xFFE6FFE8, themeFontFor(universeTheme()));
@@ -3956,11 +3959,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v9.0.0  \u00B7  Build 90");
+        appTitleTv.setText("HomeScreen v11.0.0  \u00B7  Build 110");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("7 Theme Universes \u00B7 344 Story Jukebox \u00B7 Live Onboarding \u00B7 120 FPS");
+        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Living Weather \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -3994,12 +3997,22 @@ public class MainActivity extends Activity {
         aboutCard.addView(shareRow, srlp);
         View jukeboxActionRow = createSettingsActionRow(
                 "\uD83C\uDFAC Story Scene Jukebox & Live Pinning",
-                skyView != null && skyView.isSceneLocked() ? "Pinned" : "344 Scenes",
+                skyView != null && skyView.isSceneLocked() ? "Pinned" : "388 Scenes",
                 v -> {
                     d.dismiss();
                     showStoryJukeboxDialog();
                 });
         aboutCard.addView(jukeboxActionRow);
+        final String[] moodNamesShort = {"Auto Live", "Clear Sky", "Rainstorm", "Snowfall", "Thunderstorm", "Aurora"};
+        int curMoodIdx = Math.max(0, Math.min(5, prefs().getInt("weather_mood", 0)));
+        View weatherActionRow = createSettingsActionRow(
+                "\uD83C\uDF27\uFE0F Living Weather & Clock Studio",
+                moodNamesShort[curMoodIdx],
+                v -> {
+                    d.dismiss();
+                    showWeatherAndClockStudio();
+                });
+        aboutCard.addView(weatherActionRow);
         View onboardingActionRow = createSettingsActionRow(
                 "\u2728 Universe Showcase & Default Launcher Setup",
                 isDefaultLauncherActive() ? "Default Active" : "Setup",
@@ -5033,6 +5046,9 @@ public class MainActivity extends Activity {
     // Formats "| 62°F Overcast" in the Harry Potter font while styling the '°' glyph with cinzelFont
     // because harryp.ttf does not include the Unicode degree character (\u00B0).
     private void setWeatherText(String raw) {
+        if (skyView != null && raw != null) {
+            skyView.setLiveWeatherCondition(raw);
+        }
         if (weatherView == null || raw == null || raw.isEmpty()) return;
         String clean = "|   " + raw.trim();
         SpannableString ss = new SpannableString(clean);
@@ -5045,6 +5061,57 @@ public class MainActivity extends Activity {
             }, deg, deg + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         weatherView.setText(ss);
+    }
+
+    // Interactive Living Weather & Clock Studio (tap the top-left Clock/Weather header or open from App Settings):
+    // Lets the user pick real-time 120 FPS atmospheric weather overlays (Auto Live Weather, Clear Starfield,
+    // Rainstorm with Puddle Ripples, Winter Snowfall, Thunder & Lightning, or Solar Aurora Borealis),
+    // switch 12h / 24h / Auto clock format live, or force-refresh the live forecast.
+    private void showWeatherAndClockStudio() {
+        final String[] moodLabels = {
+            "\uD83C\uDF26\uFE0F  Auto Live Weather (Syncs with Forecast)",
+            "\u2728  Clear Starfield (Crisp Night Sky)",
+            "\uD83C\uDF27\uFE0F  Rainstorm & Stage Puddle Ripples",
+            "\u2744\uFE0F  Winter Snowfall & Drifting Flakes",
+            "\u26A1  Thunder & Lightning Storm",
+            "\uD83C\uDF0C  Solar Aurora Borealis Curtains"
+        };
+        int curMood = prefs().getInt("weather_mood", 0);
+        String curClock = prefs().getString(PREF_CLOCK, "auto");
+        String clockLabel = "24".equals(curClock) ? "24-Hour (14:30)" : ("12".equals(curClock) ? "12-Hour (2:30)" : "Auto System");
+
+        List<String> items = new ArrayList<>();
+        for (int i = 0; i < moodLabels.length; i++) {
+            items.add((i == curMood ? "\u2713 " : "    ") + moodLabels[i]);
+        }
+        items.add("\uD83D\uDD52  Clock Format: " + clockLabel + " (Tap to Cycle)");
+        items.add("\uD83D\uDD04  Refresh Live Weather Forecast Now");
+        items.add("Close Studio");
+
+        panel("Living Weather & Clock Studio", items, which -> {
+            if (which >= 0 && which < moodLabels.length) {
+                prefs().edit().putInt("weather_mood", which).apply();
+                if (skyView != null) {
+                    skyView.setWeatherMood(which);
+                }
+                Toast.makeText(this, "Sky Weather Mood: " + moodLabels[which].substring(3).trim(), Toast.LENGTH_SHORT).show();
+            } else if (which == moodLabels.length) {
+                String c = prefs().getString(PREF_CLOCK, "auto");
+                String next = "auto".equals(c) ? "12" : ("12".equals(c) ? "24" : "auto");
+                if ("auto".equals(next)) prefs().edit().remove(PREF_CLOCK).apply();
+                else prefs().edit().putString(PREF_CLOCK, next).apply();
+                if (timeClockView != null) {
+                    timeClockView.setFormat12Hour("24".equals(next) ? "H:mm" : "h:mm");
+                    timeClockView.setFormat24Hour("12".equals(next) ? "h:mm" : "H:mm");
+                }
+                Toast.makeText(this, "Clock format set to " + next.toUpperCase(), Toast.LENGTH_SHORT).show();
+                showWeatherAndClockStudio();
+            } else if (which == moodLabels.length + 1) {
+                lastWeatherFetch = 0;
+                fetchWeatherAsync();
+                Toast.makeText(this, "Refreshing live weather forecast...", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void fetchWeatherAsync() {
