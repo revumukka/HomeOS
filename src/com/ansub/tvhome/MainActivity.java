@@ -704,10 +704,35 @@ public class MainActivity extends Activity {
         // Tap right edge / swipe left -> Next Story Scene; Tap left edge / swipe right -> Previous Story Scene
         root.setOnTouchListener(new View.OnTouchListener() {
             private float downX, downY;
+            private long lastSkyTapMs = 0L;
+            private float lastSkyTapX = 0f, lastSkyTapY = 0f;
             @Override
             public boolean onTouch(View v, android.view.MotionEvent ev) {
                 int h = v.getHeight();
-                if (h <= 0 || ev.getY() < h * 0.62f) return false;
+                if (h <= 0) return false;
+                if (ev.getY() < h * 0.62f) {
+                    if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                        downX = ev.getX();
+                        downY = ev.getY();
+                        return true;
+                    } else if (ev.getAction() == android.view.MotionEvent.ACTION_UP) {
+                        if (Math.abs(ev.getX() - downX) < dp(24) && Math.abs(ev.getY() - downY) < dp(24)) {
+                            long now = System.currentTimeMillis();
+                            if (now - lastSkyTapMs < 350L
+                                    && Math.hypot(ev.getX() - lastSkyTapX, ev.getY() - lastSkyTapY) < dp(52)) {
+                                lastSkyTapMs = 0L;
+                                if (skyView != null) skyView.onUserTouch(ev.getX(), ev.getY(), true);
+                                executeDoubleTapHomeGesture();
+                            } else {
+                                lastSkyTapMs = now;
+                                lastSkyTapX = ev.getX();
+                                lastSkyTapY = ev.getY();
+                            }
+                        }
+                        return true;
+                    }
+                    return false;
+                }
                 if (ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
                     downX = ev.getX();
                     downY = ev.getY();
@@ -2412,6 +2437,52 @@ public class MainActivity extends Activity {
     // v17.0.0: 1-Tap Zen Art Canvas Mode (Hides App Grid & Dots so the 120 FPS Sky & Story Stage shine unobstructed)
     private boolean zenCanvasActive = false;
 
+    private void executeDoubleTapHomeGesture() {
+        performCinemaHaptic(true);
+        applyOledPixelShiftIfNeeded();
+        int act = ProSystemVault.getDoubleTapAction(this);
+        if (act == 0) {
+            toggleZenCanvasMode();
+        } else if (act == 1) {
+            ProSystemVault.runTurboRamBoost(this);
+        } else if (act == 2) {
+            if (skyView != null) skyView.nextStoryScene();
+        } else if (act == 3) {
+            idleHandler.postDelayed(startScreensaverTask, 120);
+        } else if (act == 4) {
+            showWeatherAndClockStudio();
+        } else {
+            showAllAppsDrawer(false);
+        }
+    }
+
+    private void applyOledPixelShiftIfNeeded() {
+        if (clockContainer == null) return;
+        if (!ProSystemVault.isOledProtectionEnabled(this)) {
+            clockContainer.setTranslationX(0f);
+            clockContainer.setTranslationY(0f);
+            return;
+        }
+        double sec = System.currentTimeMillis() / 1000.0;
+        float dx = (float) Math.sin(sec * 0.08) * dp(2.5f);
+        float dy = (float) Math.cos(sec * 0.06) * dp(2.0f);
+        clockContainer.setTranslationX(dx);
+        clockContainer.setTranslationY(dy);
+    }
+
+    private void openProStudio() {
+        performCinemaHaptic(true);
+        applyOledPixelShiftIfNeeded();
+        ProSystemVault.showProStudioDialog(
+                this,
+                isTvDevice(),
+                cinzelFont != null ? cinzelFont : semibold,
+                regular,
+                getResources().getDisplayMetrics().density,
+                this::openLiveWallpaperPicker,
+                this::toggleZenCanvasMode);
+    }
+
     private void toggleZenCanvasMode() {
         zenCanvasActive = !zenCanvasActive;
         performCinemaHaptic(true);
@@ -2548,6 +2619,7 @@ public class MainActivity extends Activity {
             // Settings button dropdown: App Settings replaces Sky Palette & Glow (which are removed
             // because each Universe Theme renders its own procedural story sky background).
             List<String> list = new ArrayList<>();
+            list.add("Pro Studio ($2.49 Edition)");
             list.add("App Settings");
             list.add("Turbo RAM & Cache Boost");
             list.add("Story Scene Jukebox");
@@ -2570,7 +2642,9 @@ public class MainActivity extends Activity {
             final String[] items = list.toArray(new String[0]);
             dropdown(tile(SETTINGS), items, which -> {
                 String picked = items[which];
-                if ("App Settings".equals(picked)) {
+                if ("Pro Studio ($2.49 Edition)".equals(picked)) {
+                    openProStudio();
+                } else if ("App Settings".equals(picked)) {
                     showAppSettingsDialog();
                 } else if ("Turbo RAM & Cache Boost".equals(picked)) {
                     performCinemaHaptic(true);
@@ -2741,6 +2815,7 @@ public class MainActivity extends Activity {
     }
 
     private void refreshNetwork() {
+        applyOledPixelShiftIfNeeded();
         if (netIcon == null) return;
         int state = networkState();
         if (state == netState) return;
@@ -4281,11 +4356,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v19.0.0  \u00B7  Build 190");
+        appTitleTv.setText("HomeScreen v20.0.0  \u00B7  Build 200");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("PIN App Vault \u00B7 Custom App Rename \u00B7 Turbo RAM Booster \u00B7 120 FPS");
+        appSubTv.setText("Pro Studio ($2.49 Unlocked) \u00B7 9 Universes \u00B7 PIN Vault \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4317,6 +4392,14 @@ public class MainActivity extends Activity {
         shareRow.addView(installTvBtn, tvbLp);
 
         aboutCard.addView(shareRow, srlp);
+        View proStudioRow = createSettingsActionRow(
+                "\uD83D\uDC51 HomeScreen Pro Studio ($2.49 Edition)",
+                "Founder's Unlocked",
+                v -> {
+                    d.dismiss();
+                    openProStudio();
+                });
+        aboutCard.addView(proStudioRow);
         View jukeboxActionRow = createSettingsActionRow(
                 "\uD83C\uDFAC Story Scene Jukebox & Live Pinning",
                 skyView != null && skyView.isSceneLocked() ? "Pinned" : "432 Scenes",
@@ -5146,7 +5229,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v18.0.0 \u2014 an ad-free, 120 FPS procedural launcher & Lock Screen Live Wallpaper for Android Phones, Foldables, Tablets & Android TV with 9 Theme Universes and 432 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v20.0.0 \u2014 an ad-free, 120 FPS procedural launcher & Lock Screen Live Wallpaper for Android Phones, Foldables, Tablets & Android TV with 9 Theme Universes, 432 live animated story scenes, PIN App Vault & Turbo RAM Booster!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -5157,7 +5240,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v18.0.0 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v20.0.0 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -5219,7 +5302,7 @@ public class MainActivity extends Activity {
         sbLp.bottomMargin = dp(14);
         card.addView(statusBadge, sbLp);
 
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v18.0.0_180.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v20.0.0_200.apk";
 
         TextView btnShareLink = createSettingsPillButton("\uD83D\uDCF2 Share Download Link (Quick Share / TV)", true, v -> inviteFriends());
         LinearLayout.LayoutParams b1Lp = new LinearLayout.LayoutParams(-1, -2);

@@ -463,4 +463,198 @@ public final class ProSystemVault {
     public static void setOledProtectionEnabled(Context ctx, boolean enabled) {
         prefs(ctx).edit().putBoolean(PREF_OLED_PROTECTION, enabled).apply();
     }
+
+    /**
+     * v20.0.0: Interactive "HomeScreen Pro Studio ($2.49 Founder's Edition)" Showcase & Control Hub.
+     */
+    public static void showProStudioDialog(final Context ctx, final boolean isTv,
+                                           final Typeface titleFont, final Typeface bodyFont,
+                                           final float density,
+                                           final Runnable onOpenLiveWallpaper,
+                                           final Runnable onToggleZenCanvas) {
+        final Dialog d = new Dialog(ctx, android.R.style.Theme_Material_Dialog_NoActionBar);
+        int pad = Math.round(20 * density);
+
+        LinearLayout rootCard = new LinearLayout(ctx);
+        rootCard.setOrientation(LinearLayout.VERTICAL);
+        rootCard.setPadding(pad, pad, pad, pad);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(26 * density);
+        bg.setColor(0xF80A0D1A);
+        bg.setStroke(Math.max(1, Math.round(1.8f * density)), 0x99FFD54F);
+        rootCard.setBackground(bg);
+
+        // Header Row
+        TextView titleTv = new TextView(ctx);
+        titleTv.setText("\uD83D\uDC51 HomeScreen Pro Studio");
+        titleTv.setTextColor(0xFFFFF4D2);
+        titleTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
+        if (titleFont != null) titleTv.setTypeface(titleFont);
+        titleTv.setGravity(Gravity.CENTER);
+        rootCard.addView(titleTv, new LinearLayout.LayoutParams(-1, -2));
+
+        TextView badgeTv = new TextView(ctx);
+        badgeTv.setText("\u2713 $2.49 FOUNDER'S EDITION UNLOCKED  \u00B7  LIFETIME PRO  \u00B7  ZERO ADS");
+        badgeTv.setTextColor(0xFF69F0AE);
+        badgeTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f);
+        if (bodyFont != null) badgeTv.setTypeface(bodyFont);
+        badgeTv.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams bLp = new LinearLayout.LayoutParams(-1, -2);
+        bLp.topMargin = Math.round(4 * density);
+        bLp.bottomMargin = Math.round(12 * density);
+        rootCard.addView(badgeTv, bLp);
+
+        ScrollView scroll = new ScrollView(ctx);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout list = new LinearLayout(ctx);
+        list.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(list, new ScrollView.LayoutParams(-1, -2));
+
+        // Live Scorecard Banner
+        final TextView scoreTv = new TextView(ctx);
+        scoreTv.setTextColor(0xFFFFE8B0);
+        scoreTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f);
+        if (bodyFont != null) scoreTv.setTypeface(bodyFont);
+        scoreTv.setGravity(Gravity.CENTER);
+        int sPad = Math.round(12 * density);
+        scoreTv.setPadding(sPad, sPad, sPad, sPad);
+        GradientDrawable sBg = new GradientDrawable();
+        sBg.setCornerRadius(16 * density);
+        sBg.setColor(0x22FFD54F);
+        sBg.setStroke(Math.max(1, Math.round(1f * density)), 0x55FFD54F);
+        scoreTv.setBackground(sBg);
+        final Runnable refreshScore = () -> {
+            scoreTv.setText(getLiveSystemSummary(ctx, isTv)
+                    + "\n9 Universes \u00B7 432 Scenes \u00B7 "
+                    + getLockedApps(ctx).size() + " PIN-Locked Apps \u00B7 120 FPS Engine");
+        };
+        refreshScore.run();
+        LinearLayout.LayoutParams scLp = new LinearLayout.LayoutParams(-1, -2);
+        scLp.bottomMargin = Math.round(12 * density);
+        list.addView(scoreTv, scLp);
+
+        // 1. Double-Tap Empty Home Space Gesture Row
+        final TextView[] dtBtnHolder = new TextView[1];
+        dtBtnHolder[0] = createProStudioButton(ctx, density, bodyFont,
+                "\uD83D\uDC46 Double-Tap Home Space: " + DOUBLE_TAP_LABELS[getDoubleTapAction(ctx)],
+                true,
+                v -> {
+                    int next = (getDoubleTapAction(ctx) + 1) % DOUBLE_TAP_LABELS.length;
+                    setDoubleTapAction(ctx, next);
+                    dtBtnHolder[0].setText("\uD83D\uDC46 Double-Tap Home Space: " + DOUBLE_TAP_LABELS[next]);
+                    Toast.makeText(ctx, "Double-Tap Home Gesture \u2192 " + DOUBLE_TAP_LABELS[next], Toast.LENGTH_SHORT).show();
+                });
+        list.addView(dtBtnHolder[0], rowParams(density));
+
+        // 2. OLED & QLED Sub-Pixel Burn-In Protection Row
+        final TextView[] oledBtnHolder = new TextView[1];
+        oledBtnHolder[0] = createProStudioButton(ctx, density, bodyFont,
+                "\uD83D\uDEE1\uFE0F OLED Burn-In Pixel Shift: " + (isOledProtectionEnabled(ctx) ? "ACTIVE (\u00B12.5px Orbit)" : "OFF"),
+                false,
+                v -> {
+                    boolean next = !isOledProtectionEnabled(ctx);
+                    setOledProtectionEnabled(ctx, next);
+                    oledBtnHolder[0].setText("\uD83D\uDEE1\uFE0F OLED Burn-In Pixel Shift: " + (next ? "ACTIVE (\u00B12.5px Orbit)" : "OFF"));
+                    Toast.makeText(ctx, "OLED Sub-Pixel Burn-In Protection: " + (next ? "ACTIVE" : "OFF"), Toast.LENGTH_SHORT).show();
+                });
+        list.addView(oledBtnHolder[0], rowParams(density));
+
+        // 3. 1-Tap Turbo RAM & Cache Booster
+        TextView ramBtn = createProStudioButton(ctx, density, bodyFont,
+                "\uD83D\uDE80 Run 1-Tap Turbo RAM & Cache Booster Now",
+                false,
+                v -> {
+                    runTurboRamBoost(ctx);
+                    refreshScore.run();
+                });
+        list.addView(ramBtn, rowParams(density));
+
+        // 4. Set as Lock & Home Screen 120 FPS Live Wallpaper
+        TextView wpBtn = createProStudioButton(ctx, density, bodyFont,
+                "\uD83D\uDDBC\uFE0F Apply 120 FPS Lock & Home Live Wallpaper",
+                false,
+                v -> {
+                    d.dismiss();
+                    if (onOpenLiveWallpaper != null) onOpenLiveWallpaper.run();
+                });
+        list.addView(wpBtn, rowParams(density));
+
+        // 5. Configure 4-Digit PIN App Lock Vault
+        TextView pinBtn = createProStudioButton(ctx, density, bodyFont,
+                "\uD83D\uDD12 Set 4-Digit App Vault PIN (Long-Press Any App to Lock)",
+                false,
+                v -> showPinPadDialog(ctx, "Set 4-Digit Vault PIN",
+                        "Choose your 4-digit PIN for locking apps on the home screen",
+                        titleFont, density, true, () -> {
+                            Toast.makeText(ctx, "\uD83D\uDD12 Vault PIN Saved!", Toast.LENGTH_SHORT).show();
+                            refreshScore.run();
+                        }));
+        list.addView(pinBtn, rowParams(density));
+
+        // 6. Toggle Zen Art Canvas Mode
+        TextView zenBtn = createProStudioButton(ctx, density, bodyFont,
+                "\uD83E\uDDD8 Toggle 1-Tap Zen Art Canvas Mode",
+                false,
+                v -> {
+                    d.dismiss();
+                    if (onToggleZenCanvas != null) onToggleZenCanvas.run();
+                });
+        list.addView(zenBtn, rowParams(density));
+
+        // Close Button
+        TextView closeBtn = createProStudioButton(ctx, density, bodyFont,
+                "\u2713 Done",
+                true,
+                v -> d.dismiss());
+        list.addView(closeBtn, rowParams(density));
+
+        rootCard.addView(scroll, new LinearLayout.LayoutParams(-1, -2));
+        d.setContentView(rootCard);
+
+        Window win = d.getWindow();
+        if (win != null) {
+            win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            win.setGravity(Gravity.CENTER);
+            win.setDimAmount(0.70f);
+            int screenW = ctx.getResources().getDisplayMetrics().widthPixels;
+            int modalW = Math.min(screenW - Math.round(28 * density), Math.round((isTv ? 540 : 460) * density));
+            win.setLayout(modalW, -2);
+        }
+        d.show();
+    }
+
+    private static LinearLayout.LayoutParams rowParams(float density) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.bottomMargin = Math.round(8 * density);
+        return lp;
+    }
+
+    private static TextView createProStudioButton(Context ctx, final float density, Typeface tf,
+                                                  String label, final boolean gold, View.OnClickListener onClick) {
+        final TextView btn = new TextView(ctx);
+        btn.setText(label);
+        btn.setTextColor(gold ? 0xFF100D18 : 0xFFFFF4D2);
+        btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
+        if (tf != null) btn.setTypeface(tf);
+        btn.setGravity(Gravity.CENTER);
+        int padH = Math.round(14 * density);
+        int padV = Math.round(10 * density);
+        btn.setPadding(padH, padV, padH, padV);
+        btn.setFocusable(true);
+
+        final GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(15 * density);
+        final int restBg = gold ? 0xFFFFD54F : 0x1EFFFFFF;
+        final int focusBg = gold ? 0xFFFFE57F : 0x42FFE8B0;
+        final int restStroke = gold ? 0xFFFFF4D2 : 0x48F5D078;
+        bg.setColor(restBg);
+        bg.setStroke(Math.max(1, Math.round(1f * density)), restStroke);
+        btn.setBackground(bg);
+        btn.setOnFocusChangeListener((v, has) -> {
+            bg.setColor(has ? focusBg : restBg);
+            bg.setStroke(Math.max(1, Math.round((has ? 2f : 1f) * density)), has ? 0xFFFFF4D2 : restStroke);
+        });
+        btn.setOnClickListener(onClick);
+        return btn;
+    }
 }
