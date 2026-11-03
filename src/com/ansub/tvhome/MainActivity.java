@@ -1819,6 +1819,7 @@ public class MainActivity extends Activity {
         cell.setOnFocusChangeListener((v, has) -> {
             if (has) {
                 focusedKey = key;
+                performCinemaHaptic(false);
                 if (skyView != null) {
                     skyView.setReactiveColor(houseCol, false);
                     skyView.onTileFocused(x + w * 0.5f, y + iconSize * 0.5f, y, houseCol);
@@ -2397,16 +2398,92 @@ public class MainActivity extends Activity {
         return new BitmapDrawable(getResources(), bm);
     }
 
+    // v15.0.0: Cinema Haptics & Zero-Asset Procedural Harmonic Soundscape Synthesizer
+    private static final String PREF_CINEMA_AUDIO_HAPTICS = "cinema_audio_haptics";
+
+    private boolean isCinemaAudioHapticsEnabled() {
+        return prefs().getBoolean(PREF_CINEMA_AUDIO_HAPTICS, true);
+    }
+
+    private void performCinemaHaptic(boolean strong) {
+        if (!isCinemaAudioHapticsEnabled()) return;
+        try {
+            View decor = getWindow() != null ? getWindow().getDecorView() : null;
+            if (decor != null) {
+                int fb = strong ? android.view.HapticFeedbackConstants.VIRTUAL_KEY
+                        : (android.os.Build.VERSION.SDK_INT >= 21 ? android.view.HapticFeedbackConstants.CLOCK_TICK : android.view.HapticFeedbackConstants.KEYBOARD_TAP);
+                decor.performHapticFeedback(fb, android.view.HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private void playThemeHarmonic(final int theme, final boolean fullChord) {
+        if (!isCinemaAudioHapticsEnabled()) return;
+        Thread audioThread = new Thread(() -> {
+            android.media.AudioTrack track = null;
+            try {
+                final int sampleRate = 22050;
+                final float durationSec = fullChord ? 0.34f : 0.14f;
+                final int numSamples = Math.round(sampleRate * durationSec);
+                final short[] pcm = new short[numSamples];
+                // Theme-specific musical triad frequencies (Hz)
+                final float[][] chords = {
+                    {659.25f, 783.99f, 987.77f}, // 0: Wizarding World (Celesta E5-G5-B5)
+                    {440.00f, 659.25f, 880.00f}, // 1: Shinobi World (Pentatonic Shamisen A4-E5-A5)
+                    {523.25f, 622.25f, 783.99f}, // 2: Demon Slayer (Taisho Koto C5-Eb5-G5)
+                    {392.00f, 587.33f, 783.99f}, // 3: Star Wars (Twin Suns French Horn G4-D5-G5)
+                    {440.00f, 587.33f, 659.25f}, // 4: Marvel Avengers (Heroic Fanfare A4-D5-E5)
+                    {261.63f, 392.00f, 523.25f}, // 5: DC Justice League (Deep Zimmer Brass C4-G4-C5)
+                    {880.00f, 1174.66f, 1760.0f},// 6: Formula 1 (FIA Starting Grid Telemetry Triad)
+                    {329.63f, 493.88f, 739.99f}, // 7: Cyberpunk 2099 (Night City Synth E4-B4-F#5)
+                    {523.25f, 659.25f, 783.99f}  // 8: Spirited Skies (Warm Joe Hisaishi Major Triad)
+                };
+                float[] freqs = chords[Math.max(0, Math.min(chords.length - 1, theme))];
+                for (int i = 0; i < numSamples; i++) {
+                    float t = i / (float) sampleRate;
+                    float env = (t < 0.02f) ? (t / 0.02f) : (float) Math.exp(-t * (fullChord ? 8.5f : 18.0f));
+                    double sig = Math.sin(2.0 * Math.PI * freqs[0] * t);
+                    if (fullChord) {
+                        sig = 0.45 * sig
+                            + 0.32 * Math.sin(2.0 * Math.PI * freqs[1] * t)
+                            + 0.23 * Math.sin(2.0 * Math.PI * freqs[2] * t);
+                    }
+                    pcm[i] = (short) Math.round(sig * env * 4200.0);
+                }
+                track = new android.media.AudioTrack(
+                        android.media.AudioManager.STREAM_MUSIC,
+                        sampleRate,
+                        android.media.AudioFormat.CHANNEL_OUT_MONO,
+                        android.media.AudioFormat.ENCODING_PCM_16BIT,
+                        pcm.length * 2,
+                        android.media.AudioTrack.MODE_STATIC);
+                track.write(pcm, 0, pcm.length);
+                track.play();
+                Thread.sleep(Math.round(durationSec * 1000f) + 40L);
+            } catch (Throwable ignored) {
+            } finally {
+                if (track != null) {
+                    try { track.release(); } catch (Throwable ignored) {}
+                }
+            }
+        }, "cinema-synth");
+        audioThread.setDaemon(true);
+        audioThread.start();
+    }
+
     private void showThemePicker() {
         final int size = spx(44);
         final int current = universeTheme();
         panel("Theme Universe", Arrays.asList(UNIVERSE_THEMES), pos -> createThemeRowIcon(pos, size), size, current, pos -> {
             if (skyView != null) skyView.setUniverseTheme(pos);
             applyThemeTypography(pos);
+            performCinemaHaptic(false);
         }, which -> {
             getSharedPreferences(PREFS, 0).edit().putInt(PREF_THEME, which).apply();
             if (skyView != null) skyView.setUniverseTheme(which);
             applyThemeTypography(which);
+            performCinemaHaptic(true);
+            playThemeHarmonic(which, true);
             focusedKey = THEME_PICK;
             buildTiles();
         });
@@ -4118,11 +4195,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v14.0.0  \u00B7  Build 140");
+        appTitleTv.setText("HomeScreen v15.0.0  \u00B7  Build 150");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Icon Style Studio \u00B7 120 FPS");
+        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Cinema Synth & Haptics \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4180,6 +4257,24 @@ public class MainActivity extends Activity {
                     showUniverseOnboardingShowcase();
                 });
         aboutCard.addView(onboardingActionRow);
+        final TextView[] audioRightHolder = new TextView[1];
+        View audioHapticRow = createSettingsActionRow(
+                "\uD83D\uDD0A Cinema Harmonic Chords & Micro-Haptics",
+                isCinemaAudioHapticsEnabled() ? "Active" : "Muted",
+                audioRightHolder,
+                v -> {
+                    boolean next = !isCinemaAudioHapticsEnabled();
+                    prefs().edit().putBoolean(PREF_CINEMA_AUDIO_HAPTICS, next).apply();
+                    if (audioRightHolder[0] != null) {
+                        audioRightHolder[0].setText((next ? "Active" : "Muted") + "  \u203A");
+                    }
+                    if (next) {
+                        performCinemaHaptic(true);
+                        playThemeHarmonic(universeTheme(), true);
+                    }
+                    Toast.makeText(this, "Cinema Chords & Haptics: " + (next ? "ON" : "OFF"), Toast.LENGTH_SHORT).show();
+                });
+        aboutCard.addView(audioHapticRow);
         content.addView(aboutCard, createCardMarginParams());
 
         // -----------------------------------------------------------------
