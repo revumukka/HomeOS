@@ -117,7 +117,8 @@ public class MainActivity extends Activity {
         "Star Wars",
         "MCU",
         "DCU",
-        "Formula 1"
+        "Formula 1",
+        "Cyberpunk 2099"
     };
     private static final int[] UNIVERSE_THEME_COLORS = {
         0xFFFFD54F, // 1. Harry Potter
@@ -126,7 +127,8 @@ public class MainActivity extends Activity {
         0xFF2979FF, // 4. Star Wars
         0xFFB388FF, // 5. MCU
         0xFF00B0FF, // 6. DCU
-        0xFFFF1801  // 7. Formula 1
+        0xFFFF1801, // 7. Formula 1
+        0xFF00F0FF  // 8. Cyberpunk 2099
     };
     private static final String[] QUICK_NAMES = {"bluetooth", "sound", "picture"};
     private static final String[] QUICK_LABELS = {"Bluetooth", "Sound", "Picture"};
@@ -195,10 +197,10 @@ public class MainActivity extends Activity {
     private float scale = 1f;
     private float uiScale = 1f;
     private float settingsScale = 1f;
-    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27, 29};
+    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27, 29, 28};
 
     private static Typeface regular, semibold, defaultThemeFont, cinzelFont;
-    private static final Typeface[] themeFonts = new Typeface[7];
+    private static final Typeface[] themeFonts = new Typeface[8];
 
     private FrameLayout root; // the page, inside a vertical scroller
     private SkyView skyView;
@@ -2267,7 +2269,7 @@ public class MainActivity extends Activity {
             bt.lineTo(cx - er * 0.12f, cy - er * 0.45f); // Left bat ear
             bt.close();
             c.drawPath(bt, p);
-        } else {
+        } else if (pos == 6) {
             // FORMULA 1: Official F1 Crimson Twin-Stripe Speed Wing + Slanted '1' + Checkered Flag Accent
             p.setStyle(Paint.Style.STROKE);
             p.setStrokeCap(Paint.Cap.ROUND);
@@ -2295,6 +2297,28 @@ public class MainActivity extends Activity {
                 p.setColor((cl % 2 == 0) ? 0xFFFFFFFF : 0xFF1A1E28);
                 c.drawRect(baseX + cl * sq, baseY, baseX + (cl + 1) * sq, baseY + sq * 0.75f, p);
             }
+        } else {
+            // CYBERPUNK 2099: Neon Yellow Samurai Jacket Collar + Glowing Cyan/Magenta Cyber-Visor & Neural Circuit
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0xFFFCEE09); // Iconic Cyber-Yellow Jacket Collar
+            Path colPath = new Path();
+            colPath.moveTo(cx - er * 0.78f, cy - er * 0.65f);
+            colPath.lineTo(cx + er * 0.78f, cy - er * 0.65f);
+            colPath.lineTo(cx + er * 0.52f, cy + er * 0.78f);
+            colPath.lineTo(cx, cy + er * 0.42f);
+            colPath.lineTo(cx - er * 0.52f, cy + er * 0.78f);
+            colPath.close();
+            c.drawPath(colPath, p);
+            p.setColor(0xFF0D111C);
+            c.drawCircle(cx, cy - er * 0.08f, er * 0.48f, p);
+            // Glowing Cyan & Magenta Kiroshi Cyber-Optic Visor Slash
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeCap(Paint.Cap.ROUND);
+            p.setStrokeWidth(Math.max(2.2f, 2.8f * scale));
+            p.setColor(0xFF00F0FF);
+            c.drawLine(cx - er * 0.58f, cy - er * 0.15f, cx + er * 0.58f, cy - er * 0.15f, p);
+            p.setColor(0xFFFF0055);
+            c.drawLine(cx - er * 0.36f, cy + er * 0.12f, cx + er * 0.36f, cy + er * 0.12f, p);
         }
         return new BitmapDrawable(getResources(), bm);
     }
@@ -3403,7 +3427,8 @@ public class MainActivity extends Activity {
             "44 Scenes  \u00B7  Hyperspace, X-Wing Dogfights & Twin Suns",
             "44 Scenes  \u00B7  Avengers Tower, Sling-Ring Portals & Arc Reactors",
             "44 Scenes  \u00B7  Gotham Bat-Signal, Krypton & Speed Force",
-            "44 Scenes  \u00B7  Floodlit Grand Prix Tracks, Team Cars & Podiums"
+            "44 Scenes  \u00B7  Floodlit Grand Prix Tracks, Team Cars & Podiums",
+            "44 Scenes  \u00B7  Night City Neon, Sandevistan & Trauma Team AVs"
         };
 
         final Runnable refreshSelectionUI = () -> {
@@ -4995,7 +5020,7 @@ public class MainActivity extends Activity {
         } catch (Throwable t) {
             cinzelFont = semibold;
         }
-        String[] fontAssets = {"harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf", "f1.ttf"};
+        String[] fontAssets = {"harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf", "f1.ttf", "f1.ttf"};
         for (int i = 0; i < fontAssets.length; i++) {
             try {
                 themeFonts[i] = Typeface.createFromAsset(c.getAssets(), fontAssets[i]);

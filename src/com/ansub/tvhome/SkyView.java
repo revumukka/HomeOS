@@ -452,6 +452,53 @@ final class SkyView extends View {
         "XLIV  |  CHAMPIONS GALA  |  CONSTRUCTORS' & DRIVERS' WORLD TROPHY LIFT"
     };
 
+    private static final String[] CYBERPUNK_TITLES = {
+        "I  |  CORPO PLAZA  |  ARASAKA TOWER NEON RAIN & TRAUMA TEAM AV",
+        "II  |  WATSON KABUKI  |  QUADRA TURBO-R V-TECH MIDNIGHT DRIFT",
+        "III  |  AFTERLIFE VIP  |  LEGEND OF NIGHT CITY & JOHNNY SILVERHAND",
+        "IV  |  SANDEVISTAN  |  DAVID MARTINEZ EMERALD TIME-DILATION SLASH",
+        "V  |  JAPANTOWN BRIDGE  |  YAIBA KUSANAGI AKIRA POWER-SLIDE",
+        "VI  |  THE BLACKWALL  |  LUCY & V DEEP CYBERSPACE NETRUNNER DIVE",
+        "VII  |  KONPEKI PLAZA  |  THE RELIC BIOCHIP HEIST & FLATHEAD BOT",
+        "VIII  |  PACIFICA PIER  |  VOODOO BOYS SUB-NET DATA MATRIX",
+        "IX  |  LIZZIE'S BAR  |  JUDY ALVAREZ BRAIN-DANCE HOLOGRAM STUDIO",
+        "X  |  BADLANDS HIGHWAY  |  PANAM PALMER & ALDECALDOS BASILISK TANK",
+        "XI  |  MEGABUILDING H10  |  LITTLE CHINA HOLOGRAPHIC KOI SKYWAY",
+        "XII  |  CYBERPSYCHO SIGHTING  |  MAXTAC MANTIS BLADES INTERCEPT",
+        "XIII  |  ARASAKA PARADE  |  DASHI HOLO-DRAGONS & ODA KATANA DUEL",
+        "XIV  |  ORBITAL AIR  |  TYCHO LUNAR SHUTTLE LAUNCH OVER MORRO ROCK",
+        "XV  |  DOGTOWN STADIUM  |  SOLOMON REED & SONGBIRD BLACKWALL SURGE",
+        "XVI  |  TOTENTANZ CLUB  |  MAELSTROM CHROME LASER RAVE",
+        "XVII  |  VIKTOR VEKTOR CLINIC  |  KIROSHI OPTICS & GORILLA ARMS UPGRADE",
+        "XVIII  |  CHERRY BLOSSOM MARKET  |  WAKAKO OKADA & TYGER CLAWS BIKES",
+        "XIX  |  DELAMAIN HQ  |  ROGUE AI COMBAT CAB HIGH-SPEED PURSUIT",
+        "XX  |  BIOTECHNICA FLATS  |  SYNTHETIC PROTEIN FARMS & ACID FOG",
+        "XXI  |  TRAUMA TEAM PLATINUM  |  AV-4 MEDEVAC GUNSHIP EXTRACTION",
+        "XXII  |  SAMURAI REUNION  |  KERRY EURODYNE & SILVERHAND GUITAR SOLO",
+        "XXIII  |  REBECCA & PILAR  |  EDGERUNNERS HEAVY SHOTGUN OVERDRIVE",
+        "XXIV  |  CYBERSKELETON  |  GRAVITY-CRUSH CONVOY SHOWDOWN",
+        "XXV  |  ARASAKA ATRIUM  |  DON'T FEAR THE REAPER SOLO ASSAULT",
+        "XXVI  |  ADAM SMASHER  |  BORG TITAN VS. SANDEVISTAN THERMAL KATANA",
+        "XXVII  |  MIKOSHI SOULKILLER  |  DIGITAL ENGRAM STARLIGHT BRIDGE",
+        "XXVIII  |  MOONLIGHT PROMISE  |  I REALLY WANT TO STAY AT YOUR HOUSE",
+        "XXIX  |  HEYWOOD GLEN  |  VALENTINOS LOWRIDER GOLD HYDRAULIC CRUISE",
+        "XXX  |  CHARTER HILL  |  RAYFIELD CALIBURN HYPERCAR SONIC BOOM",
+        "XXXI  |  NORTHSIDE DOCKS  |  MILITECH MECH & DRONE CONVOY",
+        "XXXII  |  SANTO DOMINGO  |  6TH STREET ROOFTOP SNIPER OVERWATCH",
+        "XXXIII  |  HEAVY HEARTS PYRAMID  |  MR. HANDS HIGH-STAKES FIXER GIG",
+        "XXXIV  |  CYNOSURE BUNKER  |  CERBERUS AI CORE & RED DATA TENDRILS",
+        "XXXV  |  THE STAR ENDING  |  PANAM & V CROSSING THE BORDER CANYON",
+        "XXXVI  |  THE SUN ENDING  |  CRYSTAL PALACE ZERO-G SPACE HEIST",
+        "XXXVII  |  SECTOR NINE  |  MOTOKO KUSANAGI THERMO-OPTIC ROOFTOP DIVE",
+        "XXXVIII  |  LOS ANGELES 2049  |  SPINNER POLICE CRUISER OVER SEA WALL",
+        "XXXIX  |  NEO-TOKYO HIGHWAY  |  SHOTARO KANEDA RED LASER MOTORBIKE",
+        "XL  |  TYRELL PYRAMID  |  TEARS IN RAIN ROOFTOP MONOLOGUE",
+        "XLI  |  JIG-JIG STREET  |  NEON KANJI SIGNS & STEAMING RAMEN STALL",
+        "XLII  |  MONOWIRE WHIP  |  NETRUNNER THERMAL MONOWIRE ARC SLASH",
+        "XLIII  |  RELIC OVERCLOCK  |  JOHNNY & V DUAL MALORIAN PISTOL BLAST",
+        "XLIV  |  NIGHT CITY LEGENDS  |  TOP OF ARASAKA TOWER NEON SUNRISE"
+    };
+
     // Cached Ambilight Edge LinearGradients (rebuilt ONLY when RGB or screen dimensions change)
     private LinearGradient topEdgeShader, botEdgeShader, leftEdgeShader, rightEdgeShader;
     private int cachedShaderRgb = -1, cachedShaderW = -1, cachedShaderH = -1;
@@ -507,7 +554,7 @@ final class SkyView extends View {
     private float screensaverZoom = 0f;
     private int screensaverOverrideScene = -1;
     private int lastScreensaverSlot = -1;
-    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 6; // 344 total story scenes across 7 themes
+    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 7; // 388 total story scenes across 8 themes
     private final int[] shuffledPool = new int[TOTAL_POOL_SCENES];
     private int poolCursor = TOTAL_POOL_SCENES;
     private final java.util.Random poolRng = new java.util.Random();
@@ -544,7 +591,8 @@ final class SkyView extends View {
             STAR_WARS_TITLES.length,
             MCU_TITLES.length,
             DCU_TITLES.length,
-            F1_TITLES.length
+            F1_TITLES.length,
+            CYBERPUNK_TITLES.length
         };
         for (int th = 0; th < counts.length; th++) {
             for (int sc = 0; sc < counts[th]; sc++) {
@@ -592,7 +640,7 @@ final class SkyView extends View {
                 baseSky = null;
             }
         }
-        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801};
+        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801, 0xFF00F0FF};
         int col = themeColors[Math.max(0, Math.min(themeColors.length - 1, nextTheme))];
         setReactiveColor(col, false);
         if (screensaverThemeListener != null) {
@@ -704,6 +752,7 @@ final class SkyView extends View {
         if (theme == 4) return MCU_TITLES;
         if (theme == 5) return DCU_TITLES;
         if (theme == 6) return F1_TITLES;
+        if (theme == 7) return CYBERPUNK_TITLES;
         return CHAPTER_TITLES;
     }
 
@@ -1132,6 +1181,10 @@ final class SkyView extends View {
                 // Theme 7: FORMULA 1 — Night Grand Prix Stadium Floodlights, Camera Flashes & Telemetry Sky
                 topCol = 0xFF04070E; midCol = 0xFF0B1324; botCol = 0xFF070912;
                 glow1 = 0x42C8EEFF; glow2 = 0x3800D2BE; glow3 = 0x36FF1801;
+            } else if (universeTheme == 7) {
+                // Theme 8: CYBERPUNK 2099 — Night City Neon Cyan, Hot Magenta & Cyber-Yellow Smog Sky
+                topCol = 0xFF04030E; midCol = 0xFF0D0824; botCol = 0xFF070414;
+                glow1 = 0x4800F0FF; glow2 = 0x42FF0055; glow3 = 0x38FCEE09;
             } else if (paletteIndex == 1) {
                 topCol = 0xFF16080A; midCol = 0xFF220E12; botCol = 0xFF0E070A;
                 glow1 = 0x44FFB840; glow2 = 0x38B82830;
@@ -1514,6 +1567,73 @@ final class SkyView extends View {
                 p.setStrokeWidth(px(1.8f));
                 p.setColor(0x88FF1801);
                 c.drawLine(0, groundY, w, groundY, p);
+            } else if (universeTheme == 7) {
+                // CYBERPUNK 2099 SKY: Night City Megabuilding Skyline, Arasaka Holo-Rings & Kiroshi Sky Projections
+                float mx = w * 0.85f, my = h * 0.16f, mr = px(40);
+                // Holographic Magenta/Cyan Orbital Air & Arasaka Sky Ring in Upper Right
+                p.setShader(new RadialGradient(mx, my, mr * 4.2f,
+                        new int[] {0x48FF0055, 0x2400F0FF, 0x00000000}, new float[] {0f, 0.48f, 1f}, Shader.TileMode.CLAMP));
+                c.drawCircle(mx, my, mr * 4.2f, p);
+                p.setShader(null);
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.4f));
+                p.setColor(0xCC00F0FF);
+                c.drawCircle(mx, my, mr, p);
+                p.setStrokeWidth(px(1.6f));
+                p.setColor(0xEEFF0055);
+                c.drawCircle(mx, my, mr * 0.68f, p);
+                // Arasaka 3-Lobe Corporate Holo-Crest inside the sky ring
+                p.setStyle(Paint.Style.FILL);
+                p.setColor(0xDDFF003C);
+                c.drawCircle(mx, my - mr * 0.25f, px(5.5f), p);
+                c.drawCircle(mx - mr * 0.22f, my + mr * 0.16f, px(5.5f), p);
+                c.drawCircle(mx + mr * 0.22f, my + mr * 0.16f, px(5.5f), p);
+
+                // Vertical Cyan & Magenta Kiroshi Advertising Sky-Beams rising from Corpo Plaza
+                p.setColor(0x1400F0FF);
+                c.drawRect(w * 0.72f, skyY(w, h, 0.45f), w * 0.74f, skyY(w, h, 0.90f), p);
+                p.setColor(0x14FF0055);
+                c.drawRect(w * 0.88f, skyY(w, h, 0.42f), w * 0.90f, skyY(w, h, 0.90f), p);
+
+                float groundY = h * 0.900f;
+                p.setColor(0x9405040E);
+                Path stage = new Path();
+                stage.moveTo(0, h);
+                stage.lineTo(0, groundY);
+                stage.lineTo(w * 0.65f, groundY);
+                // Night City Megabuilding H10 & Arasaka Tower Brutalist Skyline on right (0.65..0.98)
+                stage.lineTo(w * 0.68f, skyY(w, h, 0.73f)); // Megabuilding H10 stepped block
+                stage.lineTo(w * 0.75f, skyY(w, h, 0.73f));
+                stage.lineTo(w * 0.75f, groundY);
+                stage.lineTo(w * 0.78f, groundY);
+                stage.lineTo(w * 0.79f, skyY(w, h, 0.63f)); // Tall Arasaka Corporate Tower
+                stage.lineTo(w * 0.86f, skyY(w, h, 0.65f));
+                stage.lineTo(w * 0.86f, groundY);
+                stage.lineTo(w * 0.89f, skyY(w, h, 0.71f)); // Konpeki / Biotechnica Tower
+                stage.lineTo(w * 0.96f, skyY(w, h, 0.71f));
+                stage.lineTo(w * 0.96f, groundY);
+                stage.lineTo(w, groundY);
+                stage.lineTo(w, h);
+                stage.close();
+                c.drawPath(stage, p);
+
+                // Neon Cyan, Magenta & Cyber-Yellow Window Strips on the Megabuildings
+                int[] neonWinCols = {0xCC00F0FF, 0xCCFF0055, 0xCCFCEE09};
+                for (int wy = 0; wy < 6; wy++) {
+                    p.setColor(neonWinCols[wy % 3]);
+                    float yPos = skyY(w, h, 0.67f + wy * 0.035f);
+                    c.drawRect(w * 0.80f, yPos, w * 0.85f, yPos + px(2.4f), p);
+                    if (wy >= 2) {
+                        c.drawRect(w * 0.695f, yPos, w * 0.735f, yPos + px(2.2f), p);
+                        c.drawRect(w * 0.905f, yPos, w * 0.945f, yPos + px(2.2f), p);
+                    }
+                }
+
+                // Neon Wet-Asphalt Horizon Line
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.0f));
+                p.setColor(0x9900F0FF);
+                c.drawLine(0, groundY, w, groundY, p);
             } else {
             // Full Moon in upper right sky
             float mx = w * 0.85f, my = h * 0.16f, mr = px(34);
@@ -1738,6 +1858,9 @@ final class SkyView extends View {
                 glintRgb = starRgb;
             } else if (universeTheme == 5) {
                 starRgb = (i % 3 == 0) ? 0x0048FF90 : (i % 3 == 1 ? 0x0078E0FF : 0x00FFE478);
+                glintRgb = starRgb;
+            } else if (universeTheme == 7) {
+                starRgb = (i % 3 == 0) ? 0x0000F0FF : (i % 3 == 1 ? 0x00FF0055 : 0x00FCEE09);
                 glintRgb = starRgb;
             }
             paint.setColor((alpha << 24) | starRgb);
@@ -2225,6 +2348,62 @@ final class SkyView extends View {
                     paint.setStyle(Paint.Style.FILL);
                 }
                 continue;
+            } else if (universeTheme == 7) {
+                // CYBERPUNK 2099 Top Sky: Floating Holographic Neon Signs, Militech Recon Drones & Relic Biochip Shards
+                float cy2 = cy + ch * 0.28f;
+                int cpMode = i % 3;
+                if (cpMode == 0) {
+                    // Type A: Floating Vertical Neon Kanji / Cyber-Billboard Frame (Cyan + Magenta Neon Tubes)
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x32 << 24) | 0x00FF0055);
+                    canvas.drawCircle(cx, cy2, cw * 2.8f * flicker, paint);
+                    paint.setColor(0xDD0A0818);
+                    canvas.drawRoundRect(cx - cw * 1.15f, cy2 - ch * 0.36f, cx + cw * 1.15f, cy2 + ch * 0.36f, px(3f), px(3f), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.6f));
+                    paint.setColor(0xFF00F0FF);
+                    canvas.drawRoundRect(cx - cw * 1.15f, cy2 - ch * 0.36f, cx + cw * 1.15f, cy2 + ch * 0.36f, px(3f), px(3f), paint);
+                    // Glowing magenta & yellow stylized Kanji / Cyber glyph strokes inside the neon sign
+                    paint.setColor(0xFFFF0055);
+                    canvas.drawLine(cx - cw * 0.65f, cy2 - ch * 0.18f, cx + cw * 0.65f, cy2 - ch * 0.18f, paint);
+                    canvas.drawLine(cx, cy2 - ch * 0.24f, cx, cy2 + ch * 0.24f, paint);
+                    paint.setColor(0xFFFCEE09);
+                    canvas.drawLine(cx - cw * 0.55f, cy2 + ch * 0.08f, cx + cw * 0.55f, cy2 + ch * 0.08f, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                } else if (cpMode == 1) {
+                    // Type B: Arasaka / Militech Security Recon Drone with Red Laser Scanner Cone
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0x24FF003C);
+                    flamePath.reset();
+                    flamePath.moveTo(cx, cy2 + px(3f));
+                    flamePath.lineTo(cx + cw * 2.4f, cy2 + ch * 0.85f);
+                    flamePath.lineTo(cx - cw * 2.4f, cy2 + ch * 0.85f);
+                    flamePath.close();
+                    canvas.drawPath(flamePath, paint);
+                    paint.setColor(0xFF1A2030);
+                    canvas.drawOval(rectF(cx - cw * 1.35f, cy2 - cw * 0.65f, cx + cw * 1.35f, cy2 + cw * 0.65f), paint);
+                    paint.setColor(0xFFFF003C);
+                    canvas.drawCircle(cx, cy2, cw * 0.42f * flicker, paint);
+                    paint.setColor(0xFF00F0FF);
+                    canvas.drawCircle(cx - cw * 0.9f, cy2, px(1.5f), paint);
+                    canvas.drawCircle(cx + cw * 0.9f, cy2, px(1.5f), paint);
+                } else {
+                    // Type C: Floating Relic Biochip Shard & Sandevistan Neural Node
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x34 << 24) | 0x0000F0FF);
+                    canvas.drawCircle(cx, cy2, cw * 2.6f * flicker, paint);
+                    paint.setColor(0xEE081828);
+                    canvas.drawRoundRect(cx - cw * 0.72f, cy2 - ch * 0.30f, cx + cw * 0.72f, cy2 + ch * 0.30f, px(2.5f), px(2.5f), paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.4f));
+                    paint.setColor(0xFFFCEE09);
+                    canvas.drawRoundRect(cx - cw * 0.72f, cy2 - ch * 0.30f, cx + cw * 0.72f, cy2 + ch * 0.30f, px(2.5f), px(2.5f), paint);
+                    paint.setColor(0xFF00F0FF);
+                    canvas.drawLine(cx - cw * 0.4f, cy2 - ch * 0.14f, cx + cw * 0.4f, cy2 + ch * 0.14f, paint);
+                    canvas.drawLine(cx + cw * 0.4f, cy2 - ch * 0.14f, cx - cw * 0.4f, cy2 + ch * 0.14f, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                }
+                continue;
             }
             // THEME 0 (HARRY POTTER): Sculpted Great Hall Floating Wax Taper Candle with Brass Holder & 3-Layer Flame
             paint.setColor((0x24 << 24) | rgbOnly);
@@ -2399,6 +2578,22 @@ final class SkyView extends View {
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(0xFFFF6D00);
             c.drawCircle(sx, sy, px(3.6f), paint);
+            return;
+        } else if (universeTheme == 7) {
+            // CYBERPUNK 2099 Companion: Hovering Netrunner Cyber-Deck & Twin Cyan/Magenta Kiroshi Optics
+            paint.setColor(0x4800F0FF);
+            c.drawCircle(sx, sy, px(13f), paint);
+            paint.setColor(0xFF101424);
+            c.drawRoundRect(sx - px(10f), sy - px(6f), sx + px(10f), sy + px(6f), px(3f), px(3f), paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(1.8f));
+            paint.setColor(0xFFFCEE09);
+            c.drawRoundRect(sx - px(10f), sy - px(6f), sx + px(10f), sy + px(6f), px(3f), px(3f), paint);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0xFF00F0FF);
+            c.drawCircle(sx - px(4f), sy, px(2.4f), paint);
+            paint.setColor(0xFFFF0055);
+            c.drawCircle(sx + px(4f), sy, px(2.4f), paint);
             return;
         }
         paint.setColor(0x44FFE066);
@@ -2611,6 +2806,31 @@ final class SkyView extends View {
                 paint.setColor(0xEE00E676);
                 c.drawCircle(gx + dir * px(15f * sc), gy - px(4f * sc), px(1.6f * sc), paint);
                 continue;
+            } else if (universeTheme == 7) {
+                // CYBERPUNK 2099 Top Sky: Trauma Team AV-4 Aerodynes & Blade Runner Spinner Cruisers with Neon Ion Trails
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.2f * sc));
+                paint.setColor(g % 2 == 0 ? 0xAA00F0FF : 0xAAFF0055);
+                c.drawLine(gx - dir * px(14f * sc), gy, gx - dir * px(42f * sc), gy, paint);
+                // Downward scanning headlight cone
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0x1C00F0FF);
+                actorPath.reset();
+                actorPath.moveTo(gx + dir * px(10f * sc), gy + px(3f * sc));
+                actorPath.lineTo(gx + dir * px(36f * sc), gy + px(28f * sc));
+                actorPath.lineTo(gx + dir * px(4f * sc), gy + px(28f * sc));
+                actorPath.close();
+                c.drawPath(actorPath, paint);
+                // Sleek armored Trauma Team / Spinner aerodyne hull
+                paint.setColor(g % 2 == 0 ? 0xFFF0F4FA : 0xFF182032);
+                c.drawRoundRect(gx - px(14f * sc), gy - px(5f * sc), gx + px(14f * sc), gy + px(5f * sc), px(3f * sc), px(3f * sc), paint);
+                // Flashing Red/Cyan Trauma Team Emergency Strobe
+                boolean strobe = (((int) (t * 6f + g)) % 2) == 0;
+                paint.setColor(strobe ? 0xFFFF003C : 0xFF00F0FF);
+                c.drawCircle(gx + dir * px(6f * sc), gy - px(5.5f * sc), px(2.4f * sc), paint);
+                paint.setColor(0xFFFCEE09);
+                c.drawCircle(gx - dir * px(12f * sc), gy, px(2.6f * sc), paint);
+                continue;
             }
             float shimmer = 0.72f + 0.28f * (float) Math.sin(t * 3.1f + g * 1.3f);
             int auraAlpha = Math.round(18f * shimmer);
@@ -2708,6 +2928,9 @@ final class SkyView extends View {
             return;
         } else if (universeTheme == 6) {
             drawF1StoryLoop(c, w, h, t);
+            return;
+        } else if (universeTheme == 7) {
+            drawCyberpunkStoryLoop(c, w, h, t);
             return;
         }
         float totalCycle = CHAPTER_SEC * SCENE_COUNT;
@@ -8180,6 +8403,293 @@ final class SkyView extends View {
     }
 
     /**
+     * Draws the 44-Scene CYBERPUNK 2099 (Night City / Edgerunners / Netrunner) Saga Loop across the bottom stage.
+     * Features:
+     * - Faded Night City District & Faction Watermark in the lower stage (`CORPO PLAZA // ARASAKA`, `EDGERUNNERS // SANDEVISTAN`, etc.)
+     * - Neon wet-asphalt reflection grid along groundY
+     * - Quadra Turbo-R V-Tech supercar with glowing cyan light-bar & magenta underglow
+     * - Yaiba Kusanagi CT-3X neon cyber-bike Akira power-slides & wheelies
+     * - Cyber-Samurai / David Martinez / V with Sandevistan emerald-cyan time-dilation clones & thermal katana slash
+     * - Trauma Team AV-4 aerial extraction & Blackwall cyberspace data pillars
+     */
+    private void drawCyberpunkStoryLoop(Canvas c, int w, int h, float t) {
+        int count = CYBERPUNK_TITLES.length;
+        float totalCycle = CHAPTER_SEC * count;
+        float cycleTime = t % totalCycle;
+        int scene = resolveActiveScene(cycleTime, count);
+        float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
+        float fade = resolveStoryFade(p);
+        int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
+
+        float groundY = h * 0.900f;
+        drawStoryCaptionAndDots(c, w, h, CYBERPUNK_TITLES[scene], scene, count, aBase,
+                0x0000F0FF, 0xEE00F0FF, 0x44FF0055, px(7.8f));
+
+        c.save();
+        applyStageTransform(c, w, h, groundY);
+
+        // 1. Faded Night City District & Faction Watermark in the bottom stage
+        String[] districts = {
+            "CORPO PLAZA // ARASAKA TOWER",
+            "WATSON KABUKI // QUADRA V-TECH",
+            "AFTERLIFE VIP // SAMURAI LEGENDS",
+            "SANDEVISTAN // EDGERUNNERS OVERDRIVE",
+            "JAPANTOWN // YAIBA KUSANAGI",
+            "PACIFICA // BLACKWALL CYBERSPACE",
+            "KONPEKI PLAZA // RELIC BIOCHIP",
+            "DOGTOWN // BLACKWALL PROTOCOL"
+        };
+        String[] subs = {
+            "NIGHT CITY SECTOR 01 // HIGH-ALERT TRAUMA TEAM AIRSPACE",
+            "TURBO-R V-TECH // NEON WET-ASPHALT MIDNIGHT DRIFT",
+            "JOHNNY SILVERHAND & V // NEVER FADE AWAY",
+            "DAVID MARTINEZ & LUCY // MILITARY CYBERWARE TIME-DILATION",
+            "AKIRA HIGH-G POWER SLIDE // TYGER CLAWS TERRITORY",
+            "NETWATCH ICE BREAKER // DEEP NEURAL SUB-NET",
+            "ARASAKA COUNTER-INTEL // MILITECH FLATHEAD BOT",
+            "SOLOMON REED & SONGBIRD // ORBITAL AIR LAUNCH"
+        };
+        int[] distCols = {0x00FF0055, 0x0000F0FF, 0x00FCEE09, 0x0000FF9D, 0x00FF003C, 0x0000F0FF, 0x00FCEE09, 0x00FF0055};
+        int dIdx = scene % districts.length;
+        int dCol = distCols[dIdx];
+
+        Typeface prevTf = paint.getTypeface();
+        Paint.Align prevAlign = paint.getTextAlign();
+        paint.setTypeface(f1Font != null ? f1Font : (cinzelFont != null ? cinzelFont : Typeface.DEFAULT_BOLD));
+        paint.setTextAlign(Paint.Align.CENTER);
+        float cx = w * 0.45f;
+        float maxW = w * 0.46f;
+        float wmSize = px(26f);
+        paint.setTextSize(wmSize);
+        float m = paint.measureText(districts[dIdx]);
+        if (m > maxW && m > 0f) paint.setTextSize(Math.max(px(13f), wmSize * (maxW / m)));
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((Math.round(aBase * 0.16f) << 24) | dCol);
+        c.drawText(districts[dIdx], cx, groundY - px(38f), paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(1.0f));
+        paint.setColor((Math.round(aBase * 0.28f) << 24) | 0x0000F0FF);
+        c.drawText(districts[dIdx], cx, groundY - px(38f), paint);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(px(8.8f));
+        paint.setColor((Math.round(aBase * 0.42f) << 24) | 0x00E0F8FF);
+        c.drawText(subs[dIdx], cx, groundY + px(14f), paint);
+        paint.setTextAlign(prevAlign);
+        paint.setTypeface(prevTf);
+
+        // 2. Neon Wet-Asphalt Cyber Grid along groundY
+        float kStart = w * 0.22f, kEnd = w * 0.68f;
+        float kW = px(22f);
+        float scroll = (t * px(160f)) % (kW * 2f);
+        int kIdx = 0;
+        for (float kx = kStart - scroll; kx < kEnd; kx += kW, kIdx++) {
+            float l = Math.max(kStart, kx);
+            float r = Math.min(kEnd, kx + kW);
+            if (r > l) {
+                int kc = (kIdx % 2 == 0) ? 0x0000F0FF : 0x00FF0055;
+                paint.setColor((aBase * 3 / 4 << 24) | kc);
+                c.drawRect(l, groundY - px(3.5f), r, groundY, paint);
+            }
+        }
+
+        // 3. Scene-Specific Choreography (Quadra V-Tech, Yaiba Kusanagi, Sandevistan Edgerunner, Blackwall Netrunner, Trauma Team AV)
+        int mode = scene % 5;
+        if (mode == 0) {
+            // Mode A: Quadra Turbo-R V-Tech Supercar vs. Trauma Team AV-4 Gunship Extraction
+            float carX = w * (0.28f + p * 0.32f);
+            drawCyberQuadraCar(c, carX, groundY - px(10f), t, aBase, 0x001A2234, 0x0000F0FF, 0x00FF0055, false, 1.32f);
+            // Hovering Trauma Team AV-4 overhead with downward searchlight beam
+            float avX = w * (0.58f - p * 0.18f);
+            float avY = groundY - px(92f) + (float) Math.sin(t * 4f) * px(6f);
+            paint.setColor((aBase / 4 << 24) | 0x0000F0FF);
+            actorPath.reset();
+            actorPath.moveTo(avX - px(18f), avY + px(8f));
+            actorPath.lineTo(avX + px(18f), avY + px(8f));
+            actorPath.lineTo(avX + px(54f), groundY);
+            actorPath.lineTo(avX - px(54f), groundY);
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            paint.setColor((aBase << 24) | 0x00F0F6FF);
+            c.drawRoundRect(avX - px(32f), avY - px(10f), avX + px(32f), avY + px(10f), px(5f), px(5f), paint);
+            paint.setColor((aBase << 24) | 0x00FF003C);
+            c.drawRect(avX - px(14f), avY - px(4f), avX + px(14f), avY + px(4f), paint);
+            c.drawCircle(avX - px(24f), avY + px(10f), px(4.5f), paint);
+            c.drawCircle(avX + px(24f), avY + px(10f), px(4.5f), paint);
+        } else if (mode == 1) {
+            // Mode B: Sandevistan Time-Dilation Overdrive — 5 Emerald/Cyan After-Image Clones + Thermal Katana Slash
+            float baseX = w * (0.28f + p * 0.30f);
+            int[] sandCols = {0x0000FF66, 0x0000F0FF, 0x0038FF98, 0x0000D8FF, 0x00FCEE09};
+            for (int cl = 0; cl < 5; cl++) {
+                float cxPos = baseX - (4 - cl) * px(26f);
+                int cAlpha = (cl == 4) ? aBase : Math.round(aBase * (0.22f + cl * 0.14f));
+                drawCyberEdgerunner(c, cxPos, groundY - px(56f), t + cl * 0.2f, cAlpha, sandCols[cl], cl == 4, false, 1.32f);
+            }
+            // Opponent Borg / Cyberpsycho on right
+            drawCyberEdgerunner(c, w * 0.62f, groundY - px(58f), t, aBase, 0x00FF003C, true, true, 1.42f);
+            drawLightningStreak(c, baseX + px(18f), groundY - px(64f), w * 0.60f, groundY - px(64f),
+                    t, 700 + scene, 0x0000F0FF, 0x00FCEE09, 0x00FFFFFF, px(3.8f), aBase, true);
+        } else if (mode == 2) {
+            // Mode C: Yaiba Kusanagi CT-3X Akira Power-Slide & Plasma Light-Ribbon Wake
+            float bikeX = w * (0.28f + p * 0.34f);
+            // Trailing Akira neon red & cyan tail-light plasma ribbons
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(4.2f));
+            paint.setColor((aBase * 3 / 4 << 24) | 0x00FF003C);
+            c.drawLine(bikeX - px(95f), groundY - px(16f), bikeX - px(18f), groundY - px(16f), paint);
+            paint.setStrokeWidth(px(2.6f));
+            paint.setColor((aBase * 3 / 4 << 24) | 0x0000F0FF);
+            c.drawLine(bikeX - px(82f), groundY - px(10f), bikeX - px(18f), groundY - px(10f), paint);
+            paint.setStyle(Paint.Style.FILL);
+            drawCyberKusanagiBike(c, bikeX, groundY - px(10f), t, aBase, 0x00FF003C, 0x0000F0FF, 1.38f);
+        } else if (mode == 3) {
+            // Mode D: The Blackwall Cyberspace Dive — Vertical Red/Cyan Data Matrix Pillars & Floating Netrunners
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.4f));
+            for (int col = 0; col < 12; col++) {
+                float bx = w * (0.25f + col * 0.036f);
+                float bh = px(55f + 38f * (float) Math.abs(Math.sin(t * 3.2f + col * 0.9f)));
+                paint.setColor(((aBase * 2 / 3) << 24) | (col % 3 == 0 ? 0x0000F0FF : 0x00FF003C));
+                c.drawLine(bx, groundY, bx, groundY - bh, paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+            drawCyberEdgerunner(c, w * 0.38f, groundY - px(62f), t, aBase, 0x0000F0FF, false, false, 1.32f);
+            drawCyberEdgerunner(c, w * 0.54f, groundY - px(62f), t + 0.5f, aBase, 0x00FF0055, false, true, 1.32f);
+        } else {
+            // Mode E: High-Speed Midnight Street Duel — Quadra V-Tech vs. Rayfield Caliburn Hypercar
+            float c1 = w * (0.25f + p * 0.28f);
+            float c2 = c1 + px(135f) + (float) Math.sin(t * 4.5f) * px(18f);
+            drawCyberQuadraCar(c, c1, groundY - px(10f), t, aBase, 0x00182030, 0x00FF0055, 0x00FCEE09, false, 1.26f);
+            drawCyberQuadraCar(c, c2, groundY - px(10f), t + 0.4f, aBase, 0x00F0F6FF, 0x0000F0FF, 0x00FF003C, false, 1.28f);
+        }
+
+        c.restore();
+    }
+
+    private void drawCyberQuadraCar(Canvas c, float x, float y, float t, int alpha,
+                                     int bodyRgb, int neonRgb, int tailRgb, boolean facingLeft, float s) {
+        float dir = facingLeft ? -1f : 1f;
+        // 1. Neon Underglow Strip on the Wet Asphalt
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha / 2 << 24) | (neonRgb & 0xFFFFFF));
+        c.drawOval(x - px(46f * s), y + px(2f * s), x + px(46f * s), y + px(10f * s), paint);
+
+        // 2. Blue/Magenta Twin Plasma Exhaust Afterburner Flames
+        float flameLen = px(18f * s + 8f * s * (float) Math.abs(Math.sin(t * 28f)));
+        paint.setColor((alpha << 24) | (tailRgb & 0xFFFFFF));
+        c.drawOval(Math.min(x - dir * px(42f * s), x - dir * (px(42f * s) + flameLen)), y - px(9f * s),
+                   Math.max(x - dir * px(42f * s), x - dir * (px(42f * s) + flameLen)), y - px(3f * s), paint);
+
+        // 3. Wide Wedge-Shaped Quadra V-Tech / Caliburn Chassis
+        paint.setColor((alpha << 24) | (bodyRgb & 0xFFFFFF));
+        actorPath.reset();
+        actorPath.moveTo(x - dir * px(42f * s), y - px(3f * s));
+        actorPath.lineTo(x - dir * px(40f * s), y - px(16f * s));
+        actorPath.lineTo(x - dir * px(14f * s), y - px(24f * s)); // Louvered fastback roofline
+        actorPath.lineTo(x + dir * px(12f * s), y - px(23f * s));
+        actorPath.lineTo(x + dir * px(32f * s), y - px(12f * s));
+        actorPath.lineTo(x + dir * px(46f * s), y - px(3f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+
+        // 4. Glowing Cyan Side Trim & Windshield Visor
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(2.0f * s));
+        paint.setColor((alpha << 24) | (neonRgb & 0xFFFFFF));
+        c.drawLine(x - dir * px(38f * s), y - px(11f * s), x + dir * px(42f * s), y - px(9f * s), paint);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | (tailRgb & 0xFFFFFF));
+        c.drawCircle(x - dir * px(40f * s), y - px(13f * s), px(3.5f * s), paint);
+
+        // 5. Glowing Cyber-Rims
+        float wR = px(9.2f * s);
+        for (int wi = 0; wi < 2; wi++) {
+            float wx = x + (wi == 0 ? -dir * px(26f * s) : dir * px(28f * s));
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor((alpha << 24) | 0x0010141E);
+            c.drawCircle(wx, y - px(6f * s), wR, paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.2f * s));
+            paint.setColor((alpha << 24) | (neonRgb & 0xFFFFFF));
+            c.drawCircle(wx, y - px(6f * s), wR * 0.68f, paint);
+        }
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    private void drawCyberKusanagiBike(Canvas c, float x, float y, float t, int alpha, int bodyRgb, int neonRgb, float s) {
+        // Low-slung Yaiba Kusanagi / Kaneda Cyber-Motorcycle with glowing hubless neon rims
+        float wR = px(10.0f * s);
+        float rX = x - px(24f * s), fX = x + px(26f * s), wY = y - px(6.5f * s);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00121622);
+        c.drawCircle(rX, wY, wR, paint);
+        c.drawCircle(fX, wY, wR, paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(2.4f * s));
+        paint.setColor((alpha << 24) | (neonRgb & 0xFFFFFF));
+        c.drawCircle(rX, wY, wR * 0.68f, paint);
+        c.drawCircle(fX, wY, wR * 0.68f, paint);
+
+        // Fairing & Rider leaning forward
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | (bodyRgb & 0xFFFFFF));
+        actorPath.reset();
+        actorPath.moveTo(rX - px(6f * s), wY - px(4f * s));
+        actorPath.lineTo(x + px(8f * s), wY - px(18f * s));
+        actorPath.lineTo(fX + px(8f * s), wY - px(6f * s));
+        actorPath.lineTo(rX, wY + px(2f * s));
+        actorPath.close();
+        c.drawPath(actorPath, paint);
+        // Edgerunner rider helmet & yellow collar
+        paint.setColor((alpha << 24) | 0x00FCEE09);
+        c.drawCircle(x - px(2f * s), wY - px(22f * s), px(5.2f * s), paint);
+    }
+
+    private void drawCyberEdgerunner(Canvas c, float x, float y, float t, int alpha,
+                                     int neonRgb, boolean katanaOut, boolean facingLeft, float s) {
+        float dir = facingLeft ? -1f : 1f;
+        float stride = (float) Math.sin(t * 7f) * px(5f * s);
+        int col = neonRgb & 0xFFFFFF;
+
+        // Neon Aura
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((Math.max(0, alpha / 5) << 24) | col);
+        c.drawCircle(x, y + px(4f * s), px(26f * s), paint);
+
+        // Legs
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(3.2f * s));
+        paint.setColor((alpha << 24) | 0x001C2436);
+        c.drawLine(x - px(4f * s), y + px(14f * s), x - px(10f * s) - stride * 0.5f, y + px(38f * s), paint);
+        c.drawLine(x + px(4f * s), y + px(14f * s), x + px(10f * s) + stride * 0.5f, y + px(38f * s), paint);
+
+        // Samurai / Edgerunner High-Collar Jacket
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((alpha << 24) | 0x00182030);
+        c.drawRoundRect(x - px(8.5f * s), y - px(12f * s), x + px(8.5f * s), y + px(18f * s), px(3f * s), px(3f * s), paint);
+        // Glowing high LED collar & Sandevistan neural spine stripe
+        paint.setColor((alpha << 24) | col);
+        c.drawRect(x - px(9.5f * s), y - px(15f * s), x + px(9.5f * s), y - px(10f * s), paint);
+        c.drawRect(x - px(2f * s), y - px(10f * s), x + px(2f * s), y + px(14f * s), paint);
+
+        // Head & Glowing Cyber-Visor
+        paint.setColor((alpha << 24) | 0x00222A3A);
+        c.drawCircle(x, y - px(20f * s), px(5.8f * s), paint);
+        paint.setColor((alpha << 24) | 0x0000F0FF);
+        c.drawRect(x + (facingLeft ? -px(6f * s) : 0f), y - px(22f * s),
+                   x + (facingLeft ? 0f : px(6f * s)), y - px(19.5f * s), paint);
+
+        // Thermal Katana / Mantis Blade Slash
+        if (katanaOut) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeWidth(px(2.8f * s));
+            paint.setColor((alpha << 24) | col);
+            c.drawLine(x + dir * px(6f * s), y - px(6f * s), x + dir * px(34f * s), y - px(22f * s), paint);
+            paint.setStyle(Paint.Style.FILL);
+        }
+    }
+
+    /**
      * Renders the faded Constructor / Team Name watermark & telemetry badge in the bottom F1 story area
      * so every scene clearly displays the competing Formula 1 Team(s) in a sleek faded motorsport look.
      */
@@ -9963,6 +10473,24 @@ final class SkyView extends View {
                 topBg = 0xFF06241A; botBg = 0xFF02100B; glowCol = 0x6000A86B;
                 houseSub = "ASTON MARTIN  |  GRAND PRIX"; emblemType = 605;
             }
+        } else if (theme == 7) {
+            // Theme 8: CYBERPUNK 2099 App Banners (Arasaka Corp, Edgerunners Sandevistan, Netrunner Blackwall, Trauma Team, Samurai Afterlife)
+            if (styleSlot == 0) {
+                topBg = 0xFF2C0512; botBg = 0xFF120208; glowCol = 0x64FF0055;
+                houseSub = "ARASAKA CORP  |  NIGHT CITY"; emblemType = 701;
+            } else if (styleSlot == 1) {
+                topBg = 0xFF052822; botBg = 0xFF02100E; glowCol = 0x6000FF9D;
+                houseSub = "EDGERUNNERS  |  SANDEVISTAN"; emblemType = 702;
+            } else if (styleSlot == 2) {
+                topBg = 0xFF061E30; botBg = 0xFF030B14; glowCol = 0x6400F0FF;
+                houseSub = "NETRUNNER  |  THE BLACKWALL"; emblemType = 703;
+            } else if (styleSlot == 3) {
+                topBg = 0xFF2A2204; botBg = 0xFF120E02; glowCol = 0x64FCEE09;
+                houseSub = "QUADRA V-TECH  |  AFTERLIFE"; emblemType = 704;
+            } else {
+                topBg = 0xFF1C082E; botBg = 0xFF0B0314; glowCol = 0x60B848FF;
+                houseSub = "TRAUMA TEAM  |  PLATINUM AV"; emblemType = 705;
+            }
         } else if (styleSlot == 0) {
             topBg = 0xFF28090E; botBg = 0xFF110407; glowCol = 0x58E83038;
             houseSub = "GRYFFINDOR  |  PENSIEVE";
@@ -10254,6 +10782,32 @@ final class SkyView extends View {
                 c.drawRoundRect(new RectF(cx - er * 0.45f, cy - er * 0.75f, cx + er * 0.45f, cy + er * 0.25f), er * 0.20f, er * 0.20f, p);
                 c.drawLine(cx, cy + er * 0.25f, cx, cy + er * 0.82f, p);
                 c.drawLine(cx - er * 0.42f, cy + er * 0.82f, cx + er * 0.42f, cy + er * 0.82f, p);
+            }
+        } else if (emblemType >= 701 && emblemType <= 705) {
+            // CYBERPUNK 2099 Custom Emblems: Arasaka 3-Lobe Crest, Sandevistan Spine, Blackwall Matrix, Samurai Visor, Trauma Cross
+            if (emblemType == 701) { // Arasaka 3-Ring Corporate Crest
+                c.drawCircle(cx, cy - er * 0.42f, er * 0.32f, p);
+                c.drawCircle(cx - er * 0.38f, cy + er * 0.28f, er * 0.32f, p);
+                c.drawCircle(cx + er * 0.38f, cy + er * 0.28f, er * 0.32f, p);
+                c.drawLine(cx, cy, cx, cy - er * 0.10f, p);
+            } else if (emblemType == 702) { // Sandevistan Cyberware Neural Spine
+                c.drawLine(cx, cy - er * 0.88f, cx, cy + er * 0.88f, p);
+                for (int nd = -2; nd <= 2; nd++) {
+                    float ny = cy + nd * er * 0.34f;
+                    c.drawLine(cx - er * 0.52f, ny, cx + er * 0.52f, ny - er * 0.12f, p);
+                }
+            } else if (emblemType == 703) { // Netrunner Blackwall Hexagon & Data Nodes
+                c.drawRect(cx - er * 0.72f, cy - er * 0.72f, cx + er * 0.72f, cy + er * 0.72f, p);
+                c.drawLine(cx - er * 0.72f, cy - er * 0.72f, cx + er * 0.72f, cy + er * 0.72f, p);
+                c.drawCircle(cx, cy, er * 0.32f, p);
+            } else if (emblemType == 704) { // Samurai Jacket Collar & Cyber-Visor
+                c.drawLine(cx - er * 0.85f, cy - er * 0.20f, cx + er * 0.85f, cy - er * 0.20f, p);
+                c.drawLine(cx - er * 0.55f, cy - er * 0.65f, cx, cy + er * 0.75f, p);
+                c.drawLine(cx + er * 0.55f, cy - er * 0.65f, cx, cy + er * 0.75f, p);
+            } else { // Trauma Team Platinum Medical Cross & Shield
+                c.drawCircle(cx, cy, er * 0.88f, p);
+                c.drawLine(cx - er * 0.52f, cy, cx + er * 0.52f, cy, p);
+                c.drawLine(cx, cy - er * 0.52f, cx, cy + er * 0.52f, p);
             }
         } else if (emblemType == 1) {
             Path tri = new Path();
