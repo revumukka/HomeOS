@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ansub.tvhome" android:versionCode="180" android:versionName="18.0.0"
+    package="com.ansub.tvhome" android:versionCode="190" android:versionName="19.0.0"
     android:installLocation="internalOnly">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
@@ -46,6 +46,8 @@
     </queries>
     <!-- Lets "Uninstall" in the app menu open Android's uninstall prompt. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- v19.0.0: 1-Tap Turbo RAM & Background App Cache Sweeper -->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <!-- Google Play hardware declarations: all optional so Play Console permits TVs, Foldables & Tablets -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />

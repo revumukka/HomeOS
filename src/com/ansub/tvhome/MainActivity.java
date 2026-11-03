@@ -1492,9 +1492,8 @@ public class MainActivity extends Activity {
             if (isNarrowVertical) {
                 for (int i = 0; i < rowApps.size(); i++) {
                     String pkg = rowApps.get(i);
-                    String label = pkg;
+                    String label = labelOf(pkg);
                     Drawable defaultIcon = null;
-                    try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
                     addMobileAppTile(pagerContent, pkg, label, null, defaultIcon, gridX(i), gridY(i), tileW, tileH, iconSize);
                 }
@@ -1502,9 +1501,8 @@ public class MainActivity extends Activity {
                 float bannerScale = Math.min(uiScale * 0.95f, tileH / 185f);
                 for (int i = 0; i < rowApps.size(); i++) {
                     String pkg = rowApps.get(i);
-                    String label = pkg;
+                    String label = labelOf(pkg);
                     Drawable defaultIcon = null;
-                    try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                     try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
                     Drawable banner = SkyView.createThemeBanner(
                             getResources(), pkg, label, tileW, tileH, bannerScale,
@@ -1602,9 +1600,8 @@ public class MainActivity extends Activity {
             }
             for (int i = 0; i < rowApps.size(); i++) {
                 String pkg = rowApps.get(i);
-                String label = pkg;
+                String label = labelOf(pkg);
                 Drawable defaultIcon = null;
-                try { label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); } catch (Exception ignored) {}
                 try { defaultIcon = pm.getApplicationIcon(pkg); } catch (Exception ignored) {}
                 Drawable banner = SkyView.createThemeBanner(
                         getResources(), pkg, label, w, h, scale, themeFontFor(universeTheme()), cinzelFont, universeTheme(), defaultIcon, i);
@@ -1806,7 +1803,7 @@ public class MainActivity extends Activity {
         cell.addView(iconBox, new LinearLayout.LayoutParams(iconSize, iconSize));
 
         final TextView titleView = text(sp(11f), 0xF8FFF8EC, semibold);
-        titleView.setText(label);
+        titleView.setText(ProSystemVault.isAppLocked(this, key) ? ("\uD83D\uDD12 " + label) : label);
         titleView.setIncludeFontPadding(false);
         titleView.setSingleLine(true);
         titleView.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -2552,6 +2549,7 @@ public class MainActivity extends Activity {
             // because each Universe Theme renders its own procedural story sky background).
             List<String> list = new ArrayList<>();
             list.add("App Settings");
+            list.add("Turbo RAM & Cache Boost");
             list.add("Story Scene Jukebox");
             list.add(zenCanvasActive ? "Exit Zen Canvas Mode" : "Zen Art Canvas Mode");
             list.add("Set Lock & Home Wallpaper");
@@ -2574,6 +2572,9 @@ public class MainActivity extends Activity {
                 String picked = items[which];
                 if ("App Settings".equals(picked)) {
                     showAppSettingsDialog();
+                } else if ("Turbo RAM & Cache Boost".equals(picked)) {
+                    performCinemaHaptic(true);
+                    ProSystemVault.runTurboRamBoost(this);
                 } else if ("Story Scene Jukebox".equals(picked)) {
                     showStoryJukeboxDialog();
                 } else if (picked.contains("Zen")) {
@@ -2605,15 +2606,32 @@ public class MainActivity extends Activity {
             openQuick(key.substring(QUICK.length()));
             return;
         } else {
-            i = launchIntent(getPackageManager(), key);
-            if (i == null) return;
-            recordAppLaunch(key);
-            View tView = tile(key);
-            if (tView != null && skyView != null) {
-                int[] loc = new int[2];
-                tView.getLocationOnScreen(loc);
-                skyView.onUserTouch(loc[0] + tView.getWidth() * 0.5f, loc[1] + tView.getHeight() * 0.5f, true);
+            if (ProSystemVault.isAppLocked(this, key)) {
+                performCinemaHaptic(true);
+                ProSystemVault.showPinPadDialog(
+                        this,
+                        "Unlock " + labelOf(key),
+                        "Enter your 4-digit Vault PIN to launch " + labelOf(key),
+                        cinzelFont != null ? cinzelFont : semibold,
+                        getResources().getDisplayMetrics().density,
+                        false,
+                        () -> launchUnlockedApp(key));
+                return;
             }
+            launchUnlockedApp(key);
+            return;
+        }
+    }
+
+    private void launchUnlockedApp(String key) {
+        Intent i = launchIntent(getPackageManager(), key);
+        if (i == null) return;
+        recordAppLaunch(key);
+        View tView = tile(key);
+        if (tView != null && skyView != null) {
+            int[] loc = new int[2];
+            tView.getLocationOnScreen(loc);
+            skyView.onUserTouch(loc[0] + tView.getWidth() * 0.5f, loc[1] + tView.getHeight() * 0.5f, true);
         }
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try { startActivity(i); } catch (Exception ignored) {}
@@ -3001,10 +3019,38 @@ public class MainActivity extends Activity {
         final int index = rowApps.indexOf(key);
         if (index < 0) return;
         final boolean user = userInstalled(key);
-        dropdown(tile(key), user ? EDIT_ITEMS : EDIT_ITEMS_SYSTEM, which -> {
-            if (which == 0) startMove(key);
-            else if (which == 1) showAddMenu(index);
-            else if (which == 3) {
+        final boolean locked = ProSystemVault.isAppLocked(this, key);
+        final String[] menuItems = {
+            "Move",
+            "Rename App",
+            locked ? "Unlock PIN Vault" : "Lock App with PIN",
+            "Replace",
+            "Remove from home",
+            user ? "Uninstall" : "App info"
+        };
+        dropdown(tile(key), menuItems, which -> {
+            if (which == 0) {
+                startMove(key);
+            } else if (which == 1) {
+                ProSystemVault.showRenameAppDialog(
+                        this, key, labelOf(key), rawSystemLabelOf(key),
+                        getResources().getDisplayMetrics().density,
+                        () -> {
+                            focusedKey = key;
+                            buildTiles();
+                        });
+            } else if (which == 2) {
+                ProSystemVault.toggleAppLock(
+                        this, key, labelOf(key),
+                        cinzelFont != null ? cinzelFont : semibold,
+                        getResources().getDisplayMetrics().density,
+                        () -> {
+                            focusedKey = key;
+                            buildTiles();
+                        });
+            } else if (which == 3) {
+                showAddMenu(index);
+            } else if (which == 5) {
                 Uri pkg = Uri.parse("package:" + key);
                 try { startActivity(user ? new Intent(Intent.ACTION_DELETE, pkg)
                         : new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg)); }
@@ -4235,11 +4281,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v18.0.0  \u00B7  Build 180");
+        appTitleTv.setText("HomeScreen v19.0.0  \u00B7  Build 190");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("9 Universes \u00B7 432 Scenes \u00B7 Lock & Home Live Wallpaper \u00B7 120 FPS");
+        appSubTv.setText("PIN App Vault \u00B7 Custom App Rename \u00B7 Turbo RAM Booster \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4295,6 +4341,40 @@ public class MainActivity extends Activity {
                     openLiveWallpaperPicker();
                 });
         aboutCard.addView(liveWpActionRow);
+        final TextView[] ramRightHolder = new TextView[1];
+        View turboRamActionRow = createSettingsActionRow(
+                "\uD83D\uDE80 Turbo RAM & Cache Booster",
+                ProSystemVault.getLiveSystemSummary(this, tvMode),
+                ramRightHolder,
+                v -> {
+                    performCinemaHaptic(true);
+                    ProSystemVault.runTurboRamBoost(this);
+                    if (ramRightHolder[0] != null) {
+                        ramRightHolder[0].setText(ProSystemVault.getLiveSystemSummary(this, tvMode) + "  \u203A");
+                    }
+                });
+        aboutCard.addView(turboRamActionRow);
+        final TextView[] pinRightHolder = new TextView[1];
+        View pinVaultRow = createSettingsActionRow(
+                "\uD83D\uDD12 4-Digit App Lock Vault PIN",
+                ProSystemVault.getLockedApps(this).size() + " Locked \u00B7 Set PIN",
+                pinRightHolder,
+                v -> {
+                    ProSystemVault.showPinPadDialog(
+                            this,
+                            "Set 4-Digit Vault PIN",
+                            "Enter a new 4-digit PIN (Long-press any app tile to lock/unlock it)",
+                            cinzelFont != null ? cinzelFont : semibold,
+                            getResources().getDisplayMetrics().density,
+                            true,
+                            () -> {
+                                Toast.makeText(this, "\uD83D\uDD12 Vault PIN Updated!", Toast.LENGTH_SHORT).show();
+                                if (pinRightHolder[0] != null) {
+                                    pinRightHolder[0].setText(ProSystemVault.getLockedApps(this).size() + " Locked \u00B7 PIN Set  \u203A");
+                                }
+                            });
+                });
+        aboutCard.addView(pinVaultRow);
         final String[] moodNamesShort = {"Auto Live", "Clear Sky", "Rainstorm", "Snowfall", "Thunderstorm", "Aurora"};
         int curMoodIdx = Math.max(0, Math.min(5, prefs().getInt("weather_mood", 0)));
         View weatherActionRow = createSettingsActionRow(
@@ -5212,10 +5292,14 @@ public class MainActivity extends Activity {
         panel("Privacy & Data Safety", disclosures, which -> {});
     }
 
-    private String labelOf(String pkg) {
+    private String rawSystemLabelOf(String pkg) {
         PackageManager pm = getPackageManager();
         try { return pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString(); }
         catch (Exception e) { return pkg; }
+    }
+
+    private String labelOf(String pkg) {
+        return ProSystemVault.getCustomAppLabel(this, pkg, rawSystemLabelOf(pkg));
     }
 
     // Saves the top row as the app list, so it no longer follows apps.txt.
