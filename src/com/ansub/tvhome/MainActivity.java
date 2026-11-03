@@ -118,7 +118,8 @@ public class MainActivity extends Activity {
         "MCU",
         "DCU",
         "Formula 1",
-        "Cyberpunk 2099"
+        "Cyberpunk 2099",
+        "Spirited Skies"
     };
     private static final int[] UNIVERSE_THEME_COLORS = {
         0xFFFFD54F, // 1. Harry Potter
@@ -128,7 +129,8 @@ public class MainActivity extends Activity {
         0xFFB388FF, // 5. MCU
         0xFF00B0FF, // 6. DCU
         0xFFFF1801, // 7. Formula 1
-        0xFF00F0FF  // 8. Cyberpunk 2099
+        0xFF00F0FF, // 8. Cyberpunk 2099
+        0xFF4CE0B3  // 9. Spirited Skies
     };
     private static final String[] QUICK_NAMES = {"bluetooth", "sound", "picture"};
     private static final String[] QUICK_LABELS = {"Bluetooth", "Sound", "Picture"};
@@ -197,10 +199,10 @@ public class MainActivity extends Activity {
     private float scale = 1f;
     private float uiScale = 1f;
     private float settingsScale = 1f;
-    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27, 29, 28};
+    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27, 29, 28, 28};
 
     private static Typeface regular, semibold, defaultThemeFont, cinzelFont;
-    private static final Typeface[] themeFonts = new Typeface[8];
+    private static final Typeface[] themeFonts = new Typeface[9];
 
     private FrameLayout root; // the page, inside a vertical scroller
     private SkyView skyView;
@@ -2372,7 +2374,7 @@ public class MainActivity extends Activity {
                 p.setColor((cl % 2 == 0) ? 0xFFFFFFFF : 0xFF1A1E28);
                 c.drawRect(baseX + cl * sq, baseY, baseX + (cl + 1) * sq, baseY + sq * 0.75f, p);
             }
-        } else {
+        } else if (pos == 7) {
             // CYBERPUNK 2099: Neon Yellow Samurai Jacket Collar + Glowing Cyan/Magenta Cyber-Visor & Neural Circuit
             p.setStyle(Paint.Style.FILL);
             p.setColor(0xFFFCEE09); // Iconic Cyber-Yellow Jacket Collar
@@ -2394,11 +2396,43 @@ public class MainActivity extends Activity {
             c.drawLine(cx - er * 0.58f, cy - er * 0.15f, cx + er * 0.58f, cy - er * 0.15f, p);
             p.setColor(0xFFFF0055);
             c.drawLine(cx - er * 0.36f, cy + er * 0.12f, cx + er * 0.36f, cy + er * 0.12f, p);
+        } else {
+            // SPIRITED SKIES: Enchanted Vermilion Bathhouse Lantern + Glowing Laputa Crystal & Soot Sprite Eyes
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0xFFFF5252);
+            c.drawOval(new android.graphics.RectF(cx - er * 0.68f, cy - er * 0.56f, cx + er * 0.68f, cy + er * 0.56f), p);
+            p.setColor(0xFFFFE082);
+            c.drawCircle(cx, cy, er * 0.34f, p);
+            p.setColor(0xFF4CE0B3);
+            c.drawCircle(cx, cy, er * 0.18f, p);
+            p.setColor(0xFF1E1410);
+            c.drawRect(cx - er * 0.45f, cy - er * 0.68f, cx + er * 0.45f, cy - er * 0.52f, p);
+            c.drawRect(cx - er * 0.45f, cy + er * 0.52f, cx + er * 0.45f, cy + er * 0.68f, p);
         }
         return new BitmapDrawable(getResources(), bm);
     }
 
-    // v15.0.0: Cinema Haptics & Zero-Asset Procedural Harmonic Soundscape Synthesizer
+    // v17.0.0: 1-Tap Zen Art Canvas Mode (Hides App Grid & Dots so the 120 FPS Sky & Story Stage shine unobstructed)
+    private boolean zenCanvasActive = false;
+
+    private void toggleZenCanvasMode() {
+        zenCanvasActive = !zenCanvasActive;
+        performCinemaHaptic(true);
+        if (appPager != null) {
+            appPager.animate().alpha(zenCanvasActive ? 0f : 1f).setDuration(260)
+                    .withEndAction(() -> appPager.setVisibility(zenCanvasActive ? View.INVISIBLE : View.VISIBLE)).start();
+        }
+        for (View t : tiles) {
+            Object tag = t.getTag();
+            if (SETTINGS.equals(tag) || THEME_PICK.equals(tag) || GLOW_TOGGLE.equals(tag) || NETWORK.equals(tag)) continue;
+            if (appPager == null) {
+                t.animate().alpha(zenCanvasActive ? 0f : 1f).setDuration(260).start();
+            }
+        }
+        Toast.makeText(this, zenCanvasActive
+                ? "\uD83E\uDDD8 Zen Art Canvas Active \u2014 Tap Settings or Back to restore apps"
+                : "\u2728 App Grid Restored", Toast.LENGTH_SHORT).show();
+    }
     private static final String PREF_CINEMA_AUDIO_HAPTICS = "cinema_audio_haptics";
 
     private boolean isCinemaAudioHapticsEnabled() {
@@ -2519,6 +2553,7 @@ public class MainActivity extends Activity {
             List<String> list = new ArrayList<>();
             list.add("App Settings");
             list.add("Story Scene Jukebox");
+            list.add(zenCanvasActive ? "Exit Zen Canvas Mode" : "Zen Art Canvas Mode");
             if (!isTvDevice()) {
                 list.add("Pin / Manage Apps");
             }
@@ -2540,6 +2575,8 @@ public class MainActivity extends Activity {
                     showAppSettingsDialog();
                 } else if ("Story Scene Jukebox".equals(picked)) {
                     showStoryJukeboxDialog();
+                } else if (picked.contains("Zen")) {
+                    toggleZenCanvasMode();
                 } else if ("Pin / Manage Apps".equals(picked)) {
                     showAllAppsDrawer(true);
                 } else if ("Next Story Scene".equals(picked)) {
@@ -4195,11 +4232,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v16.0.0  \u00B7  Build 160");
+        appTitleTv.setText("HomeScreen v17.0.0  \u00B7  Build 170");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 QR & TV Pairing Hub \u00B7 120 FPS");
+        appSubTv.setText("9 Theme Universes \u00B7 432 Story Jukebox \u00B7 Zen Canvas \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4233,12 +4270,20 @@ public class MainActivity extends Activity {
         aboutCard.addView(shareRow, srlp);
         View jukeboxActionRow = createSettingsActionRow(
                 "\uD83C\uDFAC Story Scene Jukebox & Live Pinning",
-                skyView != null && skyView.isSceneLocked() ? "Pinned" : "388 Scenes",
+                skyView != null && skyView.isSceneLocked() ? "Pinned" : "432 Scenes",
                 v -> {
                     d.dismiss();
                     showStoryJukeboxDialog();
                 });
         aboutCard.addView(jukeboxActionRow);
+        View zenActionRow = createSettingsActionRow(
+                "\uD83E\uDDD8 Zen Art Canvas Mode (Hide App Grid)",
+                zenCanvasActive ? "Active" : "1-Tap Toggle",
+                v -> {
+                    d.dismiss();
+                    toggleZenCanvasMode();
+                });
+        aboutCard.addView(zenActionRow);
         final String[] moodNamesShort = {"Auto Live", "Clear Sky", "Rainstorm", "Snowfall", "Thunderstorm", "Aurora"};
         int curMoodIdx = Math.max(0, Math.min(5, prefs().getInt("weather_mood", 0)));
         View weatherActionRow = createSettingsActionRow(
@@ -5412,7 +5457,7 @@ public class MainActivity extends Activity {
         } catch (Throwable t) {
             cinzelFont = semibold;
         }
-        String[] fontAssets = {"harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf", "f1.ttf", "f1.ttf"};
+        String[] fontAssets = {"harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf", "f1.ttf", "f1.ttf", "cinzel.ttf"};
         for (int i = 0; i < fontAssets.length; i++) {
             try {
                 themeFonts[i] = Typeface.createFromAsset(c.getAssets(), fontAssets[i]);

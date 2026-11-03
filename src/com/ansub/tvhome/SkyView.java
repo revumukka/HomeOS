@@ -503,6 +503,53 @@ final class SkyView extends View {
         "XLIV  |  NIGHT CITY LEGENDS  |  TOP OF ARASAKA TOWER NEON SUNRISE"
     };
 
+    private static final String[] SPIRITED_SKIES_TITLES = {
+        "I  |  ABURAYA BATHHOUSE  |  RED BRIDGE & FLOATING SPIRIT LANTERNS",
+        "II  |  SEA RAILWAY  |  SIXTH STATION TRAIN OVER THE MIRROR OCEAN",
+        "III  |  HAKU RIVER SPIRIT  |  WHITE DRAGON & SHIKIGAMI PAPER BIRDS",
+        "IV  |  HOWL'S MOVING CASTLE  |  WALKING STEAM FORTRESS IN THE ALPS",
+        "V  |  CALCIFER'S HEARTH  |  FALLING SHOOTING STARS & STAR-CHILD",
+        "VI  |  CATBUS EXPRESS  |  TWELVE-LEGGED FOREST SPIRIT MIDNIGHT LEAP",
+        "VII  |  CAMPHOR TREE  |  RAINY BUS STOP & RED UMBRELLA LANTERN",
+        "VIII  |  LAPUTA SKY CASTLE  |  FLOATING ISLAND & LEVITATING CRYSTAL",
+        "IX  |  MONONOKE FOREST  |  GLOWING KODAMA TREE SPIRITS & NIGHT-WALKER",
+        "X  |  KORIKO BAY  |  RED RIBBON BROOM FLIGHT OVER THE CLOCK TOWER",
+        "XI  |  ADRIATIC CLOUDS  |  SAVOIA S.21 CRIMSON SEAPLANE CONTRAIL",
+        "XII  |  VALLEY OF THE WIND  |  MEHVE JET GLIDER & GOLDEN OHMU SPORES",
+        "XIII  |  BOILER ROOM  |  KAMADO SOOT SPRITES & KONPEITO CANDY STARS",
+        "XIV  |  NO-FACE ON THE BRIDGE  |  KAONASHI GOLDEN TOKENS & LANTERNS",
+        "XV  |  ZENIBA'S COTTAGE  |  SWAMP BOTTOM STATION & HOPPING LAMP",
+        "XVI  |  RIVER SPIRIT CLEANSE  |  HERBAL BATH TOKEN & GOLDEN DRAGON RISE",
+        "XVII  |  FLOWER GARDEN  |  SOPHIE & HOWL AIRWALK OVER STAR LAKE",
+        "XVIII  |  TURNIP HEAD  |  HOPPING SCARECROW IN THE MISTY MOUNTAINS",
+        "XIX  |  ACORN SPROUT DANCE  |  MIDNIGHT GARDEN GIANT TREE GROWTH",
+        "XX  |  TIGER MOTH AIRSHIP  |  DOLA PIRATE FLAPTER CLOUD PURSUIT",
+        "XXI  |  LAPUTA ROBOT GUARDIAN  |  ANCIENT MOSS GARDEN & BLUE FLOWER",
+        "XXII  |  IRON TOWN FORGE  |  ASHITAKA & YAKUL RIDING THROUGH SPARKS",
+        "XXIII  |  SAN & MORO WOLF CLAN  |  MOONLIT MOUNTAIN RIDGE HOWL",
+        "XXIV  |  JIJI AT THE BAKERY  |  GÜTIEMPO WINDOW & SEASIDE GULLS",
+        "XXV  |  DIRIGIBLE RESCUE  |  DECK BRUSH FLIGHT AT THE CLOCK TOWER",
+        "XXVI  |  GINA'S HOTEL ADRIANO  |  SEAPLANE LAGOON SUNSET FLYBY",
+        "XXVII  |  PONYO ON THE CLIFF  |  RUNNING ACROSS GIANT STORM WAVES",
+        "XXVIII  |  TOY BOAT VOYAGE  |  CANDLE-POWERED STEAMBOAT HARBOR",
+        "XXIX  |  ARRIETTY'S GARDEN  |  BORROWERS AMONG DEWDROPS & IVY",
+        "XXX  |  BAMBOO GROVE  |  PRINCESS KAGUYA MOONLIGHT PROCESSION",
+        "XXXI  |  CAPRONI DREAM SKY  |  PAPER AIRPLANES IN THE SUMMER BREEZE",
+        "XXXII  |  COQUELICOT HILL  |  MARITIME SIGNAL FLAGS OVER THE HARBOR",
+        "XXXIII  |  MARNIE'S MARSH HOUSE  |  ROWBOAT UNDER THE FULL MOON TIDE",
+        "XXXIV  |  EARTHSEA DRAGONS  |  TWIN DRAGONS SOARING AT TWILIGHT",
+        "XXXV  |  THE BARON'S STUDIO  |  WHISPER OF THE HEART EMERALD EYES",
+        "XXXVI  |  CAT KINGDOM PARADE  |  BARON HUMBERT VON GIKKINGEN CANE",
+        "XXXVII  |  TANUKI LANTERN FESTIVAL  |  POM POKO SHAPE-SHIFTER PARADE",
+        "XXXVIII  |  OHMU GOLDEN FIELDS  |  BLUE ROBE WALKING ON GOLDEN TENDRILS",
+        "XXXIX  |  HOWL'S BLACK WING TRANSFORMATION  |  FEATHER STORM & FIRE",
+        "XL  |  CHIHIR0 & HAKU SKY FALL  |  KOHAKU RIVER NAME REMEMBERED",
+        "XLI  |  ONE SUMMER'S DAY  |  TUNNEL GATEWAY INTO THE SPIRIT REALM",
+        "XLII  |  MERRY-GO-ROUND OF LIFE  |  WALTZ IN THE CLOUDS",
+        "XLIII  |  PATH OF THE WIND  |  OCARINA MELODY IN THE TREETOPS",
+        "XLIV  |  SPIRITED SKIES FINALE  |  LANTERNS RISING TO THE STARS"
+    };
+
     // Cached Ambilight Edge LinearGradients (rebuilt ONLY when RGB or screen dimensions change)
     private LinearGradient topEdgeShader, botEdgeShader, leftEdgeShader, rightEdgeShader;
     private int cachedShaderRgb = -1, cachedShaderW = -1, cachedShaderH = -1;
@@ -558,7 +605,7 @@ final class SkyView extends View {
     private float screensaverZoom = 0f;
     private int screensaverOverrideScene = -1;
     private int lastScreensaverSlot = -1;
-    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 7; // 388 total story scenes across 8 themes
+    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 8; // 432 total story scenes across 9 themes
     private final int[] shuffledPool = new int[TOTAL_POOL_SCENES];
     private int poolCursor = TOTAL_POOL_SCENES;
     private final java.util.Random poolRng = new java.util.Random();
@@ -596,7 +643,8 @@ final class SkyView extends View {
             MCU_TITLES.length,
             DCU_TITLES.length,
             F1_TITLES.length,
-            CYBERPUNK_TITLES.length
+            CYBERPUNK_TITLES.length,
+            SPIRITED_SKIES_TITLES.length
         };
         for (int th = 0; th < counts.length; th++) {
             for (int sc = 0; sc < counts[th]; sc++) {
@@ -644,7 +692,7 @@ final class SkyView extends View {
                 baseSky = null;
             }
         }
-        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801, 0xFF00F0FF};
+        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801, 0xFF00F0FF, 0xFF4CE0B3};
         int col = themeColors[Math.max(0, Math.min(themeColors.length - 1, nextTheme))];
         setReactiveColor(col, false);
         if (screensaverThemeListener != null) {
@@ -810,6 +858,7 @@ final class SkyView extends View {
         if (theme == 5) return DCU_TITLES;
         if (theme == 6) return F1_TITLES;
         if (theme == 7) return CYBERPUNK_TITLES;
+        if (theme == 8) return SPIRITED_SKIES_TITLES;
         return CHAPTER_TITLES;
     }
 
@@ -1266,6 +1315,10 @@ final class SkyView extends View {
                 // Theme 8: CYBERPUNK 2099 — Night City Neon Cyan, Hot Magenta & Cyber-Yellow Smog Sky
                 topCol = 0xFF04030E; midCol = 0xFF0D0824; botCol = 0xFF070414;
                 glow1 = 0x4800F0FF; glow2 = 0x42FF0055; glow3 = 0x38FCEE09;
+            } else if (universeTheme == 8) {
+                // Theme 9: SPIRITED SKIES — Enchanted Twilight Teal, Warm Bathhouse Lantern Gold & Vermilion Bridge Sky
+                topCol = 0xFF05101E; midCol = 0xFF0B2230; botCol = 0xFF081820;
+                glow1 = 0x444CE0B3; glow2 = 0x3EFFB74D; glow3 = 0x38FF5252;
             } else if (paletteIndex == 1) {
                 topCol = 0xFF16080A; midCol = 0xFF220E12; botCol = 0xFF0E070A;
                 glow1 = 0x44FFB840; glow2 = 0x38B82830;
@@ -1714,6 +1767,62 @@ final class SkyView extends View {
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(px(2.0f));
                 p.setColor(0x9900F0FF);
+                c.drawLine(0, groundY, w, groundY, p);
+            } else if (universeTheme == 8) {
+                // Theme 9 (SPIRITED SKIES) Base Horizon: Glowing Laputa Levitation Crystal Moon & Aburaya Spirit Bathhouse
+                float mx = w * 0.85f, my = h * 0.16f, mr = px(38);
+                p.setShader(new RadialGradient(mx, my, mr * 4.2f,
+                        new int[] {0x484CE0B3, 0x24FFE082, 0x00000000}, new float[] {0f, 0.48f, 1f}, Shader.TileMode.CLAMP));
+                c.drawCircle(mx, my, mr * 4.2f, p);
+                p.setShader(null);
+                p.setColor(0x38FFF8DC);
+                c.drawCircle(mx, my, mr, p);
+                // Laputa Levitation Crystal Emblem inside the Moon
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.0f));
+                p.setColor(0xDD4CE0B3);
+                Path cr = new Path();
+                cr.moveTo(mx, my - mr * 0.55f);
+                cr.lineTo(mx + mr * 0.42f, my);
+                cr.lineTo(mx, my + mr * 0.55f);
+                cr.lineTo(mx - mr * 0.42f, my);
+                cr.close();
+                c.drawPath(cr, p);
+
+                // Multi-Tiered Aburaya Spirit Bathhouse & Arched Vermilion Bridge Silhouette on Right (0.66..0.96)
+                float groundY = h * 0.900f;
+                p.setStyle(Paint.Style.FILL);
+                p.setColor(0x9006121A);
+                Path stage = new Path();
+                stage.moveTo(0, h);
+                stage.lineTo(0, groundY);
+                stage.lineTo(w * 0.68f, groundY);
+                stage.lineTo(w * 0.72f, skyY(w, h, 0.78f));
+                stage.lineTo(w * 0.70f, skyY(w, h, 0.77f));
+                stage.lineTo(w * 0.76f, skyY(w, h, 0.71f));
+                stage.lineTo(w * 0.74f, skyY(w, h, 0.70f));
+                stage.lineTo(w * 0.82f, skyY(w, h, 0.63f));
+                stage.lineTo(w * 0.90f, skyY(w, h, 0.70f));
+                stage.lineTo(w * 0.88f, skyY(w, h, 0.71f));
+                stage.lineTo(w * 0.94f, skyY(w, h, 0.78f));
+                stage.lineTo(w * 0.96f, groundY);
+                stage.lineTo(w, groundY);
+                stage.lineTo(w, h);
+                stage.close();
+                c.drawPath(stage, p);
+
+                // Warm Golden Shoji Paper Windows on the Spirit Bathhouse
+                p.setColor(0xCCFFD54F);
+                for (int r = 0; r < 3; r++) {
+                    float wy = skyY(w, h, 0.73f + r * 0.045f);
+                    for (int col = 0; col < 4; col++) {
+                        float wx = w * (0.76f + col * 0.028f);
+                        c.drawRoundRect(wx, wy, wx + px(6f), wy + px(8f), px(1.5f), px(1.5f), p);
+                    }
+                }
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(1.8f));
+                p.setColor(0x784CE0B3);
                 c.drawLine(0, groundY, w, groundY, p);
             } else {
             // Full Moon in upper right sky
@@ -2489,6 +2598,45 @@ final class SkyView extends View {
                     paint.setStyle(Paint.Style.FILL);
                 }
                 continue;
+            } else if (universeTheme == 8) {
+                // SPIRITED SKIES Top Sky: Floating Vermilion Bathhouse Lanterns, Soot Sprites (Susuwatari) & Glowing Kodama Spirits
+                float cy2 = cy + ch * 0.26f;
+                int ghMode = i % 3;
+                if (ghMode == 0) {
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x34 << 24) | 0x00FFB74D);
+                    canvas.drawCircle(cx, cy2, cw * 2.7f * flicker, paint);
+                    paint.setColor(0xEEFF5252);
+                    canvas.drawOval(rectF(cx - cw * 1.05f, cy2 - ch * 0.30f, cx + cw * 1.05f, cy2 + ch * 0.30f), paint);
+                    paint.setColor(0xFFFFE082);
+                    canvas.drawCircle(cx, cy2, cw * 0.55f * flicker, paint);
+                    paint.setColor(0xFF261810);
+                    canvas.drawRect(cx - cw * 0.65f, cy2 - ch * 0.34f, cx + cw * 0.65f, cy2 - ch * 0.26f, paint);
+                    canvas.drawRect(cx - cw * 0.65f, cy2 + ch * 0.26f, cx + cw * 0.65f, cy2 + ch * 0.34f, paint);
+                } else if (ghMode == 1) {
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xEE14141C);
+                    canvas.drawCircle(cx, cy2, cw * 1.15f, paint);
+                    paint.setColor(0xFFFFFFFF);
+                    canvas.drawCircle(cx - cw * 0.38f, cy2 - cw * 0.15f, cw * 0.36f, paint);
+                    canvas.drawCircle(cx + cw * 0.38f, cy2 - cw * 0.15f, cw * 0.36f, paint);
+                    paint.setColor(0xFF000000);
+                    canvas.drawCircle(cx - cw * 0.35f, cy2 - cw * 0.15f, cw * 0.15f, paint);
+                    canvas.drawCircle(cx + cw * 0.35f, cy2 - cw * 0.15f, cw * 0.15f, paint);
+                    paint.setColor((i % 2 == 0) ? 0xFFFF80AB : 0xFFFFD54F);
+                    canvas.drawCircle(cx, cy2 + cw * 1.35f, cw * 0.45f, paint);
+                } else {
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor((0x36 << 24) | 0x004CE0B3);
+                    canvas.drawCircle(cx, cy2, cw * 2.6f * flicker, paint);
+                    paint.setColor(0xEEECFFF8);
+                    canvas.drawCircle(cx, cy2, cw * 0.95f, paint);
+                    paint.setColor(0xFF1B3028);
+                    canvas.drawCircle(cx - cw * 0.32f, cy2 - cw * 0.12f, cw * 0.20f, paint);
+                    canvas.drawCircle(cx + cw * 0.32f, cy2 - cw * 0.12f, cw * 0.20f, paint);
+                    canvas.drawCircle(cx, cy2 + cw * 0.28f, cw * 0.16f, paint);
+                }
+                continue;
             }
             // THEME 0 (HARRY POTTER): Sculpted Great Hall Floating Wax Taper Candle with Brass Holder & 3-Layer Flame
             paint.setColor((0x24 << 24) | rgbOnly);
@@ -3048,6 +3196,22 @@ final class SkyView extends View {
                 paint.setColor(0xFFFCEE09);
                 c.drawCircle(gx - dir * px(12f * sc), gy, px(2.6f * sc), paint);
                 continue;
+            } else if (universeTheme == 8) {
+                // SPIRITED SKIES Top Sky: Haku's White River Dragon & Fluttering Shikigami Paper Birds
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeCap(Paint.Cap.ROUND);
+                paint.setStrokeWidth(px(4.2f * sc));
+                paint.setColor(0xEEFFFFFF);
+                actorPath.reset();
+                actorPath.moveTo(gx - dir * px(26f * sc), gy + (float) Math.sin(t * 6f + g) * px(6f * sc));
+                actorPath.quadTo(gx - dir * px(8f * sc), gy - px(10f * sc), gx + dir * px(14f * sc), gy);
+                c.drawPath(actorPath, paint);
+                paint.setStrokeWidth(px(2.0f * sc));
+                paint.setColor(0xFF4CE0B3);
+                c.drawLine(gx - dir * px(18f * sc), gy - px(5f * sc), gx + dir * px(10f * sc), gy - px(4f * sc), paint);
+                paint.setStyle(Paint.Style.FILL);
+                drawBird(c, gx - dir * px(34f * sc), gy - px(8f * sc), t * 12f + g, px(11f * sc), 0xEEFFF8E8);
+                continue;
             }
             float shimmer = 0.72f + 0.28f * (float) Math.sin(t * 3.1f + g * 1.3f);
             int auraAlpha = Math.round(18f * shimmer);
@@ -3148,6 +3312,9 @@ final class SkyView extends View {
             return;
         } else if (universeTheme == 7) {
             drawCyberpunkStoryLoop(c, w, h, t);
+            return;
+        } else if (universeTheme == 8) {
+            drawSpiritedSkiesStoryLoop(c, w, h, t);
             return;
         }
         float totalCycle = CHAPTER_SEC * SCENE_COUNT;
@@ -8782,6 +8949,132 @@ final class SkyView extends View {
         c.restore();
     }
 
+    /**
+     * Theme 9 (universeTheme == 8): SPIRITED SKIES — 44 Enchanted Bathhouse, Sea Railway, Haku Dragon & Sky Castle Scenes.
+     */
+    private void drawSpiritedSkiesStoryLoop(Canvas c, int w, int h, float t) {
+        int count = SPIRITED_SKIES_TITLES.length;
+        float totalCycle = CHAPTER_SEC * count;
+        float cycleTime = t % totalCycle;
+        int scene = resolveActiveScene(cycleTime, count);
+        float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
+        float fade = resolveStoryFade(p);
+        int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
+
+        float groundY = h * 0.900f;
+        drawStoryCaptionAndDots(c, w, h, SPIRITED_SKIES_TITLES[scene], scene, count, aBase,
+                0x00B2FFDA, 0xEE4CE0B3, 0x444CE0B3, px(6.2f));
+
+        c.save();
+        applyStageTransform(c, w, h, groundY);
+
+        String[] realms = {
+            "ABURAYA // SPIRIT BATHHOUSE",
+            "SIXTH STATION // SEA RAILWAY",
+            "KOHAKU RIVER // WHITE DRAGON",
+            "MOVING CASTLE // STARLIGHT ALPS",
+            "LAPUTA // CASTLE IN THE SKY",
+            "CAMPHOR FOREST // KODAMA SANCTUARY"
+        };
+        String[] subs = {
+            "RED BRIDGE CROSSING // FLOATING PAPER LANTERNS & GOLDEN TOKENS",
+            "MIRROR OCEAN TRACKS // TWILIGHT WATERBORNE EXPRESS",
+            "CHIHIRO & HAKU // THOUSAND PAPER BIRDS IN THE CLOUDS",
+            "CALCIFER'S HEARTH // WALKING STEAM FORTRESS & SHOOTING STARS",
+            "LEVITATION CRYSTAL // ANCIENT FLOATING ISLAND SANCTUARY",
+            "SOOT SPRITES & TREE SPIRITS // KONPEITO STARLIGHT PARADE"
+        };
+        int[] realmCols = {0x00FF5252, 0x004CE0B3, 0x0080DEEA, 0x00FFD54F, 0x004CE0B3, 0x00B2FF59};
+        int rIdx = scene % realms.length;
+
+        Typeface prevTf = paint.getTypeface();
+        Paint.Align prevAlign = paint.getTextAlign();
+        paint.setTypeface(cinzelFont != null ? cinzelFont : Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.CENTER);
+        float cx = w * 0.45f;
+        float maxW = w * 0.46f;
+        float wmSize = px(25f);
+        paint.setTextSize(wmSize);
+        float m = paint.measureText(realms[rIdx]);
+        if (m > maxW && m > 0f) paint.setTextSize(Math.max(px(13f), wmSize * (maxW / m)));
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor((Math.round(aBase * 0.16f) << 24) | realmCols[rIdx]);
+        c.drawText(realms[rIdx], cx, groundY - px(38f), paint);
+        paint.setTextSize(px(8.8f));
+        paint.setColor((Math.round(aBase * 0.42f) << 24) | 0x00E0FFF4);
+        c.drawText(subs[rIdx], cx, groundY + px(14f), paint);
+        paint.setTextAlign(prevAlign);
+        paint.setTypeface(prevTf);
+
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(1.6f));
+        paint.setColor((aBase * 2 / 3 << 24) | 0x004CE0B3);
+        c.drawLine(w * 0.22f, groundY, w * 0.68f, groundY, paint);
+        paint.setStyle(Paint.Style.FILL);
+
+        int mode = scene % 3;
+        if (mode == 0) {
+            float trainX = w * (0.24f + p * 0.30f);
+            float trainY = groundY - px(28f);
+            paint.setColor((aBase << 24) | 0x00C83830);
+            c.drawRoundRect(trainX, trainY - px(14f), trainX + px(132f), trainY + px(24f), px(6f), px(6f), paint);
+            paint.setColor((aBase << 24) | 0x00FFF0B8);
+            c.drawRect(trainX + px(4f), trainY + px(6f), trainX + px(128f), trainY + px(12f), paint);
+            for (int wi = 0; wi < 5; wi++) {
+                float wx = trainX + px(12f + wi * 23f);
+                paint.setColor((aBase << 24) | 0x00FFE082);
+                c.drawRoundRect(wx, trainY - px(8f), wx + px(15f), trainY + px(4f), px(2f), px(2f), paint);
+                paint.setColor((aBase / 3 << 24) | 0x00FFE082);
+                c.drawRoundRect(wx, groundY + px(3f), wx + px(15f), groundY + px(11f), px(2f), px(2f), paint);
+            }
+        } else if (mode == 1) {
+            float dx = w * (0.30f + p * 0.28f);
+            float dy = groundY - px(56f) + (float) Math.sin(t * 4.2f) * px(10f);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeWidth(px(9.5f));
+            paint.setColor((aBase << 24) | 0x00F4FFFC);
+            actorPath.reset();
+            actorPath.moveTo(dx - px(85f), dy + (float) Math.sin(t * 5f) * px(16f));
+            actorPath.cubicTo(dx - px(30f), dy - px(26f), dx + px(25f), dy + px(22f), dx + px(78f), dy - px(8f));
+            c.drawPath(actorPath, paint);
+            paint.setStrokeWidth(px(3.5f));
+            paint.setColor((aBase << 24) | 0x004CE0B3);
+            c.drawPath(actorPath, paint);
+            paint.setStyle(Paint.Style.FILL);
+            for (int b = 0; b < 5; b++) {
+                float bx = dx - px(70f) + b * px(32f);
+                float by = dy - px(24f) + (float) Math.cos(t * 6f + b) * px(12f);
+                drawBird(c, bx, by, t * 12f + b, px(14f), (aBase << 24) | 0x00FFFFFF);
+            }
+        } else {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(3.5f));
+            paint.setColor((aBase << 24) | 0x00FF5252);
+            c.drawLine(w * 0.28f, groundY - px(18f), w * 0.62f, groundY - px(18f), paint);
+            for (int post = 0; post < 6; post++) {
+                float pxPos = w * (0.29f + post * 0.064f);
+                c.drawLine(pxPos, groundY, pxPos, groundY - px(22f), paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+            float nfX = w * 0.45f;
+            paint.setColor((aBase * 7 / 8 << 24) | 0x0010121A);
+            c.drawOval(rectF(nfX - px(14f), groundY - px(68f), nfX + px(14f), groundY), paint);
+            paint.setColor((aBase << 24) | 0x00F8F4EC);
+            c.drawOval(rectF(nfX - px(8f), groundY - px(62f), nfX + px(8f), groundY - px(42f)), paint);
+            for (int sp = 0; sp < 4; sp++) {
+                float sx = w * (0.33f + sp * 0.08f);
+                float sy = groundY - px(10f) - (float) Math.abs(Math.sin(t * 7f + sp)) * px(14f);
+                paint.setColor((aBase << 24) | 0x00181822);
+                c.drawCircle(sx, sy, px(7.5f), paint);
+                paint.setColor((aBase << 24) | 0x00FFD54F);
+                c.drawCircle(sx, sy - px(48f), px(9f), paint);
+            }
+        }
+
+        c.restore();
+    }
+
     private void drawCyberQuadraCar(Canvas c, float x, float y, float t, int alpha,
                                      int bodyRgb, int neonRgb, int tailRgb, boolean facingLeft, float s) {
         float dir = facingLeft ? -1f : 1f;
@@ -10707,6 +11000,24 @@ final class SkyView extends View {
             } else {
                 topBg = 0xFF1C082E; botBg = 0xFF0B0314; glowCol = 0x60B848FF;
                 houseSub = "TRAUMA TEAM  |  PLATINUM AV"; emblemType = 705;
+            }
+        } else if (theme == 8) {
+            // Theme 9: SPIRITED SKIES App Banners
+            if (styleSlot == 0) {
+                topBg = 0xFF280B10; botBg = 0xFF100406; glowCol = 0x60FF5252;
+                houseSub = "ABURAYA  |  SPIRIT BATHHOUSE"; emblemType = 801;
+            } else if (styleSlot == 1) {
+                topBg = 0xFF072622; botBg = 0xFF03100E; glowCol = 0x604CE0B3;
+                houseSub = "KOHAKU RIVER  |  WHITE DRAGON"; emblemType = 802;
+            } else if (styleSlot == 2) {
+                topBg = 0xFF081C30; botBg = 0xFF040B14; glowCol = 0x6040C4FF;
+                houseSub = "LAPUTA  |  SKY CRYSTAL"; emblemType = 803;
+            } else if (styleSlot == 3) {
+                topBg = 0xFF281A06; botBg = 0xFF100A02; glowCol = 0x60FFD54F;
+                houseSub = "CALCIFER  |  MOVING CASTLE"; emblemType = 804;
+            } else {
+                topBg = 0xFF0E2414; botBg = 0xFF051008; glowCol = 0x6069F0AE;
+                houseSub = "CAMPHOR TREE  |  KODAMA"; emblemType = 805;
             }
         } else if (styleSlot == 0) {
             topBg = 0xFF28090E; botBg = 0xFF110407; glowCol = 0x58E83038;
