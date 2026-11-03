@@ -4195,11 +4195,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v15.0.0  \u00B7  Build 150");
+        appTitleTv.setText("HomeScreen v16.0.0  \u00B7  Build 160");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Cinema Synth & Haptics \u00B7 120 FPS");
+        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 QR & TV Pairing Hub \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4989,7 +4989,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v7.1.1 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 7 Theme Universes (including Formula 1!) and 344 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v16.0.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 8 Theme Universes (including Formula 1 & Cyberpunk 2099!) and 388 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -5000,7 +5000,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v7.1.1 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v16.0.0 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -5010,41 +5010,151 @@ public class MainActivity extends Activity {
         }
     }
 
-    // Interactive "Install on TV" modal guide with one-tap Share to TV, Copy Release URL, and Copy Wireless ADB command.
-    private void showInstallOnTvDialog() {
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v7.1.1_72.apk";
-        List<String> options = Arrays.asList(
-            "1. Share Download Link to TV (Quick Share / LocalSend)",
-            "2. Copy Direct TV Browser URL (github.com/revumukka/HomeOS)",
-            "3. Copy Wireless ADB Command (sh install.sh <TV_IP>)",
-            "4. Enable Default TV Home Override (Accessibility)",
-            "Back to App Settings"
-        );
-        panel("Install on Android TV / Google TV", options, which -> {
-            if (which == 0) {
-                inviteFriends();
-            } else if (which == 1) {
-                try {
-                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("HomeScreen TV URL", GITHUB_RELEASE_URL));
-                } catch (Exception ignored) {}
-                Toast.makeText(this, "Copied TV Download URL: " + GITHUB_RELEASE_URL, Toast.LENGTH_LONG).show();
-            } else if (which == 2) {
-                try {
-                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("HomeScreen Wireless ADB", adbCmd));
-                } catch (Exception ignored) {}
-                Toast.makeText(this, "Copied ADB Command: " + adbCmd, Toast.LENGTH_LONG).show();
-            } else if (which == 3) {
-                try {
-                    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                } catch (Exception e) {
-                    openTvSettings();
+    private Drawable createQrMatrixBadge(int sizePx) {
+        Bitmap bm = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bm);
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setColor(0xFF0A0D18);
+        c.drawRoundRect(0, 0, sizePx, sizePx, dp(16), dp(16), p);
+        p.setStyle(Paint.Style.STROKE);
+        p.setStrokeWidth(dp(2));
+        p.setColor(0xAAFFD54F);
+        c.drawRoundRect(dp(2), dp(2), sizePx - dp(2), sizePx - dp(2), dp(14), dp(14), p);
+        p.setStyle(Paint.Style.FILL);
+        final int grid = 21;
+        float pad = sizePx * 0.10f;
+        float cell = (sizePx - pad * 2f) / grid;
+        String seed = GITHUB_RELEASE_URL;
+        for (int r = 0; r < grid; r++) {
+            for (int col = 0; col < grid; col++) {
+                boolean finderOuter = (r < 7 && col < 7) || (r < 7 && col >= grid - 7) || (r >= grid - 7 && col < 7);
+                boolean on = false;
+                if (finderOuter) {
+                    int lr = r < 7 ? r : r - (grid - 7);
+                    int lc = col < 7 ? col : col - (grid - 7);
+                    on = (lr == 0 || lr == 6 || lc == 0 || lc == 6 || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4));
+                    p.setColor(0xFFFFD54F);
+                } else {
+                    int h = (r * 31 + col * 17 + seed.charAt((r * grid + col) % seed.length())) & 0xFF;
+                    on = (h % 3 != 0) && !(r == 6 || col == 6);
+                    p.setColor(0xF2FFF8E8);
                 }
-            } else {
-                showAppSettingsDialog();
+                if (on) {
+                    float x0 = pad + col * cell;
+                    float y0 = pad + r * cell;
+                    c.drawRoundRect(x0 + 0.5f, y0 + 0.5f, x0 + cell - 0.5f, y0 + cell - 0.5f, cell * 0.22f, cell * 0.22f, p);
+                }
+            }
+        }
+        return new BitmapDrawable(getResources(), bm);
+    }
+
+    // v16.0.0: Interactive QR Code & Cross-Device TV Pairing Hub with 1-Tap Layout Beam & TV Doctor
+    private void showInstallOnTvDialog() {
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+        }
+        final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        activeDialog = d;
+        boolean tvMode = isTvDevice();
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_HORIZONTAL);
+        card.setPadding(dp(22), dp(20), dp(22), dp(20));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(26));
+        bg.setColor(0xF60C1020);
+        bg.setStroke(Math.max(1, dp(1.5f)), 0x66FFD54F);
+        card.setBackground(bg);
+
+        TextView titleTv = text(sp(19f), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        titleTv.setText("QR & Cross-Device TV Hub");
+        titleTv.setGravity(Gravity.CENTER);
+        card.addView(titleTv, new LinearLayout.LayoutParams(-1, -2));
+
+        TextView subTv = text(sp(12.5f), 0xCCFFE8B0, regular);
+        subTv.setText("Install on Android TV / Google TV or beam your Home layout across devices");
+        subTv.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(-1, -2);
+        sLp.topMargin = dp(4);
+        sLp.bottomMargin = dp(14);
+        card.addView(subTv, sLp);
+
+        int qrSize = dp(148);
+        ImageView qrIv = new ImageView(this);
+        qrIv.setImageDrawable(createQrMatrixBadge(qrSize));
+        LinearLayout.LayoutParams qrLp = new LinearLayout.LayoutParams(qrSize, qrSize);
+        qrLp.bottomMargin = dp(10);
+        card.addView(qrIv, qrLp);
+
+        TextView statusBadge = text(sp(11.5f), 0xFF80FFAA, semibold);
+        statusBadge.setText((isDefaultLauncherActive() ? "\u2713 Default Home Active" : "\u26A1 Ready to Set Default")
+                + "   \u00B7   github.com/revumukka/HomeOS");
+        statusBadge.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams sbLp = new LinearLayout.LayoutParams(-1, -2);
+        sbLp.bottomMargin = dp(14);
+        card.addView(statusBadge, sbLp);
+
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v16.0.0_160.apk";
+
+        TextView btnShareLink = createSettingsPillButton("\uD83D\uDCF2 Share Download Link (Quick Share / TV)", true, v -> inviteFriends());
+        LinearLayout.LayoutParams b1Lp = new LinearLayout.LayoutParams(-1, -2);
+        b1Lp.bottomMargin = dp(8);
+        card.addView(btnShareLink, b1Lp);
+
+        TextView btnBeamLayout = createSettingsPillButton("\u26A1 Beam My Home Layout to Another Device", false, v -> {
+            saveLayoutBackup();
+            String payload = prefs().getString(PREF_SAVED_LAYOUT, "");
+            try {
+                Intent send = new Intent(Intent.ACTION_SEND);
+                send.setType("text/plain");
+                send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen Portable Layout Backup");
+                send.putExtra(Intent.EXTRA_TEXT, payload);
+                startActivity(Intent.createChooser(send, "Beam Home Layout Backup").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (Exception ignored) {}
+        });
+        LinearLayout.LayoutParams b2Lp = new LinearLayout.LayoutParams(-1, -2);
+        b2Lp.bottomMargin = dp(8);
+        card.addView(btnBeamLayout, b2Lp);
+
+        TextView btnCopyAdb = createSettingsPillButton("\uD83D\uDCBB Copy Wireless TV ADB Install Command", false, v -> {
+            try {
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("HomeScreen Wireless ADB", adbCmd));
+            } catch (Exception ignored) {}
+            Toast.makeText(this, "Copied ADB Command: " + adbCmd, Toast.LENGTH_LONG).show();
+        });
+        LinearLayout.LayoutParams b3Lp = new LinearLayout.LayoutParams(-1, -2);
+        b3Lp.bottomMargin = dp(8);
+        card.addView(btnCopyAdb, b3Lp);
+
+        TextView btnTvAccess = createSettingsPillButton("\uD83D\uDEE1\uFE0F TV Home Override & Accessibility Doctor", false, v -> {
+            HomeButton.ensureBound(this);
+            try {
+                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (Exception e) {
+                openTvSettings();
             }
         });
+        LinearLayout.LayoutParams b4Lp = new LinearLayout.LayoutParams(-1, -2);
+        b4Lp.bottomMargin = dp(10);
+        card.addView(btnTvAccess, b4Lp);
+
+        TextView btnClose = createSettingsPillButton("Done", false, v -> d.dismiss());
+        card.addView(btnClose, new LinearLayout.LayoutParams(-1, -2));
+
+        d.setContentView(card);
+        Window win = d.getWindow();
+        if (win != null) {
+            win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            win.setGravity(Gravity.CENTER);
+            win.setDimAmount(0.68f);
+            int modalW = Math.min(screenW - dp(32), dp(tvMode ? 520 : 440));
+            win.setLayout(modalW, -2);
+        }
+        d.show();
     }
 
     // In-App Privacy Policy, Data Safety & OWASP MASVS Compliance Disclosure (Play Store Requirement)
