@@ -684,6 +684,59 @@ final class SkyView extends View {
         return edgeGlowEnabled;
     }
 
+    // v12.0.0: Interactive Touch/Swipe Particle Playground & 3D Gyroscope Tilt Parallax
+    private static final int TOUCH_RIPPLE_MAX = 8;
+    private final float[] touchRipples = new float[TOUCH_RIPPLE_MAX * 4]; // x, y, spawnT, rgb
+    private int touchRippleHead = 0;
+    private static final int TOUCH_SPARK_MAX = 36;
+    private final float[] touchSparks = new float[TOUCH_SPARK_MAX * 6]; // x, y, vx, vy, spawnT, rgb
+    private int touchSparkHead = 0;
+    private float lastTouchSparkX = -999f, lastTouchSparkY = -999f;
+    private float tiltTargetX = 0f, tiltTargetY = 0f;
+    private float tiltCurX = 0f, tiltCurY = 0f;
+
+    void setTiltOffset(float tx, float ty) {
+        this.tiltTargetX = Math.max(-1f, Math.min(1f, tx));
+        this.tiltTargetY = Math.max(-1f, Math.min(1f, ty));
+    }
+
+    void onUserTouch(float x, float y, boolean isDown) {
+        float now = nowSec();
+        int[] themeCols = {0xFFFFD54F, 0xFFFF6D00, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801, 0xFF00F0FF};
+        int rgb = themeCols[Math.max(0, Math.min(themeCols.length - 1, universeTheme))];
+        snitchTargetX = x;
+        snitchTargetY = Math.max(px(36f), y - px(18f));
+        if (isDown) {
+            int rb = (touchRippleHead % TOUCH_RIPPLE_MAX) * 4;
+            touchRippleHead++;
+            touchRipples[rb] = x;
+            touchRipples[rb + 1] = y;
+            touchRipples[rb + 2] = now;
+            touchRipples[rb + 3] = Float.intBitsToFloat(rgb);
+            lastTouchSparkX = x;
+            lastTouchSparkY = y;
+        } else {
+            float dist = (float) Math.hypot(x - lastTouchSparkX, y - lastTouchSparkY);
+            if (dist < px(14f)) return;
+            lastTouchSparkX = x;
+            lastTouchSparkY = y;
+        }
+        int count = isDown ? 8 : 3;
+        for (int i = 0; i < count; i++) {
+            int sb = (touchSparkHead % TOUCH_SPARK_MAX) * 6;
+            touchSparkHead++;
+            double ang = (touchSparkHead * 1.17) + i * (Math.PI * 2.0 / count);
+            float spd = px(isDown ? (65f + (i % 3) * 35f) : (38f + (i % 2) * 28f));
+            touchSparks[sb] = x;
+            touchSparks[sb + 1] = y;
+            touchSparks[sb + 2] = (float) Math.cos(ang) * spd;
+            touchSparks[sb + 3] = (float) Math.sin(ang) * spd - px(16f);
+            touchSparks[sb + 4] = now;
+            touchSparks[sb + 5] = Float.intBitsToFloat((i % 2 == 0) ? 0xFFFFFFFF : rgb);
+        }
+        if (running) postInvalidateOnAnimation();
+    }
+
     void setReactiveColor(int rgb, boolean prism) {
         this.prismMode = prism;
         this.targetR = Color.red(rgb);
@@ -1795,6 +1848,8 @@ final class SkyView extends View {
         curR += (targetR - curR) * colDamp;
         curG += (targetG - curG) * colDamp;
         curB += (targetB - curB) * colDamp;
+        tiltCurX += (tiltTargetX - tiltCurX) * dampFactor(0.12f, frameDt);
+        tiltCurY += (tiltTargetY - tiltCurY) * dampFactor(0.12f, frameDt);
         if (fancyPulseEnergy > 0) fancyPulseEnergy = Math.max(0, fancyPulseEnergy - 2);
 
         int ir = Math.min(255, Math.max(0, Math.round(curR)));
@@ -1839,9 +1894,11 @@ final class SkyView extends View {
 
         // 1. Twinkling ceiling stars / theme-specific atmospheric sky glints (Camera Flashes in F1, Chakra Embers in Naruto, etc.)
         paint.setStyle(Paint.Style.FILL);
+        float starTiltX = tiltCurX * px(18f);
+        float starTiltY = tiltCurY * px(12f);
         for (int i = 0; i < STAR_COUNT; i++) {
             int b = i * 6;
-            float sx = stars[b], sy = stars[b + 1], sr = stars[b + 2];
+            float sx = stars[b] + starTiltX, sy = stars[b + 1] + starTiltY, sr = stars[b + 2];
             if (universeTheme == 6) {
                 // FORMULA 1: High-Speed Xenon Camera Flashes popping across the stadium & grandstands
                 float flashWave = (float) Math.sin(t * (stars[b + 3] * 2.6f) + stars[b + 4] * 3.7f);
@@ -2524,6 +2581,37 @@ final class SkyView extends View {
             float sy = burstSparks[b + 1] + burstSparks[b + 3] * age + 0.5f * px(95f) * age * age;
             paint.setColor((alpha << 24) | (rgb & 0xFFFFFF));
             c.drawCircle(sx, sy, px(3.2f * (1f - prog * 0.4f)), paint);
+        }
+
+        // 2B. Interactive Touch & Swipe Energy Ripples + Particle Trail (v12.0.0)
+        paint.setStyle(Paint.Style.STROKE);
+        for (int i = 0; i < TOUCH_RIPPLE_MAX; i++) {
+            int rb = i * 4;
+            float spawn = touchRipples[rb + 2];
+            if (spawn <= 0f) continue;
+            float age = t - spawn;
+            if (age < 0f || age > 0.68f) continue;
+            float prog = age / 0.68f;
+            int alpha = Math.round((1f - prog) * (1f - prog) * 195f);
+            int rgb = Float.floatToRawIntBits(touchRipples[rb + 3]);
+            paint.setStrokeWidth(px(2.4f * (1f - prog * 0.5f)));
+            paint.setColor((alpha << 24) | (rgb & 0xFFFFFF));
+            c.drawCircle(touchRipples[rb], touchRipples[rb + 1], px(10f + prog * 86f), paint);
+        }
+        paint.setStyle(Paint.Style.FILL);
+        for (int i = 0; i < TOUCH_SPARK_MAX; i++) {
+            int sb = i * 6;
+            float spawn = touchSparks[sb + 4];
+            if (spawn <= 0f) continue;
+            float age = t - spawn;
+            if (age < 0f || age > 0.62f) continue;
+            float prog = age / 0.62f;
+            int alpha = Math.round((1f - prog) * 235f);
+            int rgb = Float.floatToRawIntBits(touchSparks[sb + 5]);
+            float sx = touchSparks[sb] + touchSparks[sb + 2] * age;
+            float sy = touchSparks[sb + 1] + touchSparks[sb + 3] * age + 0.5f * px(80f) * age * age;
+            paint.setColor((alpha << 24) | (rgb & 0xFFFFFF));
+            c.drawCircle(sx, sy, px(2.8f * (1f - prog * 0.35f)), paint);
         }
 
         // 3. Autonomous Companion hovering above the focused tile (or patrolling the upper sky in Screensaver Mode)

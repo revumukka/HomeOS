@@ -573,6 +573,9 @@ public class MainActivity extends Activity {
         resetIdleTimer();
         if (!isTvDevice() && (activeDialog == null || !activeDialog.isShowing())) {
             int action = ev.getActionMasked();
+            if (skyView != null && (action == android.view.MotionEvent.ACTION_DOWN || action == android.view.MotionEvent.ACTION_MOVE)) {
+                skyView.onUserTouch(ev.getRawX(), ev.getRawY(), action == android.view.MotionEvent.ACTION_DOWN);
+            }
             if (action == android.view.MotionEvent.ACTION_DOWN) {
                 gestureDownX = ev.getRawX();
                 gestureDownY = ev.getRawY();
@@ -970,10 +973,33 @@ public class MainActivity extends Activity {
         return out;
     }
 
+    private final android.hardware.SensorEventListener tiltSensorListener = new android.hardware.SensorEventListener() {
+        @Override
+        public void onSensorChanged(android.hardware.SensorEvent event) {
+            if (skyView == null || event == null || event.values == null || event.values.length < 2) return;
+            float tx = Math.max(-1f, Math.min(1f, -event.values[0] / 6.5f));
+            float ty = Math.max(-1f, Math.min(1f, (event.values[1] - 4.5f) / 6.5f));
+            skyView.setTiltOffset(tx, ty);
+        }
+        @Override
+        public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) {}
+    };
+
     @Override
     protected void onResume() {
         super.onResume();
         configureDynamicHighRefreshRate();
+        if (!isTvDevice()) {
+            try {
+                android.hardware.SensorManager sm = (android.hardware.SensorManager) getSystemService(Context.SENSOR_SERVICE);
+                if (sm != null) {
+                    android.hardware.Sensor accel = sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER);
+                    if (accel != null) {
+                        sm.registerListener(tiltSensorListener, accel, android.hardware.SensorManager.SENSOR_DELAY_GAME);
+                    }
+                }
+            } catch (Throwable ignored) {}
+        }
         // Rebuild only when apps were installed, removed or updated.
         if (dirty) {
             dirty = false;
@@ -1001,6 +1027,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        if (!isTvDevice()) {
+            try {
+                android.hardware.SensorManager sm = (android.hardware.SensorManager) getSystemService(Context.SENSOR_SERVICE);
+                if (sm != null) sm.unregisterListener(tiltSensorListener);
+            } catch (Throwable ignored) {}
+        }
         idleHandler.removeCallbacks(startScreensaverTask);
         if (screensaverActive) exitScreensaver();
         if (skyView != null) skyView.setRunning(false);
@@ -3959,11 +3991,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v11.0.0  \u00B7  Build 110");
+        appTitleTv.setText("HomeScreen v12.0.0  \u00B7  Build 120");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Living Weather \u00B7 120 FPS");
+        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 3D Tilt & Touch Physics \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
