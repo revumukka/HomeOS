@@ -1725,8 +1725,44 @@ public class MainActivity extends Activity {
 
     // Native Phone / Foldable Cover Screen App Icon Tile:
     // Full-bleed One UI / Pixel style squircle app icon + crisp 13sp single-line label underneath.
+    private static final String PREF_ICON_STYLE = "icon_style"; // 0=Luxury Gold, 1=Liquid Frosted Glass, 2=Cyber Neon Rim, 3=Minimal Circle
+    private static final String PREF_ICON_SCALE = "icon_scale"; // 0=Compact (88%), 1=Standard (100%), 2=XL Jumbo (112%)
+    private static final String[] ICON_STYLE_NAMES = {"Luxury Gold", "Liquid Glass", "Cyber Neon", "Minimal Circle"};
+    private static final String[] ICON_SCALE_NAMES = {"Compact", "Standard", "XL Jumbo"};
+
+    private void showIconStyleStudio() {
+        int curStyle = prefs().getInt(PREF_ICON_STYLE, 0);
+        int curScale = prefs().getInt(PREF_ICON_SCALE, 1);
+        List<String> items = Arrays.asList(
+            (curStyle == 0 ? "\u2713 " : "    ") + "\u2728 Frame: Luxury Gold Squircle",
+            (curStyle == 1 ? "\u2713 " : "    ") + "\uD83D\uDCA0 Frame: Liquid Frosted Glass",
+            (curStyle == 2 ? "\u2713 " : "    ") + "\u26A1 Frame: Cyber Neon Rim",
+            (curStyle == 3 ? "\u2713 " : "    ") + "\u25EF Frame: Minimal Borderless Circle",
+            "\uD83D\uDCD0 Icon Scale: " + ICON_SCALE_NAMES[Math.max(0, Math.min(2, curScale))] + " (Tap to Cycle)",
+            "Done"
+        );
+        panel("Icon & Card Style Studio", items, which -> {
+            if (which >= 0 && which <= 3) {
+                prefs().edit().putInt(PREF_ICON_STYLE, which).apply();
+                buildTiles();
+                Toast.makeText(this, "Icon Frame: " + ICON_STYLE_NAMES[which], Toast.LENGTH_SHORT).show();
+            } else if (which == 4) {
+                int nextScale = (prefs().getInt(PREF_ICON_SCALE, 1) + 1) % 3;
+                prefs().edit().putInt(PREF_ICON_SCALE, nextScale).apply();
+                buildTiles();
+                Toast.makeText(this, "Icon Scale: " + ICON_SCALE_NAMES[nextScale], Toast.LENGTH_SHORT).show();
+                showIconStyleStudio();
+            }
+        });
+    }
+
     private void addMobileAppTile(ViewGroup parent, final String key, String label, Drawable badge, Drawable appIcon,
-                                  int x, int y, int w, int h, int iconSize) {
+                                  int x, int y, int w, int h, int rawIconSize) {
+        int styleMode = prefs().getInt(PREF_ICON_STYLE, 0);
+        int scaleMode = prefs().getInt(PREF_ICON_SCALE, 1);
+        float scaleMult = scaleMode == 0 ? 0.88f : (scaleMode == 2 ? 1.12f : 1.0f);
+        final int iconSize = Math.min(w - dp(4), Math.round(rawIconSize * scaleMult));
+
         LinearLayout cell = new LinearLayout(this);
         cell.setOrientation(LinearLayout.VERTICAL);
         cell.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
@@ -1734,11 +1770,13 @@ public class MainActivity extends Activity {
         cell.setFocusable(true);
         cell.setTag(key);
 
-        final int badgeRadius = Math.round(iconSize * 0.26f);
+        float radRatio = styleMode == 3 ? 0.50f : (styleMode == 1 ? 0.32f : (styleMode == 2 ? 0.18f : 0.26f));
+        final int badgeRadius = Math.round(iconSize * radRatio);
         final FrameLayout iconBox = new FrameLayout(this);
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(badgeRadius);
-        bg.setColor(0x480E101E);
+        int boxBgCol = styleMode == 1 ? 0x38FFFFFF : (styleMode == 2 ? 0x66060A18 : (styleMode == 3 ? 0x220E101E : 0x480E101E));
+        bg.setColor(boxBgCol);
         iconBox.setBackground(bg);
         iconBox.setClipToOutline(true);
         iconBox.setElevation(dp(4));
@@ -1757,10 +1795,11 @@ public class MainActivity extends Activity {
             iconBox.addView(iv, new FrameLayout.LayoutParams(-1, -1));
         }
 
+        final int idleStrokeCol = styleMode == 1 ? 0x66FFFFFF : (styleMode == 2 ? 0xAA00F0FF : (styleMode == 3 ? 0x00000000 : 0x38FFE082));
         final GradientDrawable border = new GradientDrawable();
         border.setCornerRadius(badgeRadius);
         border.setColor(Color.TRANSPARENT);
-        border.setStroke(Math.max(1, dp(1)), 0x38FFE082);
+        border.setStroke(Math.max(1, dp(styleMode == 2 ? 1.5f : 1f)), idleStrokeCol);
         iconBox.setForeground(border);
         cell.addView(iconBox, new LinearLayout.LayoutParams(iconSize, iconSize));
 
@@ -1790,7 +1829,7 @@ public class MainActivity extends Activity {
                     .translationY(has ? -dp(3) : 0)
                     .setDuration(FOCUS_MS).setInterpolator(FOCUS_EASE).withLayer().start();
             if (!key.equals(movingKey)) {
-                border.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? focusBorderCol : 0x38FFE082);
+                border.setStroke(Math.max(1, dp(has ? 2 : 1)), has ? focusBorderCol : idleStrokeCol);
             }
             titleView.setTextColor(has ? 0xFFFFFFFF : 0xF8FFF8EC);
         });
@@ -4079,11 +4118,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v13.0.0  \u00B7  Build 130");
+        appTitleTv.setText("HomeScreen v14.0.0  \u00B7  Build 140");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Smart App Intelligence \u00B7 120 FPS");
+        appSubTv.setText("8 Theme Universes \u00B7 388 Story Jukebox \u00B7 Icon Style Studio \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4282,6 +4321,16 @@ public class MainActivity extends Activity {
                     + "\u00D7" + getDefaultGridRows(tvMode, isNarrowVertical) + ")", Toast.LENGTH_SHORT).show();
         });
         resetGridRow.addView(resetGridBtn, new LinearLayout.LayoutParams(-2, -2));
+        int curStyleIdx = Math.max(0, Math.min(3, prefs().getInt(PREF_ICON_STYLE, 0)));
+        int curScaleIdx = Math.max(0, Math.min(2, prefs().getInt(PREF_ICON_SCALE, 1)));
+        View iconStyleRow = createSettingsActionRow(
+                "\uD83C\uDFA8 Icon Frame & Size Studio",
+                ICON_STYLE_NAMES[curStyleIdx] + " \u00B7 " + ICON_SCALE_NAMES[curScaleIdx],
+                v -> {
+                    d.dismiss();
+                    showIconStyleStudio();
+                });
+        gridCard.addView(iconStyleRow);
         gridCard.addView(resetGridRow, rgrLp);
         content.addView(gridCard, createCardMarginParams());
 
