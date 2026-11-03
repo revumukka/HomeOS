@@ -676,6 +676,10 @@ public class MainActivity extends Activity {
         FrameLayout viewport = new FrameLayout(this);
         skyView = new SkyView(this, scale, 0, cinzelFont);
         skyView.setUniverseTheme(universeTheme());
+        skyView.setStorySpeedMultiplier(prefs().getFloat("story_speed", 1.0f));
+        if (prefs().getBoolean("story_locked", false)) {
+            skyView.jumpToScene(prefs().getInt("story_locked_idx", 0), true);
+        }
         skyView.setScreensaverThemeListener(theme -> runOnUiThread(() -> applyThemeTypography(theme)));
         skyView.setEdgeGlowEnabled(false);
         viewport.addView(skyView, new FrameLayout.LayoutParams(-1, -1));
@@ -688,7 +692,8 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         root.setClipChildren(false);
         // Touch & Stylus gesture support for Foldables and Tablets on the bottom Story Stage:
-        // Tap right half / swipe left -> Next Story Scene; Tap left half / swipe right -> Previous Story Scene
+        // Tap center (32%..68% width) -> Open Interactive Story Scene Jukebox;
+        // Tap right edge / swipe left -> Next Story Scene; Tap left edge / swipe right -> Previous Story Scene
         root.setOnTouchListener(new View.OnTouchListener() {
             private float downX, downY;
             @Override
@@ -705,8 +710,14 @@ public class MainActivity extends Activity {
                         if (dx < 0) skyView.nextStoryScene();
                         else skyView.prevStoryScene();
                     } else if (Math.abs(ev.getY() - downY) < px(36)) {
-                        if (ev.getX() >= v.getWidth() * 0.5f) skyView.nextStoryScene();
-                        else skyView.prevStoryScene();
+                        float xFrac = ev.getX() / Math.max(1f, (float) v.getWidth());
+                        if (xFrac >= 0.32f && xFrac <= 0.68f && ev.getY() >= h * 0.78f) {
+                            showStoryJukeboxDialog();
+                        } else if (xFrac >= 0.5f) {
+                            skyView.nextStoryScene();
+                        } else {
+                            skyView.prevStoryScene();
+                        }
                     }
                     return true;
                 }
@@ -2328,6 +2339,7 @@ public class MainActivity extends Activity {
             // because each Universe Theme renders its own procedural story sky background).
             List<String> list = new ArrayList<>();
             list.add("App Settings");
+            list.add("Story Scene Jukebox");
             if (!isTvDevice()) {
                 list.add("Pin / Manage Apps");
             }
@@ -2347,6 +2359,8 @@ public class MainActivity extends Activity {
                 String picked = items[which];
                 if ("App Settings".equals(picked)) {
                     showAppSettingsDialog();
+                } else if ("Story Scene Jukebox".equals(picked)) {
+                    showStoryJukeboxDialog();
                 } else if ("Pin / Manage Apps".equals(picked)) {
                     showAllAppsDrawer(true);
                 } else if ("Next Story Scene".equals(picked)) {
@@ -3280,6 +3294,310 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) {}
     }
 
+    // v8.0.0 Interactive Story Director HUD & 344-Scene Cinema Jukebox:
+    // Lets users browse and search all 344 scenes across every Theme Universe, jump directly to any scene,
+    // pin/lock their favorite scene as a continuous non-fading live diorama, and adjust story playback speed.
+    private void showStoryJukeboxDialog() {
+        if (skyView == null) return;
+        if (activeDialog != null && activeDialog.isShowing()) {
+            try { activeDialog.dismiss(); } catch (Exception ignored) {}
+        }
+        final Dialog d = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        activeDialog = d;
+
+        final boolean tvMode = isTvDevice();
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        final int activeTheme = universeTheme();
+        final String[] rawTitles = skyView.getSceneTitlesForTheme(activeTheme);
+        final List<Integer> filteredIndices = new ArrayList<>();
+        for (int i = 0; i < rawTitles.length; i++) filteredIndices.add(i);
+
+        LinearLayout sheet = new LinearLayout(this);
+        sheet.setOrientation(LinearLayout.VERTICAL);
+        sheet.setPadding(dp(20), dp(14), dp(20), dp(18));
+        GradientDrawable sheetBg = new GradientDrawable();
+        float topRad = dp(28);
+        if (tvMode) sheetBg.setCornerRadius(dp(24));
+        else sheetBg.setCornerRadii(new float[] {topRad, topRad, topRad, topRad, 0, 0, 0, 0});
+        sheetBg.setColor(0xF40B0E1A);
+        sheetBg.setStroke(Math.max(1, dp(1)), 0x48F5D078);
+        sheet.setBackground(sheetBg);
+
+        FrameLayout handle = null;
+        if (!tvMode) {
+            handle = createDragHandleBox();
+            LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(-1, dp(22));
+            hlp.bottomMargin = dp(4);
+            sheet.addView(handle, hlp);
+        }
+
+        // Top Header Row: Title + Pin Toggle + Speed Toggle + Close
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setGravity(Gravity.CENTER_VERTICAL);
+        final TextView headTitle = text(sp(18f), 0xFFFFF4D2, cinzelFont != null ? cinzelFont : semibold);
+        headTitle.setText(UNIVERSE_THEMES[activeTheme] + " Jukebox (" + rawTitles.length + ")");
+        headTitle.setSingleLine(true);
+        headTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        headerRow.addView(headTitle, new LinearLayout.LayoutParams(0, -2, 1f));
+
+        TextView closeBtn = createSettingsPillButton("\u2713 Done", true, v -> d.dismiss());
+        headerRow.addView(closeBtn, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout.LayoutParams hrlp = new LinearLayout.LayoutParams(-1, -2);
+        hrlp.bottomMargin = dp(10);
+        sheet.addView(headerRow, hrlp);
+
+        // Director Control Bar: [ ★ Pin / Loop Scene ]   [ ⚡ Speed: 1.0x ]   [ 🌌 Switch Universe ]
+        LinearLayout directorBar = new LinearLayout(this);
+        directorBar.setOrientation(LinearLayout.HORIZONTAL);
+        directorBar.setGravity(Gravity.CENTER_VERTICAL);
+
+        final TextView pinSceneBtn = text(sp(12.5f), 0xFFFFF4D2, semibold);
+        pinSceneBtn.setGravity(Gravity.CENTER);
+        pinSceneBtn.setSingleLine(true);
+        pinSceneBtn.setPadding(dp(12), dp(8), dp(12), dp(8));
+        final GradientDrawable pinBg = new GradientDrawable();
+        pinBg.setCornerRadius(dp(16));
+        pinSceneBtn.setBackground(pinBg);
+
+        final TextView speedBtn = text(sp(12.5f), 0xFFFFF4D2, semibold);
+        speedBtn.setGravity(Gravity.CENTER);
+        speedBtn.setSingleLine(true);
+        speedBtn.setPadding(dp(12), dp(8), dp(12), dp(8));
+        final GradientDrawable spdBg = new GradientDrawable();
+        spdBg.setCornerRadius(dp(16));
+        spdBg.setColor(0x22FFFFFF);
+        spdBg.setStroke(Math.max(1, dp(1)), 0x44F5D078);
+        speedBtn.setBackground(spdBg);
+
+        final BaseAdapter[] adapterRef = new BaseAdapter[1];
+        final Runnable refreshDirectorBar = () -> {
+            boolean locked = skyView.isSceneLocked();
+            pinSceneBtn.setText(locked ? "\u2605 Scene Pinned" : "\u2606 Pin Current Scene");
+            pinSceneBtn.setTextColor(locked ? 0xFF100D18 : 0xFFFFE8A8);
+            pinBg.setColor(locked ? 0xFFFFD54F : 0x22FFFFFF);
+            pinBg.setStroke(Math.max(1, dp(1)), locked ? 0xFFFFF4D2 : 0x44F5D078);
+
+            float spd = skyView.getStorySpeedMultiplier();
+            String spdLabel = spd < 0.75f ? "0.5x Slow" : (spd > 1.4f ? "2.0x Fast" : "1.0x Normal");
+            speedBtn.setText("\u26A1 " + spdLabel);
+            if (adapterRef[0] != null) adapterRef[0].notifyDataSetChanged();
+        };
+        refreshDirectorBar.run();
+
+        pinSceneBtn.setOnClickListener(v -> {
+            boolean nextLock = !skyView.isSceneLocked();
+            skyView.setSceneLocked(nextLock);
+            prefs().edit()
+                    .putBoolean("story_locked", nextLock)
+                    .putInt("story_locked_idx", skyView.getCurrentSceneIndex())
+                    .apply();
+            refreshDirectorBar.run();
+        });
+
+        speedBtn.setOnClickListener(v -> {
+            float cur = skyView.getStorySpeedMultiplier();
+            float next = cur < 0.75f ? 1.0f : (cur < 1.4f ? 2.0f : 0.5f);
+            skyView.setStorySpeedMultiplier(next);
+            prefs().edit().putFloat("story_speed", next).apply();
+            refreshDirectorBar.run();
+        });
+
+        LinearLayout.LayoutParams pblp = new LinearLayout.LayoutParams(0, -2, 1f);
+        pblp.rightMargin = dp(6);
+        directorBar.addView(pinSceneBtn, pblp);
+
+        LinearLayout.LayoutParams sblp2 = new LinearLayout.LayoutParams(0, -2, 1f);
+        sblp2.leftMargin = dp(6);
+        directorBar.addView(speedBtn, sblp2);
+
+        LinearLayout.LayoutParams dblp = new LinearLayout.LayoutParams(-1, -2);
+        dblp.bottomMargin = dp(10);
+        sheet.addView(directorBar, dblp);
+
+        // Search input for filtering scenes
+        EditText searchInput = new EditText(this);
+        searchInput.setHint("Filter " + UNIVERSE_THEMES[activeTheme] + " scenes\u2026");
+        searchInput.setHintTextColor(0x78FFE8B0);
+        searchInput.setTextColor(0xFFFFFFFF);
+        searchInput.setTextSize(TypedValue.COMPLEX_UNIT_PX, sp(14.5f));
+        searchInput.setSingleLine(true);
+        searchInput.setPadding(dp(16), dp(10), dp(16), dp(10));
+        GradientDrawable sBg = new GradientDrawable();
+        sBg.setCornerRadius(dp(20));
+        sBg.setColor(0x1EFFFFFF);
+        sBg.setStroke(Math.max(1, dp(1)), 0x38F5D078);
+        searchInput.setBackground(sBg);
+        LinearLayout.LayoutParams silp = new LinearLayout.LayoutParams(-1, -2);
+        silp.bottomMargin = dp(10);
+        sheet.addView(searchInput, silp);
+
+        final ListView list = new ListView(this);
+        list.setDivider(new ColorDrawable(Color.TRANSPARENT));
+        list.setDividerHeight(dp(6));
+        list.setVerticalScrollBarEnabled(false);
+        list.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        GradientDrawable listSel = new GradientDrawable();
+        listSel.setCornerRadius(dp(16));
+        listSel.setColor(0x28FFE8B0);
+        list.setSelector(listSel);
+
+        final int accentCol = UNIVERSE_THEME_COLORS[Math.max(0, Math.min(UNIVERSE_THEME_COLORS.length - 1, activeTheme))];
+        final BaseAdapter adapter = new BaseAdapter() {
+            @Override public int getCount() { return filteredIndices.size(); }
+            @Override public Object getItem(int pos) { return filteredIndices.get(pos); }
+            @Override public long getItemId(int pos) { return filteredIndices.get(pos); }
+            @Override public View getView(int pos, View convert, ViewGroup parent) {
+                LinearLayout row;
+                TextView numTv;
+                TextView titleTv;
+                TextView statusTv;
+                if (convert instanceof LinearLayout) {
+                    row = (LinearLayout) convert;
+                    numTv = (TextView) row.getChildAt(0);
+                    titleTv = (TextView) row.getChildAt(1);
+                    statusTv = (TextView) row.getChildAt(2);
+                } else {
+                    row = new LinearLayout(MainActivity.this);
+                    row.setOrientation(LinearLayout.HORIZONTAL);
+                    row.setGravity(Gravity.CENTER_VERTICAL);
+                    row.setMinimumHeight(dp(54));
+                    row.setPadding(dp(14), dp(8), dp(14), dp(8));
+
+                    numTv = text(sp(12.5f), 0xCCFFE082, cinzelFont != null ? cinzelFont : semibold);
+                    numTv.setGravity(Gravity.CENTER);
+                    numTv.setMinimumWidth(dp(34));
+                    row.addView(numTv, new LinearLayout.LayoutParams(-2, -2));
+
+                    titleTv = text(sp(13.5f), 0xFAFFFFFF, semibold);
+                    titleTv.setSingleLine(true);
+                    titleTv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, -2, 1f);
+                    tlp.leftMargin = dp(10);
+                    tlp.rightMargin = dp(8);
+                    row.addView(titleTv, tlp);
+
+                    statusTv = text(sp(11.5f), 0xFFFFD54F, semibold);
+                    statusTv.setGravity(Gravity.CENTER);
+                    statusTv.setPadding(dp(10), dp(4), dp(10), dp(4));
+                    row.addView(statusTv, new LinearLayout.LayoutParams(-2, -2));
+                }
+
+                final int sceneIdx = filteredIndices.get(pos);
+                final boolean isCurrent = (sceneIdx == skyView.getCurrentSceneIndex());
+                final boolean isPinned = isCurrent && skyView.isSceneLocked();
+
+                GradientDrawable rBg = new GradientDrawable();
+                rBg.setCornerRadius(dp(16));
+                rBg.setColor(isCurrent ? 0x26FFD54F : 0x12FFFFFF);
+                rBg.setStroke(Math.max(1, dp(1)), isCurrent ? accentCol : 0x1EFFFFFF);
+                row.setBackground(rBg);
+
+                numTv.setText("#" + (sceneIdx + 1));
+                String cleanTitle = rawTitles[sceneIdx];
+                int firstPipe = cleanTitle.indexOf('|');
+                if (firstPipe > 0 && firstPipe < 8) {
+                    cleanTitle = cleanTitle.substring(firstPipe + 1).trim();
+                }
+                titleTv.setText(cleanTitle);
+                titleTv.setTextColor(isCurrent ? 0xFFFFF8E0 : 0xF0FFFFFF);
+
+                GradientDrawable stBg = new GradientDrawable();
+                stBg.setCornerRadius(dp(12));
+                if (isPinned) {
+                    statusTv.setText("\u2605 Pinned");
+                    statusTv.setTextColor(0xFF100D18);
+                    stBg.setColor(0xFFFFD54F);
+                } else if (isCurrent) {
+                    statusTv.setText("\u25B6 Live");
+                    statusTv.setTextColor(0xFFFFD54F);
+                    stBg.setColor(0x28FFD54F);
+                    stBg.setStroke(Math.max(1, dp(1)), 0x66FFD54F);
+                } else {
+                    statusTv.setText("Play");
+                    statusTv.setTextColor(0xAAFFE8B0);
+                    stBg.setColor(0x14FFFFFF);
+                }
+                statusTv.setBackground(stBg);
+                return row;
+            }
+        };
+        adapterRef[0] = adapter;
+        list.setAdapter(adapter);
+        list.setSelection(Math.max(0, skyView.getCurrentSceneIndex() - 2));
+
+        list.setOnItemClickListener((parent, v, pos, id) -> {
+            if (pos >= 0 && pos < filteredIndices.size()) {
+                int targetIdx = filteredIndices.get(pos);
+                boolean keepLock = skyView.isSceneLocked();
+                skyView.jumpToScene(targetIdx, keepLock);
+                if (keepLock) {
+                    prefs().edit().putInt("story_locked_idx", targetIdx).apply();
+                }
+                refreshDirectorBar.run();
+            }
+        });
+
+        list.setOnItemLongClickListener((parent, v, pos, id) -> {
+            if (pos >= 0 && pos < filteredIndices.size()) {
+                int targetIdx = filteredIndices.get(pos);
+                skyView.jumpToScene(targetIdx, true);
+                prefs().edit()
+                        .putBoolean("story_locked", true)
+                        .putInt("story_locked_idx", targetIdx)
+                        .apply();
+                refreshDirectorBar.run();
+                Toast.makeText(this, "Pinned Scene #" + (targetIdx + 1) + " as Live Diorama!", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            return false;
+        });
+
+        searchInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String q = s == null ? "" : s.toString().trim().toLowerCase(java.util.Locale.ROOT);
+                filteredIndices.clear();
+                for (int i = 0; i < rawTitles.length; i++) {
+                    if (q.isEmpty() || rawTitles[i].toLowerCase(java.util.Locale.ROOT).contains(q)
+                            || ("#" + (i + 1)).contains(q)) {
+                        filteredIndices.add(i);
+                    }
+                }
+                adapter.notifyDataSetChanged();
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        sheet.addView(list, new LinearLayout.LayoutParams(-1, 0, 1f));
+
+        int sheetW = tvMode ? Math.min(screenW - dp(48), dp(680)) : Math.min(screenW, dp(640));
+        int sheetH = tvMode ? Math.round(screenH * 0.84f) : Math.round(screenH * 0.78f);
+        if (!tvMode) {
+            View host = wrapInInteractiveBottomSheet(
+                    d, sheet, sheetBg, handle,
+                    sheetW, sheetH, screenH,
+                    dp(20), dp(14), dp(18),
+                    dp(110), false,
+                    () -> isListViewAtTop(list));
+            d.setContentView(host);
+        } else {
+            d.setContentView(sheet);
+        }
+
+        Window win = d.getWindow();
+        win.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        win.setGravity(tvMode ? Gravity.CENTER : (Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        win.setDimAmount(0.45f); // Semi-transparent so user sees the live 120 FPS stage update behind the sheet!
+        win.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
+                | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        int winH = tvMode ? sheetH : screenH;
+        win.setLayout(sheetW, winH);
+        d.show();
+        win.setLayout(sheetW, winH);
+    }
+
     // Dedicated App Settings Page (v6.5.0):
     // 1. Small About Section at the top + Invite Friends & Install on TV actions
     // 2. Grid Layout Controls: Apps in a Row (Columns) & Apps in a Column (Rows before overflow)
@@ -3377,11 +3695,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v7.1.1  \u00B7  Build 72");
+        appTitleTv.setText("HomeScreen v8.0.0  \u00B7  Build 80");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("7 Theme Universes \u00B7 344 Live Story Scenes \u00B7 Dynamic 120 FPS \u00B7 Zero Ads");
+        appSubTv.setText("7 Theme Universes \u00B7 344 Story Jukebox \u00B7 Dynamic 120 FPS \u00B7 Zero Ads");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -3413,6 +3731,14 @@ public class MainActivity extends Activity {
         shareRow.addView(installTvBtn, tvbLp);
 
         aboutCard.addView(shareRow, srlp);
+        View jukeboxActionRow = createSettingsActionRow(
+                "\uD83C\uDFAC Story Scene Jukebox & Live Pinning",
+                skyView != null && skyView.isSceneLocked() ? "Pinned" : "344 Scenes",
+                v -> {
+                    d.dismiss();
+                    showStoryJukeboxDialog();
+                });
+        aboutCard.addView(jukeboxActionRow);
         content.addView(aboutCard, createCardMarginParams());
 
         // -----------------------------------------------------------------

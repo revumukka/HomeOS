@@ -163,6 +163,10 @@ final class SkyView extends View {
 
     // Manual scene-skip offset (triggered from Settings -> Next Story Scene)
     private int sceneOffset = 0;
+    private boolean sceneLocked = false;
+    private int lockedSceneIndex = 0;
+    private int lastRenderedSceneIndex = 0;
+    private float storySpeedMultiplier = 1.0f;
     // Active Theme Universe: 0 = Harry Potter, 1 = Naruto, 2 = Demon Slayer, 3 = Star Wars, 4 = MCU, 5 = DCU, 6 = Formula 1
     private int universeTheme = 0;
 
@@ -690,7 +694,72 @@ final class SkyView extends View {
     }
 
     private int activeSceneCount() {
-        return universeTheme == 0 ? CHAPTER_TITLES.length : UNIVERSE_SCENE_COUNT;
+        return getSceneTitlesForTheme(universeTheme).length;
+    }
+
+    String[] getSceneTitlesForTheme(int theme) {
+        if (theme == 1) return NARUTO_TITLES;
+        if (theme == 2) return DEMON_SLAYER_TITLES;
+        if (theme == 3) return STAR_WARS_TITLES;
+        if (theme == 4) return MCU_TITLES;
+        if (theme == 5) return DCU_TITLES;
+        if (theme == 6) return F1_TITLES;
+        return CHAPTER_TITLES;
+    }
+
+    int getCurrentSceneIndex() {
+        int c = Math.max(1, activeSceneCount());
+        return ((lastRenderedSceneIndex % c) + c) % c;
+    }
+
+    void jumpToScene(int idx, boolean lock) {
+        int c = Math.max(1, activeSceneCount());
+        int normalized = ((idx % c) + c) % c;
+        float nowT = ((SystemClock.elapsedRealtimeNanos() % 3_600_000_000_000L) * 1e-9f) * 0.5f * storySpeedMultiplier;
+        int baseSlot = ((int) (nowT / CHAPTER_SEC)) % c;
+        this.sceneOffset = ((normalized - baseSlot) % c + c) % c;
+        this.lockedSceneIndex = normalized;
+        this.lastRenderedSceneIndex = normalized;
+        this.sceneLocked = lock;
+        invalidate();
+    }
+
+    boolean isSceneLocked() {
+        return sceneLocked;
+    }
+
+    void setSceneLocked(boolean locked) {
+        if (locked && !this.sceneLocked) {
+            this.lockedSceneIndex = getCurrentSceneIndex();
+        }
+        this.sceneLocked = locked;
+        invalidate();
+    }
+
+    float getStorySpeedMultiplier() {
+        return storySpeedMultiplier;
+    }
+
+    void setStorySpeedMultiplier(float mult) {
+        this.storySpeedMultiplier = Math.max(0.25f, Math.min(3.0f, mult));
+        invalidate();
+    }
+
+    private int resolveActiveScene(float cycleTime, int count) {
+        if (screensaverMode && screensaverOverrideScene >= 0) {
+            return screensaverOverrideScene % count;
+        }
+        if (sceneLocked && lockedSceneIndex >= 0) {
+            lastRenderedSceneIndex = lockedSceneIndex % count;
+            return lastRenderedSceneIndex;
+        }
+        lastRenderedSceneIndex = (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count + count) % count;
+        return lastRenderedSceneIndex;
+    }
+
+    private float resolveStoryFade(float p) {
+        if (sceneLocked && !screensaverMode) return 1.0f;
+        return p < 0.08f ? smoothstep(p / 0.08f) : (p > 0.92f ? smoothstep((1f - p) / 0.08f) : 1f);
     }
 
     void nextStoryScene() {
@@ -700,7 +769,12 @@ final class SkyView extends View {
             return;
         }
         int c = activeSceneCount();
-        sceneOffset = (sceneOffset + 1) % c;
+        if (sceneLocked) {
+            lockedSceneIndex = (lockedSceneIndex + 1) % c;
+            lastRenderedSceneIndex = lockedSceneIndex;
+        } else {
+            sceneOffset = (sceneOffset + 1) % c;
+        }
         invalidate();
     }
 
@@ -711,7 +785,12 @@ final class SkyView extends View {
             return;
         }
         int c = activeSceneCount();
-        sceneOffset = (sceneOffset + c - 1) % c;
+        if (sceneLocked) {
+            lockedSceneIndex = (lockedSceneIndex + c - 1) % c;
+            lastRenderedSceneIndex = lockedSceneIndex;
+        } else {
+            sceneOffset = (sceneOffset + c - 1) % c;
+        }
         invalidate();
     }
 
@@ -948,6 +1027,9 @@ final class SkyView extends View {
 
     private void drawStoryCaptionAndDots(Canvas c, int w, int h, String title, int scene, int count,
                                          int aBase, int textRgb, int activeDotCol, int idleDotCol, float defaultDotStep) {
+        if (sceneLocked && !screensaverMode && title != null) {
+            title = "\u2605 PINNED  |  " + title;
+        }
         drawStageGroundGlow(c, w, h * 0.900f, aBase, activeDotCol);
         boolean isPortrait = h > w;
         paint.setStyle(Paint.Style.FILL);
@@ -2607,8 +2689,8 @@ final class SkyView extends View {
      * in a golden-ink & illuminated storybook style (zero per-frame object allocations).
      */
     private void drawStoryLoop(Canvas c, int w, int h, float rawT) {
-        // 0.5x of original animation speed for all bottom story animations
-        float t = rawT * 0.5f;
+        // Adjustable animation speed for all bottom story animations
+        float t = rawT * 0.5f * storySpeedMultiplier;
         if (universeTheme == 1) {
             drawNarutoStoryLoop(c, w, h, t);
             return;
@@ -2630,11 +2712,9 @@ final class SkyView extends View {
         }
         float totalCycle = CHAPTER_SEC * SCENE_COUNT;
         float cycleTime = t % totalCycle;
-        int scene = (screensaverMode && screensaverOverrideScene >= 0)
-                ? (screensaverOverrideScene % SCENE_COUNT)
-                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % SCENE_COUNT);
+        int scene = resolveActiveScene(cycleTime, SCENE_COUNT);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC; // 0.0 -> 1.0 progress within current scene
-        float fade = p < 0.08f ? smoothstep(p / 0.08f) : (p > 0.92f ? smoothstep((1f - p) / 0.08f) : 1f);
+        float fade = resolveStoryFade(p);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
 
         float groundY = h * 0.900f;
@@ -3862,12 +3942,9 @@ final class SkyView extends View {
         int count = NARUTO_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = (screensaverMode && screensaverOverrideScene >= 0)
-                ? (screensaverOverrideScene % count)
-                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
+        int scene = resolveActiveScene(cycleTime, count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
-        float fade = smoothstep(rawFade);
+        float fade = resolveStoryFade(p);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, NARUTO_TITLES[scene], scene, count, aBase,
@@ -4900,12 +4977,9 @@ final class SkyView extends View {
         int count = DEMON_SLAYER_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = (screensaverMode && screensaverOverrideScene >= 0)
-                ? (screensaverOverrideScene % count)
-                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
+        int scene = resolveActiveScene(cycleTime, count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
-        float fade = smoothstep(rawFade);
+        float fade = resolveStoryFade(p);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, DEMON_SLAYER_TITLES[scene], scene, count, aBase,
@@ -5609,12 +5683,9 @@ final class SkyView extends View {
         int count = STAR_WARS_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = (screensaverMode && screensaverOverrideScene >= 0)
-                ? (screensaverOverrideScene % count)
-                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
+        int scene = resolveActiveScene(cycleTime, count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
-        float fade = smoothstep(rawFade);
+        float fade = resolveStoryFade(p);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, STAR_WARS_TITLES[scene], scene, count, aBase,
@@ -6182,12 +6253,9 @@ final class SkyView extends View {
         int count = MCU_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = (screensaverMode && screensaverOverrideScene >= 0)
-                ? (screensaverOverrideScene % count)
-                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
+        int scene = resolveActiveScene(cycleTime, count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
-        float fade = smoothstep(rawFade);
+        float fade = resolveStoryFade(p);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, MCU_TITLES[scene], scene, count, aBase,
@@ -6955,12 +7023,9 @@ final class SkyView extends View {
         int count = DCU_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = (screensaverMode && screensaverOverrideScene >= 0)
-                ? (screensaverOverrideScene % count)
-                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
+        int scene = resolveActiveScene(cycleTime, count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float rawFade = p < 0.08f ? (p / 0.08f) : (p > 0.92f ? ((1f - p) / 0.08f) : 1f);
-        float fade = smoothstep(rawFade);
+        float fade = resolveStoryFade(p);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
         drawStoryCaptionAndDots(c, w, h, DCU_TITLES[scene], scene, count, aBase,
@@ -7679,11 +7744,9 @@ final class SkyView extends View {
         int count = F1_TITLES.length;
         float totalCycle = CHAPTER_SEC * count;
         float cycleTime = t % totalCycle;
-        int scene = (screensaverMode && screensaverOverrideScene >= 0)
-                ? (screensaverOverrideScene % count)
-                : (((int) (cycleTime / CHAPTER_SEC) + sceneOffset) % count);
+        int scene = resolveActiveScene(cycleTime, count);
         float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
-        float fade = p < 0.08f ? smoothstep(p / 0.08f) : (p > 0.92f ? smoothstep((1f - p) / 0.08f) : 1f);
+        float fade = resolveStoryFade(p);
         int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
         float groundY = h * 0.900f;
 
