@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ansub.tvhome" android:versionCode="170" android:versionName="17.0.0"
+    package="com.ansub.tvhome" android:versionCode="180" android:versionName="18.0.0"
     android:installLocation="internalOnly">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
@@ -53,6 +53,7 @@
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
     <uses-feature android:name="android.software.live_tv" android:required="false" />
+    <uses-feature android:name="android.software.live_wallpaper" android:required="false" />
     <application android:label="HomeScreen" android:allowBackup="false"
         android:banner="@drawable/banner" android:icon="@drawable/icon" android:roundIcon="@drawable/icon"
         android:supportsRtl="true" android:resizeableActivity="true" android:hardwareAccelerated="true"
@@ -91,6 +92,16 @@
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/home_button" />
+        </service>
+        <!-- v18.0.0: System-Wide Android Lock Screen & Home Screen 120 FPS Live Wallpaper Engine -->
+        <service android:name=".HomeScreenWallpaperService"
+            android:label="HomeScreen 120 FPS Universe Wallpaper"
+            android:exported="true"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data android:name="android.service.wallpaper" android:resource="@xml/live_wallpaper" />
         </service>
         <receiver android:name=".HomeButton$BootReceiver" android:exported="true" android:directBootAware="true">
             <intent-filter>

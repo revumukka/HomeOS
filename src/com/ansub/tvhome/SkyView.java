@@ -8876,13 +8876,12 @@ final class SkyView extends View {
             }
         }
 
-        // 3. Scene-Specific Choreography (Quadra V-Tech, Yaiba Kusanagi, Sandevistan Edgerunner, Blackwall Netrunner, Trauma Team AV)
-        int mode = scene % 5;
+        // 3. Scene-Specific Choreography (8 Distinct Cyberpunk 2099 Modes)
+        int mode = scene % 8;
         if (mode == 0) {
-            // Mode A: Quadra Turbo-R V-Tech Supercar vs. Trauma Team AV-4 Gunship Extraction
+            // Mode 0: Quadra Turbo-R V-Tech Supercar vs. Trauma Team AV-4 Gunship Extraction
             float carX = w * (0.28f + p * 0.32f);
             drawCyberQuadraCar(c, carX, groundY - px(10f), t, aBase, 0x001A2234, 0x0000F0FF, 0x00FF0055, false, 1.32f);
-            // Hovering Trauma Team AV-4 overhead with downward searchlight beam
             float avX = w * (0.58f - p * 0.18f);
             float avY = groundY - px(92f) + (float) Math.sin(t * 4f) * px(6f);
             paint.setColor((aBase / 4 << 24) | 0x0000F0FF);
@@ -8900,7 +8899,7 @@ final class SkyView extends View {
             c.drawCircle(avX - px(24f), avY + px(10f), px(4.5f), paint);
             c.drawCircle(avX + px(24f), avY + px(10f), px(4.5f), paint);
         } else if (mode == 1) {
-            // Mode B: Sandevistan Time-Dilation Overdrive — 5 Emerald/Cyan After-Image Clones + Thermal Katana Slash
+            // Mode 1: Sandevistan Time-Dilation Overdrive — 5 Emerald/Cyan After-Image Clones + Thermal Katana Slash
             float baseX = w * (0.28f + p * 0.30f);
             int[] sandCols = {0x0000FF66, 0x0000F0FF, 0x0038FF98, 0x0000D8FF, 0x00FCEE09};
             for (int cl = 0; cl < 5; cl++) {
@@ -8908,14 +8907,12 @@ final class SkyView extends View {
                 int cAlpha = (cl == 4) ? aBase : Math.round(aBase * (0.22f + cl * 0.14f));
                 drawCyberEdgerunner(c, cxPos, groundY - px(56f), t + cl * 0.2f, cAlpha, sandCols[cl], cl == 4, false, 1.32f);
             }
-            // Opponent Borg / Cyberpsycho on right
             drawCyberEdgerunner(c, w * 0.62f, groundY - px(58f), t, aBase, 0x00FF003C, true, true, 1.42f);
             drawLightningStreak(c, baseX + px(18f), groundY - px(64f), w * 0.60f, groundY - px(64f),
                     t, 700 + scene, 0x0000F0FF, 0x00FCEE09, 0x00FFFFFF, px(3.8f), aBase, true);
         } else if (mode == 2) {
-            // Mode C: Yaiba Kusanagi CT-3X Akira Power-Slide & Plasma Light-Ribbon Wake
+            // Mode 2: Yaiba Kusanagi CT-3X Akira Power-Slide & Plasma Light-Ribbon Wake
             float bikeX = w * (0.28f + p * 0.34f);
-            // Trailing Akira neon red & cyan tail-light plasma ribbons
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(px(4.2f));
             paint.setColor((aBase * 3 / 4 << 24) | 0x00FF003C);
@@ -8926,7 +8923,7 @@ final class SkyView extends View {
             paint.setStyle(Paint.Style.FILL);
             drawCyberKusanagiBike(c, bikeX, groundY - px(10f), t, aBase, 0x00FF003C, 0x0000F0FF, 1.38f);
         } else if (mode == 3) {
-            // Mode D: The Blackwall Cyberspace Dive — Vertical Red/Cyan Data Matrix Pillars & Floating Netrunners
+            // Mode 3: The Blackwall Cyberspace Dive — Vertical Red/Cyan Data Matrix Pillars & Floating Netrunners
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(px(2.4f));
             for (int col = 0; col < 12; col++) {
@@ -8938,12 +8935,43 @@ final class SkyView extends View {
             paint.setStyle(Paint.Style.FILL);
             drawCyberEdgerunner(c, w * 0.38f, groundY - px(62f), t, aBase, 0x0000F0FF, false, false, 1.32f);
             drawCyberEdgerunner(c, w * 0.54f, groundY - px(62f), t + 0.5f, aBase, 0x00FF0055, false, true, 1.32f);
-        } else {
-            // Mode E: High-Speed Midnight Street Duel — Quadra V-Tech vs. Rayfield Caliburn Hypercar
+        } else if (mode == 4) {
+            // Mode 4: High-Speed Midnight Street Duel — Quadra V-Tech vs. Rayfield Caliburn Hypercar
             float c1 = w * (0.25f + p * 0.28f);
             float c2 = c1 + px(135f) + (float) Math.sin(t * 4.5f) * px(18f);
             drawCyberQuadraCar(c, c1, groundY - px(10f), t, aBase, 0x00182030, 0x00FF0055, 0x00FCEE09, false, 1.26f);
             drawCyberQuadraCar(c, c2, groundY - px(10f), t + 0.4f, aBase, 0x00F0F6FF, 0x0000F0FF, 0x00FF003C, false, 1.28f);
+        } else if (mode == 5) {
+            // Mode 5: Johnny Silverhand & SAMURAI Concert Stage — Chrome Guitar Riff, Pyro Lasers & Equalizer Towers
+            for (int eq = 0; eq < 14; eq++) {
+                float ex = w * (0.24f + eq * 0.032f);
+                float eh = px(20f + 58f * (float) Math.abs(Math.sin(t * 6.5f + eq * 0.7f)));
+                paint.setColor(((aBase * 3 / 5) << 24) | (eq % 2 == 0 ? 0x00FF003C : 0x00FCEE09));
+                c.drawRect(ex, groundY - eh, ex + px(9f), groundY, paint);
+            }
+            drawCyberEdgerunner(c, w * 0.45f, groundY - px(60f), t * 1.4f, aBase, 0x00FCEE09, true, false, 1.45f);
+            paint.setColor((aBase << 24) | 0x00E0E8F0);
+            c.drawLine(w * 0.42f, groundY - px(46f), w * 0.49f, groundY - px(54f), paint);
+        } else if (mode == 6) {
+            // Mode 6: Badlands Militech Basilisk Hovertank & Aldecaldos Convoy
+            float tankX = w * (0.28f + p * 0.28f);
+            float hoverY = groundY - px(24f) + (float) Math.sin(t * 3.8f) * px(5f);
+            paint.setColor((aBase / 3 << 24) | 0x0000F0FF);
+            c.drawOval(rectF(tankX - px(58f), groundY - px(8f), tankX + px(58f), groundY + px(4f)), paint);
+            paint.setColor((aBase << 24) | 0x00343E4D);
+            c.drawRoundRect(tankX - px(54f), hoverY - px(16f), tankX + px(54f), hoverY + px(8f), px(6f), px(6f), paint);
+            paint.setColor((aBase << 24) | 0x00FCEE09);
+            c.drawRect(tankX + px(12f), hoverY - px(22f), tankX + px(68f), hoverY - px(16f), paint);
+            drawCyberKusanagiBike(c, tankX - px(95f), groundY - px(10f), t, aBase, 0x00FCEE09, 0x0000F0FF, 1.18f);
+        } else {
+            // Mode 7: Orbital Air Morro Rock Spaceport — Rocket Ascent Plume & Songbird Neural Beam
+            float rx = w * 0.46f;
+            float ry = groundY - px(32f) - p * px(88f);
+            paint.setColor((aBase * 3 / 4 << 24) | 0x00FF6D00);
+            c.drawOval(rectF(rx - px(16f), ry + px(14f), rx + px(16f), groundY), paint);
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawRoundRect(rx - px(8f), ry - px(36f), rx + px(8f), ry + px(18f), px(4f), px(4f), paint);
+            drawCyberEdgerunner(c, w * 0.34f, groundY - px(56f), t, aBase, 0x0000F0FF, false, false, 1.30f);
         }
 
         c.restore();
@@ -8974,7 +9002,10 @@ final class SkyView extends View {
             "KOHAKU RIVER // WHITE DRAGON",
             "MOVING CASTLE // STARLIGHT ALPS",
             "LAPUTA // CASTLE IN THE SKY",
-            "CAMPHOR FOREST // KODAMA SANCTUARY"
+            "CAMPHOR FOREST // KODAMA SANCTUARY",
+            "BUS STOP // TOTORO & CATBUS",
+            "VALLEY OF THE WIND // MEHVE GLIDER",
+            "ADRIATIC CLOUDS // SAVOIA S.21"
         };
         String[] subs = {
             "RED BRIDGE CROSSING // FLOATING PAPER LANTERNS & GOLDEN TOKENS",
@@ -8982,9 +9013,12 @@ final class SkyView extends View {
             "CHIHIRO & HAKU // THOUSAND PAPER BIRDS IN THE CLOUDS",
             "CALCIFER'S HEARTH // WALKING STEAM FORTRESS & SHOOTING STARS",
             "LEVITATION CRYSTAL // ANCIENT FLOATING ISLAND SANCTUARY",
-            "SOOT SPRITES & TREE SPIRITS // KONPEITO STARLIGHT PARADE"
+            "SOOT SPRITES & TREE SPIRITS // KONPEITO STARLIGHT PARADE",
+            "RAINY FORESTSHRINE // GIANT LEAF UMBRELLA & TWELVE-LEGGED EXPRESS",
+            "GOLDEN OHMU TIDE // NAUSICAA RIDING THE JET STREAM",
+            "CRIMSON SEAPLANE // SECRET COVE & HIGH-ALTITUDE CLOUD BANK"
         };
-        int[] realmCols = {0x00FF5252, 0x004CE0B3, 0x0080DEEA, 0x00FFD54F, 0x004CE0B3, 0x00B2FF59};
+        int[] realmCols = {0x00FF5252, 0x004CE0B3, 0x0080DEEA, 0x00FFD54F, 0x004CE0B3, 0x00B2FF59, 0x00FFD54F, 0x0064FFDA, 0x00FF5252};
         int rIdx = scene % realms.length;
 
         Typeface prevTf = paint.getTypeface();
@@ -9012,8 +9046,10 @@ final class SkyView extends View {
         c.drawLine(w * 0.22f, groundY, w * 0.68f, groundY, paint);
         paint.setStyle(Paint.Style.FILL);
 
-        int mode = scene % 3;
+        // 9 Distinct Bespoke Studio Ghibli-Inspired Stage Modes
+        int mode = scene % 9;
         if (mode == 0) {
+            // Mode 0: The Sea Railway Express Gliding Across Mirror Water
             float trainX = w * (0.24f + p * 0.30f);
             float trainY = groundY - px(28f);
             paint.setColor((aBase << 24) | 0x00C83830);
@@ -9028,6 +9064,7 @@ final class SkyView extends View {
                 c.drawRoundRect(wx, groundY + px(3f), wx + px(15f), groundY + px(11f), px(2f), px(2f), paint);
             }
         } else if (mode == 1) {
+            // Mode 1: Haku the White River Dragon Soaring Through Paper Birds
             float dx = w * (0.30f + p * 0.28f);
             float dy = groundY - px(56f) + (float) Math.sin(t * 4.2f) * px(10f);
             paint.setStyle(Paint.Style.STROKE);
@@ -9047,7 +9084,8 @@ final class SkyView extends View {
                 float by = dy - px(24f) + (float) Math.cos(t * 6f + b) * px(12f);
                 drawBird(c, bx, by, t * 12f + b, px(14f), (aBase << 24) | 0x00FFFFFF);
             }
-        } else {
+        } else if (mode == 2) {
+            // Mode 2: Bathhouse Vermilion Bridge, No-Face & Hopping Soot Sprites
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(px(3.5f));
             paint.setColor((aBase << 24) | 0x00FF5252);
@@ -9070,6 +9108,116 @@ final class SkyView extends View {
                 paint.setColor((aBase << 24) | 0x00FFD54F);
                 c.drawCircle(sx, sy - px(48f), px(9f), paint);
             }
+        } else if (mode == 3) {
+            // Mode 3: Howl's Moving Castle Walking on Mechanical Chicken Legs + Calcifer's Hearth Glow
+            float casX = w * (0.30f + p * 0.26f);
+            float bob = (float) Math.abs(Math.sin(t * 5.5f)) * px(5f);
+            float casY = groundY - px(48f) - bob;
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(3.2f));
+            paint.setColor((aBase << 24) | 0x008D6E63);
+            for (int lg = 0; lg < 4; lg++) {
+                float lx = casX - px(28f) + lg * px(18f);
+                float stride = (float) Math.sin(t * 5.5f + lg * 1.6f) * px(8f);
+                c.drawLine(lx, casY + px(18f), lx + stride, groundY, paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor((aBase << 24) | 0x004E342E);
+            c.drawRoundRect(casX - px(42f), casY - px(26f), casX + px(42f), casY + px(22f), px(14f), px(14f), paint);
+            paint.setColor((aBase << 24) | 0x006D4C41);
+            c.drawOval(rectF(casX - px(32f), casY - px(46f), casX + px(26f), casY - px(6f)), paint);
+            // Calcifer warm golden-orange hearth window glow
+            paint.setColor((aBase << 24) | 0x00FF9100);
+            c.drawCircle(casX - px(8f), casY + px(4f), px(9f), paint);
+            paint.setColor((aBase << 24) | 0x00FFF59D);
+            c.drawCircle(casX - px(8f), casY + px(4f), px(4.5f), paint);
+            // Steam puffs rising from castle chimneys
+            paint.setColor((aBase / 2 << 24) | 0x00ECEFF1);
+            for (int st = 0; st < 3; st++) {
+                float pOff = (t * 24f + st * 12f) % 36f;
+                c.drawCircle(casX + px(14f) - pOff * 0.6f, casY - px(46f) - pOff, px(5f + st * 2f), paint);
+            }
+        } else if (mode == 4) {
+            // Mode 4: Totoro & Satsuki at the Rainy Forest Bus Stop with Red Umbrella & Leaf Hat
+            float stopX = w * 0.36f;
+            paint.setColor((aBase << 24) | 0x0090A4AE);
+            c.drawRect(stopX - px(2f), groundY - px(64f), stopX + px(2f), groundY, paint);
+            paint.setColor((aBase << 24) | 0x00E53935);
+            c.drawCircle(stopX, groundY - px(68f), px(10f), paint);
+            // Giant Totoro silhouette + white belly crescents + green leaf umbrella
+            float totX = w * 0.48f;
+            paint.setColor((aBase << 24) | 0x00546E7A);
+            c.drawOval(rectF(totX - px(28f), groundY - px(74f), totX + px(28f), groundY), paint);
+            c.drawOval(rectF(totX - px(16f), groundY - px(88f), totX - px(8f), groundY - px(68f)), paint);
+            c.drawOval(rectF(totX + px(8f), groundY - px(88f), totX + px(16f), groundY - px(68f)), paint);
+            paint.setColor((aBase << 24) | 0x00ECEFF1);
+            c.drawOval(rectF(totX - px(19f), groundY - px(48f), totX + px(19f), groundY - px(8f)), paint);
+            paint.setColor((aBase << 24) | 0x0066BB6A);
+            c.drawOval(rectF(totX - px(14f), groundY - px(95f), totX + px(14f), groundY - px(85f)), paint);
+        } else if (mode == 5) {
+            // Mode 5: The Catbus Leaping Across Forest Power Lines with Glowing Headlight Eyes
+            float cbX = w * (0.26f + p * 0.34f);
+            float cbY = groundY - px(36f) - (float) Math.abs(Math.sin(t * 6.5f)) * px(22f);
+            paint.setColor((aBase << 24) | 0x00FFB300);
+            c.drawRoundRect(cbX - px(48f), cbY - px(16f), cbX + px(48f), cbY + px(14f), px(12f), px(12f), paint);
+            paint.setColor((aBase << 24) | 0x00FFF59D);
+            for (int wnd = 0; wnd < 4; wnd++) {
+                float wx = cbX - px(32f) + wnd * px(18f);
+                c.drawRoundRect(wx, cbY - px(8f), wx + px(12f), cbY + px(4f), px(3f), px(3f), paint);
+            }
+            // Twin high-beam golden headlight eyes
+            paint.setColor((aBase / 3 << 24) | 0x00FFF59D);
+            actorPath.reset();
+            actorPath.moveTo(cbX + px(46f), cbY - px(4f));
+            actorPath.lineTo(cbX + px(110f), cbY - px(24f));
+            actorPath.lineTo(cbX + px(110f), cbY + px(16f));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+        } else if (mode == 6) {
+            // Mode 6: Laputa Castle in the Sky Floating Island, Giant Tree Canopy & Levitation Stone
+            float lapX = w * 0.45f;
+            float lapY = groundY - px(62f) + (float) Math.sin(t * 2.6f) * px(8f);
+            //Lush green dome canopy
+            paint.setColor((aBase << 24) | 0x002E7D32);
+            c.drawOval(rectF(lapX - px(52f), lapY - px(42f), lapX + px(52f), lapY + px(4f)), paint);
+            // Stone citadel tiers & root hemisphere
+            paint.setColor((aBase << 24) | 0x0078909C);
+            c.drawRect(lapX - px(38f), lapY - px(12f), lapX + px(38f), lapY + px(10f), paint);
+            // Blinding cyan-gold Levitation Crystal core underneath
+            paint.setColor((aBase << 24) | 0x004CE0B3);
+            c.drawCircle(lapX, lapY + px(14f), px(8f + 3f * (float) Math.sin(t * 6f)), paint);
+        } else if (mode == 7) {
+            // Mode 7: Nausicaa's White Mehve Jet-Glider Soaring Over Golden Ohmu Shells
+            float glX = w * (0.28f + p * 0.32f);
+            float glY = groundY - px(68f) + (float) Math.sin(t * 4.0f) * px(10f);
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            actorPath.reset();
+            actorPath.moveTo(glX, glY - px(6f));
+            actorPath.lineTo(glX - px(36f), glY + px(8f));
+            actorPath.lineTo(glX + px(36f), glY + px(8f));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            // Golden Ohmu dome with glowing blue/gold eyes below
+            float ohX = w * 0.50f;
+            paint.setColor((aBase << 24) | 0x0037474F);
+            c.drawOval(rectF(ohX - px(44f), groundY - px(34f), ohX + px(44f), groundY + px(6f)), paint);
+            paint.setColor((aBase << 24) | 0x00FFD54F);
+            c.drawCircle(ohX - px(24f), groundY - px(14f), px(5.5f), paint);
+            c.drawCircle(ohX - px(10f), groundY - px(18f), px(4.5f), paint);
+        } else {
+            // Mode 8: Porco Rosso's Crimson Savoia S.21 Seaplane Banking Over the Adriatic
+            float plX = w * (0.26f + p * 0.36f);
+            float plY = groundY - px(58f) + (float) Math.cos(t * 3.8f) * px(9f);
+            // White contrail ribbon
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.5f));
+            paint.setColor((aBase * 2 / 3 << 24) | 0x00FFFFFF);
+            c.drawLine(plX - px(85f), plY + px(4f), plX - px(18f), plY + px(2f), paint);
+            paint.setStyle(Paint.Style.FILL);
+            // Crimson fuselage & parasol wing
+            paint.setColor((aBase << 24) | 0x00D50000);
+            c.drawRoundRect(plX - px(26f), plY - px(6f), plX + px(26f), plY + px(8f), px(5f), px(5f), paint);
+            c.drawRoundRect(plX - px(18f), plY - px(16f), plX + px(22f), plY - px(10f), px(3f), px(3f), paint);
         }
 
         c.restore();

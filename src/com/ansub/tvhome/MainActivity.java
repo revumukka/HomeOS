@@ -2554,6 +2554,7 @@ public class MainActivity extends Activity {
             list.add("App Settings");
             list.add("Story Scene Jukebox");
             list.add(zenCanvasActive ? "Exit Zen Canvas Mode" : "Zen Art Canvas Mode");
+            list.add("Set Lock & Home Wallpaper");
             if (!isTvDevice()) {
                 list.add("Pin / Manage Apps");
             }
@@ -2577,6 +2578,8 @@ public class MainActivity extends Activity {
                     showStoryJukeboxDialog();
                 } else if (picked.contains("Zen")) {
                     toggleZenCanvasMode();
+                } else if ("Set Lock & Home Wallpaper".equals(picked)) {
+                    openLiveWallpaperPicker();
                 } else if ("Pin / Manage Apps".equals(picked)) {
                     showAllAppsDrawer(true);
                 } else if ("Next Story Scene".equals(picked)) {
@@ -4232,11 +4235,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v17.0.0  \u00B7  Build 170");
+        appTitleTv.setText("HomeScreen v18.0.0  \u00B7  Build 180");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("9 Theme Universes \u00B7 432 Story Jukebox \u00B7 Zen Canvas \u00B7 120 FPS");
+        appSubTv.setText("9 Universes \u00B7 432 Scenes \u00B7 Lock & Home Live Wallpaper \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4284,6 +4287,14 @@ public class MainActivity extends Activity {
                     toggleZenCanvasMode();
                 });
         aboutCard.addView(zenActionRow);
+        View liveWpActionRow = createSettingsActionRow(
+                "\uD83D\uDDBC\uFE0F Set as Lock & Home Live Wallpaper",
+                "120 FPS Engine",
+                v -> {
+                    d.dismiss();
+                    openLiveWallpaperPicker();
+                });
+        aboutCard.addView(liveWpActionRow);
         final String[] moodNamesShort = {"Auto Live", "Clear Sky", "Rainstorm", "Snowfall", "Thunderstorm", "Aurora"};
         int curMoodIdx = Math.max(0, Math.min(5, prefs().getInt("weather_mood", 0)));
         View weatherActionRow = createSettingsActionRow(
@@ -5032,9 +5043,30 @@ public class MainActivity extends Activity {
         return true;
     }
 
+    // Opens Android's system Live Wallpaper preview so the user can apply HomeScreen's 120 FPS
+    // universe engine to their Lock Screen and/or Home Screen across all apps.
+    private void openLiveWallpaperPicker() {
+        performCinemaHaptic(true);
+        try {
+            Intent intent = new Intent(android.app.WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
+            intent.putExtra(android.app.WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
+                    new android.content.ComponentName(this, HomeScreenWallpaperService.class));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return;
+        } catch (Throwable ignored) {}
+        try {
+            Intent chooser = new Intent(android.app.WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(chooser);
+            return;
+        } catch (Throwable ignored) {}
+        Toast.makeText(this, "Live Wallpaper service active! On TV, use Screensaver or Default Home.", Toast.LENGTH_LONG).show();
+    }
+
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v16.0.0 \u2014 an ad-free, 120 FPS procedural launcher for Android Phones, Foldables, Tablets & Android TV with 8 Theme Universes (including Formula 1 & Cyberpunk 2099!) and 388 live animated story scenes!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v18.0.0 \u2014 an ad-free, 120 FPS procedural launcher & Lock Screen Live Wallpaper for Android Phones, Foldables, Tablets & Android TV with 9 Theme Universes and 432 live animated story scenes!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -5045,7 +5077,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v16.0.0 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v18.0.0 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -5056,42 +5088,7 @@ public class MainActivity extends Activity {
     }
 
     private Drawable createQrMatrixBadge(int sizePx) {
-        Bitmap bm = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bm);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(0xFF0A0D18);
-        c.drawRoundRect(0, 0, sizePx, sizePx, dp(16), dp(16), p);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(dp(2));
-        p.setColor(0xAAFFD54F);
-        c.drawRoundRect(dp(2), dp(2), sizePx - dp(2), sizePx - dp(2), dp(14), dp(14), p);
-        p.setStyle(Paint.Style.FILL);
-        final int grid = 21;
-        float pad = sizePx * 0.10f;
-        float cell = (sizePx - pad * 2f) / grid;
-        String seed = GITHUB_RELEASE_URL;
-        for (int r = 0; r < grid; r++) {
-            for (int col = 0; col < grid; col++) {
-                boolean finderOuter = (r < 7 && col < 7) || (r < 7 && col >= grid - 7) || (r >= grid - 7 && col < 7);
-                boolean on = false;
-                if (finderOuter) {
-                    int lr = r < 7 ? r : r - (grid - 7);
-                    int lc = col < 7 ? col : col - (grid - 7);
-                    on = (lr == 0 || lr == 6 || lc == 0 || lc == 6 || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4));
-                    p.setColor(0xFFFFD54F);
-                } else {
-                    int h = (r * 31 + col * 17 + seed.charAt((r * grid + col) % seed.length())) & 0xFF;
-                    on = (h % 3 != 0) && !(r == 6 || col == 6);
-                    p.setColor(0xF2FFF8E8);
-                }
-                if (on) {
-                    float x0 = pad + col * cell;
-                    float y0 = pad + r * cell;
-                    c.drawRoundRect(x0 + 0.5f, y0 + 0.5f, x0 + cell - 0.5f, y0 + cell - 0.5f, cell * 0.22f, cell * 0.22f, p);
-                }
-            }
-        }
-        return new BitmapDrawable(getResources(), bm);
+        return new BitmapDrawable(getResources(), QrCodeMatrix.renderQrBitmap(GITHUB_RELEASE_URL, sizePx));
     }
 
     // v16.0.0: Interactive QR Code & Cross-Device TV Pairing Hub with 1-Tap Layout Beam & TV Doctor
@@ -5142,7 +5139,7 @@ public class MainActivity extends Activity {
         sbLp.bottomMargin = dp(14);
         card.addView(statusBadge, sbLp);
 
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v16.0.0_160.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v18.0.0_180.apk";
 
         TextView btnShareLink = createSettingsPillButton("\uD83D\uDCF2 Share Download Link (Quick Share / TV)", true, v -> inviteFriends());
         LinearLayout.LayoutParams b1Lp = new LinearLayout.LayoutParams(-1, -2);
