@@ -525,7 +525,7 @@ public final class ProSystemVault {
         scoreTv.setBackground(sBg);
         final Runnable refreshScore = () -> {
             scoreTv.setText(getLiveSystemSummary(ctx, isTv)
-                    + "\n9 Universes \u00B7 432 Scenes \u00B7 "
+                    + "\n13 Universes \u00B7 608 Scenes \u00B7 "
                     + getLockedApps(ctx).size() + " PIN-Locked Apps \u00B7 120 FPS Engine");
         };
         refreshScore.run();

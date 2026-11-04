@@ -64,7 +64,7 @@ public class HomeScreenWallpaperService extends WallpaperService {
         private void syncPrefs() {
             if (skyView == null) return;
             SharedPreferences p = getSharedPreferences("config", 0);
-            int th = Math.max(0, Math.min(8, p.getInt("universe_theme", 0)));
+            int th = Math.max(0, Math.min(12, p.getInt("universe_theme", 0)));
             skyView.setUniverseTheme(th);
             skyView.setWeatherMood(p.getInt("weather_mood", 0));
             skyView.setStorySpeedMultiplier(p.getFloat("story_speed", 1.0f));
@@ -140,3 +140,4 @@ public class HomeScreenWallpaperService extends WallpaperService {
         }
     }
 }
+

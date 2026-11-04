@@ -119,7 +119,11 @@ public class MainActivity extends Activity {
         "DCU",
         "Formula 1",
         "Cyberpunk 2099",
-        "Spirited Skies"
+        "Spirited Skies",
+        "Snoopy",
+        "Tom & Jerry",
+        "Finding Nemo",
+        "Jetix"
     };
     private static final int[] UNIVERSE_THEME_COLORS = {
         0xFFFFD54F, // 1. Harry Potter
@@ -130,7 +134,11 @@ public class MainActivity extends Activity {
         0xFF00B0FF, // 6. DCU
         0xFFFF1801, // 7. Formula 1
         0xFF00F0FF, // 8. Cyberpunk 2099
-        0xFF4CE0B3  // 9. Spirited Skies
+        0xFF4CE0B3, // 9. Spirited Skies
+        0xFFFFC107, // 10. Snoopy
+        0xFFFFCA28, // 11. Tom & Jerry
+        0xFFFF6D00, // 12. Finding Nemo
+        0xFFFF1744  // 13. Jetix
     };
     private static final String[] QUICK_NAMES = {"bluetooth", "sound", "picture"};
     private static final String[] QUICK_LABELS = {"Bluetooth", "Sound", "Picture"};
@@ -199,10 +207,10 @@ public class MainActivity extends Activity {
     private float scale = 1f;
     private float uiScale = 1f;
     private float settingsScale = 1f;
-    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27, 29, 28, 28};
+    private static final int[] THEME_ROW_FONT_SIZES = {30, 29, 23, 32, 33, 27, 29, 28, 28, 28, 28, 28, 28};
 
     private static Typeface regular, semibold, defaultThemeFont, cinzelFont;
-    private static final Typeface[] themeFonts = new Typeface[9];
+    private static final Typeface[] themeFonts = new Typeface[13];
 
     private FrameLayout root; // the page, inside a vertical scroller
     private SkyView skyView;
@@ -2418,7 +2426,7 @@ public class MainActivity extends Activity {
             c.drawLine(cx - er * 0.58f, cy - er * 0.15f, cx + er * 0.58f, cy - er * 0.15f, p);
             p.setColor(0xFFFF0055);
             c.drawLine(cx - er * 0.36f, cy + er * 0.12f, cx + er * 0.36f, cy + er * 0.12f, p);
-        } else {
+        } else if (pos == 8) {
             // SPIRITED SKIES: Enchanted Vermilion Bathhouse Lantern + Glowing Laputa Crystal & Soot Sprite Eyes
             p.setStyle(Paint.Style.FILL);
             p.setColor(0xFFFF5252);
@@ -2430,6 +2438,73 @@ public class MainActivity extends Activity {
             p.setColor(0xFF1E1410);
             c.drawRect(cx - er * 0.45f, cy - er * 0.68f, cx + er * 0.45f, cy - er * 0.52f, p);
             c.drawRect(cx - er * 0.45f, cy + er * 0.52f, cx + er * 0.45f, cy + er * 0.68f, p);
+        } else if (pos == 9) {
+            // SNOOPY: Iconic Red Doghouse Roof + Sleeping White Beagle Silhouette & Golden Woodstock
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0xFFE53935);
+            Path roof = new Path();
+            roof.moveTo(cx - er * 0.82f, cy + er * 0.18f);
+            roof.lineTo(cx, cy - er * 0.38f);
+            roof.lineTo(cx + er * 0.82f, cy + er * 0.18f);
+            roof.close();
+            c.drawPath(roof, p);
+            c.drawRect(cx - er * 0.62f, cy + er * 0.16f, cx + er * 0.62f, cy + er * 0.78f, p);
+            // Snoopy lying on roof + black ear + Woodstock
+            p.setColor(0xFFFFFFFF);
+            c.drawOval(new android.graphics.RectF(cx - er * 0.48f, cy - er * 0.66f, cx + er * 0.28f, cy - er * 0.32f), p);
+            c.drawCircle(cx + er * 0.36f, cy - er * 0.54f, er * 0.24f, p);
+            p.setColor(0xFF1A1A1A);
+            c.drawOval(new android.graphics.RectF(cx + er * 0.12f, cy - er * 0.54f, cx + er * 0.30f, cy - er * 0.28f), p);
+            p.setColor(0xFFFFD600);
+            c.drawCircle(cx - er * 0.42f, cy - er * 0.78f, er * 0.16f, p);
+        } else if (pos == 10) {
+            // TOM & JERRY: Classic Crimson/Gold MGM Ring + Golden Swiss Cheese Wedge with Holes
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(Math.max(2f, 2.4f * scale));
+            p.setColor(0xFFFF5252);
+            c.drawCircle(cx, cy, er * 0.86f, p);
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0xFFFFD54F);
+            Path ch = new Path();
+            ch.moveTo(cx - er * 0.65f, cy + er * 0.45f);
+            ch.lineTo(cx + er * 0.72f, cy + er * 0.20f);
+            ch.lineTo(cx - er * 0.15f, cy - er * 0.62f);
+            ch.close();
+            c.drawPath(ch, p);
+            p.setColor(0xFF281808);
+            c.drawCircle(cx - er * 0.18f, cy + er * 0.12f, er * 0.15f, p);
+            c.drawCircle(cx + er * 0.22f, cy + er * 0.16f, er * 0.11f, p);
+        } else if (pos == 11) {
+            // FINDING NEMO: Vibrant Clownfish Orange-and-White Stripes with Black Edges & Lucky Fin
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0xFFFF6D00);
+            c.drawOval(new android.graphics.RectF(cx - er * 0.85f, cy - er * 0.52f, cx + er * 0.75f, cy + er * 0.52f), p);
+            Path tail = new Path();
+            tail.moveTo(cx - er * 0.70f, cy);
+            tail.lineTo(cx - er * 1.02f, cy - er * 0.38f);
+            tail.lineTo(cx - er * 1.02f, cy + er * 0.38f);
+            tail.close();
+            c.drawPath(tail, p);
+            p.setColor(0xFFFFFFFF);
+            c.drawRect(cx - er * 0.16f, cy - er * 0.48f, cx + er * 0.08f, cy + er * 0.48f, p);
+            c.drawRect(cx + er * 0.34f, cy - er * 0.38f, cx + er * 0.50f, cy + er * 0.38f, p);
+        } else {
+            // JETIX: Iconic Winged Chrome One-Eyed Jetix Mascot with Crimson Broadcast Crest
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0xFFFF1744);
+            Path jw = new Path();
+            jw.moveTo(cx - er * 0.96f, cy - er * 0.35f);
+            jw.lineTo(cx + er * 0.96f, cy - er * 0.35f);
+            jw.lineTo(cx + er * 0.56f, cy + er * 0.28f);
+            jw.lineTo(cx - er * 0.56f, cy + er * 0.28f);
+            jw.close();
+            c.drawPath(jw, p);
+            p.setColor(0xFFECEFF1);
+            c.drawCircle(cx, cy, er * 0.56f, p);
+            p.setColor(0xFF1A1A1A);
+            c.drawCircle(cx, cy, er * 0.26f, p);
+            p.setColor(0xFF00E5FF);
+            c.drawCircle(cx + er * 0.10f, cy - er * 0.10f, er * 0.09f, p);
         }
         return new BitmapDrawable(getResources(), bm);
     }
@@ -2538,7 +2613,11 @@ public class MainActivity extends Activity {
                     {261.63f, 392.00f, 523.25f}, // 5: DC Justice League (Deep Zimmer Brass C4-G4-C5)
                     {880.00f, 1174.66f, 1760.0f},// 6: Formula 1 (FIA Starting Grid Telemetry Triad)
                     {329.63f, 493.88f, 739.99f}, // 7: Cyberpunk 2099 (Night City Synth E4-B4-F#5)
-                    {523.25f, 659.25f, 783.99f}  // 8: Spirited Skies (Warm Joe Hisaishi Major Triad)
+                    {523.25f, 659.25f, 783.99f}, // 8: Spirited Skies (Warm Joe Hisaishi Major Triad)
+                    {587.33f, 739.99f, 880.00f}, // 9: Snoopy (Vince Guaraldi Jazz Piano D5-F#5-A5)
+                    {659.25f, 830.61f, 987.77f}, // 10: Tom & Jerry (Bright MGM Slapstick Brass E5-G#5-B5)
+                    {493.88f, 622.25f, 739.99f}, // 11: Finding Nemo (Shimmering Coral Harp B4-D#5-F#5)
+                    {440.00f, 554.37f, 880.00f}  // 12: Jetix (High-Voltage Power Synth A4-C#5-A5)
                 };
                 float[] freqs = chords[Math.max(0, Math.min(chords.length - 1, theme))];
                 for (int i = 0; i < numSamples; i++) {
@@ -3828,7 +3907,12 @@ public class MainActivity extends Activity {
             "44 Scenes  \u00B7  Avengers Tower, Sling-Ring Portals & Arc Reactors",
             "44 Scenes  \u00B7  Gotham Bat-Signal, Krypton & Speed Force",
             "44 Scenes  \u00B7  Floodlit Grand Prix Tracks, Team Cars & Podiums",
-            "44 Scenes  \u00B7  Night City Neon, Sandevistan & Trauma Team AVs"
+            "44 Scenes  \u00B7  Night City Neon, Sandevistan & Trauma Team AVs",
+            "44 Scenes  \u00B7  Spirit Bathhouse, Haku Dragon, Totoro & Moving Castle",
+            "44 Scenes  \u00B7  Red Doghouse, Woodstock, Flying Ace & Charlie Brown",
+            "44 Scenes  \u00B7  MGM Slapstick Chase, Swiss Cheese & Cat Concerto",
+            "44 Scenes  \u00B7  Great Barrier Reef, Nemo, Dory, Crush & Sydney Harbour",
+            "44 Scenes  \u00B7  Jetix Mascot, Yin Yang Yo!, Hyperforce & Power Rangers"
         };
 
         final Runnable refreshSelectionUI = () -> {
@@ -4356,11 +4440,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams atcLp = new LinearLayout.LayoutParams(0, -2, 1f);
         atcLp.leftMargin = dp(14);
         TextView appTitleTv = text(sp(16f), 0xFFFFF8E8, semibold);
-        appTitleTv.setText("HomeScreen v20.0.0  \u00B7  Build 200");
+        appTitleTv.setText("HomeScreen v21.0.0  \u00B7  Build 210");
         aboutTextCol.addView(appTitleTv);
 
         TextView appSubTv = text(sp(12.5f), 0xCCFFE8B0, regular);
-        appSubTv.setText("Pro Studio ($2.49 Unlocked) \u00B7 9 Universes \u00B7 PIN Vault \u00B7 120 FPS");
+        appSubTv.setText("Pro Studio ($2.49 Unlocked) \u00B7 13 Universes \u00B7 608 Scenes \u00B7 120 FPS");
         LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1, -2);
         subLp.topMargin = dp(2);
         aboutTextCol.addView(appSubTv, subLp);
@@ -4402,7 +4486,7 @@ public class MainActivity extends Activity {
         aboutCard.addView(proStudioRow);
         View jukeboxActionRow = createSettingsActionRow(
                 "\uD83C\uDFAC Story Scene Jukebox & Live Pinning",
-                skyView != null && skyView.isSceneLocked() ? "Pinned" : "432 Scenes",
+                skyView != null && skyView.isSceneLocked() ? "Pinned" : "608 Scenes",
                 v -> {
                     d.dismiss();
                     showStoryJukeboxDialog();
@@ -5229,7 +5313,7 @@ public class MainActivity extends Activity {
 
     // Opens Android's share sheet to invite friends with a pre-formatted message & direct release link.
     private void inviteFriends() {
-        String shareText = "Check out HomeScreen v20.0.0 \u2014 an ad-free, 120 FPS procedural launcher & Lock Screen Live Wallpaper for Android Phones, Foldables, Tablets & Android TV with 9 Theme Universes, 432 live animated story scenes, PIN App Vault & Turbo RAM Booster!\n\nDownload the latest APK release here:\n"
+        String shareText = "Check out HomeScreen v21.0.0 \u2014 an ad-free, 120 FPS procedural launcher & Lock Screen Live Wallpaper for Android Phones, Foldables, Tablets & Android TV with 13 Theme Universes, 608 live animated story scenes, PIN App Vault & Turbo RAM Booster!\n\nDownload the latest APK release here:\n"
                 + GITHUB_RELEASE_URL;
         try {
             ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -5240,7 +5324,7 @@ public class MainActivity extends Activity {
         try {
             Intent send = new Intent(Intent.ACTION_SEND);
             send.setType("text/plain");
-            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v20.0.0 \u2014 120 FPS Android & TV Launcher");
+            send.putExtra(Intent.EXTRA_SUBJECT, "HomeScreen v21.0.0 \u2014 120 FPS Android & TV Launcher");
             send.putExtra(Intent.EXTRA_TEXT, shareText);
             Intent chooser = Intent.createChooser(send, "Invite Friends to HomeScreen");
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -5302,7 +5386,7 @@ public class MainActivity extends Activity {
         sbLp.bottomMargin = dp(14);
         card.addView(statusBadge, sbLp);
 
-        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v20.0.0_200.apk";
+        final String adbCmd = "adb connect <TV_IP>:5555 && adb install -r HomeScreen_Release_v21.0.0_210.apk";
 
         TextView btnShareLink = createSettingsPillButton("\uD83D\uDCF2 Share Download Link (Quick Share / TV)", true, v -> inviteFriends());
         LinearLayout.LayoutParams b1Lp = new LinearLayout.LayoutParams(-1, -2);
@@ -5621,7 +5705,10 @@ public class MainActivity extends Activity {
         } catch (Throwable t) {
             cinzelFont = semibold;
         }
-        String[] fontAssets = {"harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf", "f1.ttf", "f1.ttf", "cinzel.ttf"};
+        String[] fontAssets = {
+            "harryp.ttf", "naruto.ttf", "demonslayer.ttf", "starwars.ttf", "mcu.ttf", "dcu.ttf",
+            "f1.ttf", "f1.ttf", "cinzel.ttf", "cinzel.ttf", "cinzel.ttf", "cinzel.ttf", "f1.ttf"
+        };
         for (int i = 0; i < fontAssets.length; i++) {
             try {
                 themeFonts[i] = Typeface.createFromAsset(c.getAssets(), fontAssets[i]);

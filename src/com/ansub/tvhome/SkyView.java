@@ -550,6 +550,194 @@ final class SkyView extends View {
         "XLIV  |  SPIRITED SKIES FINALE  |  LANTERNS RISING TO THE STARS"
     };
 
+    private static final String[] SNOOPY_TITLES = {
+        "I  |  RED DOGHOUSE ROOF  |  SNOOPY SLEEPING UNDER THE STARS",
+        "II  |  WWI FLYING ACE  |  SOPWITH CAMEL DOGFIGHT VS. THE RED BARON",
+        "III  |  CHARLIE BROWN & LUCY  |  THE GREAT AUTUMN FOOTBALL KICK",
+        "IV  |  SCHROEDER'S PIANO  |  BEETHOVEN SONATA & SNOOPY HAPPY DANCE",
+        "V  |  THE GREAT PUMPKIN  |  LINUS & SALLY IN THE MOONLIT PATCH",
+        "VI  |  BEAGLE SCOUTS  |  SNOOPY & WOODSTOCK TROOP CAMPFIRE HIKE",
+        "VII  |  JOE COOL ON CAMPUS  |  SUNGLASSES & RED SWEATER STRUT",
+        "VIII  |  TYPEWRITER NOVEL  |  IT WAS A DARK AND STORMY NIGHT",
+        "IX  |  WOODSTOCK'S NEST  |  GOLDEN FEATHER FLIGHT OVER THE FENCE",
+        "X  |  CHRISTMAS TIME IS HERE  |  SKATING ON THE FROZEN POND",
+        "XI  |  SNOOPY'S HOLIDAY LIGHTS  |  PRIZE-WINNING DOGHOUSE DECORATIONS",
+        "XII  |  CHARLIE BROWN'S LITTLE TREE  |  RED ORNAMENT & LINUS BLANKET",
+        "XIII  |  PITCHER'S MOUND  |  CHARLIE BROWN'S BASEBALL TEAM RALLY",
+        "XIV  |  KITE-EATING TREE  |  RED DIAMOND KITE IN THE SPRING BREEZE",
+        "XV  |  PSYCHIATRIC BOOTH  |  LUCY'S FIVE-CENT ADVICE STAND",
+        "XVI  |  PEPPERMINT PATTY & MARCIE  |  CLASSROOM BACK-ROW DAYDREAM",
+        "XVII  |  LINUS VAN PELT  |  BLUE SECURITY BLANKET WINDMILL SNAP",
+        "XVIII  |  SUPPERTIME DISH  |  SNOOPY DANCING WITH HIS RED DOG BOWL",
+        "XIX  |  NO MAN'S LAND  |  FLYING ACE BEHIND ENEMY LINES AT DAWN",
+        "XX  |  FLASHBEAGLE DISCO  |  NEON HEADBAND & BREAKDANCE SPIN",
+        "XXI  |  ASTRONAUT SNOOPY  |  FIRST BEAGLE ON THE MOON LANDING",
+        "XXII  |  SPIKE IN NEEDLES  |  DESERT CACTUS & FEDORA HAT COUSIN",
+        "XXIII  |  PIGPEN'S DUST CLOUD  |  WHIRLING DIRT AURA DOWN THE LANE",
+        "XXIV  |  FRANKLIN AT THE BEACH  |  SANDCASTLE & OCEAN WAVE ROLL",
+        "XXV  |  SALLY'S SWEET BABBOO  |  LOVE LETTERS TO LINUS AT RECESS",
+        "XXVI  |  WOODSTOCK ICE HOCKEY  |  ZAMBONI SWEEP ON THE BIRD BATH",
+        "XXVII  |  THANKSGIVING FEAST  |  PING-PONG TABLE POPCORN & TOAST",
+        "XXVIII  |  MASKED MARVEL  |  ARM-WRESTLING CHAMPIONSHIP TOURNAMENT",
+        "XXIX  |  CHESHIRE BEAGLE  |  SNOOPY VANISHING TO A FLOATING GRIN",
+        "XXX  |  SCHOOL BUS STOP  |  RAINY MORNING GALOSHES & UMBRELLAS",
+        "XXXI  |  VULTURE PERCH  |  FIERCE SNOOPY WATCHING FROM THE BRANCH",
+        "XXXII  |  HELICOPTER EARS  |  SNOOPYPROPELLER-EAR VERTICAL LIFT-OFF",
+        "XXXIII  |  RED BARON REMATCH  |  BIPLANE CONTRAIL ACROSS THE HARVEST MOON",
+        "XXXIV  |  DAISY HILL PUPPY FARM  |  FAMILY REUNION BAND JAM",
+        "XXXV  |  BON VOYAGE SNOOPY  |  FRENCH CAFE CROISSANT & BERET",
+        "XXXVI  |  RACE FOR YOUR LIFE  |  WHITEWATER CAMP RAFTING RAPIDS",
+        "XXXVII  |  PAW PET THEATER  |  PUPPET SHOW ON THE BRICK WALL",
+        "XXXVIII  |  STARLIGHT SYMPHONY  |  NOTES FLOATING OVER THE NEIGHBORHOOD",
+        "XXXIX  |  FALLING AUTUMN LEAVES  |  JUMPING INTO THE LEAF PILE",
+        "XL  |  LITTLE RED-HAIRED GIRL  |  VALENTINE MAILBOX HEARTBEAT",
+        "XLI  |  BEAGLE SCOUT BRIDGE  |  CROSSING THE CANYON ON A ROPE",
+        "XLII  |  MIDNIGHT SNACK RAID  |  SNOOPY & WOODSTOCK AT THE FRIDGE",
+        "XLIII  |  BRICK WALL PHILOSOPHY  |  CHARLIE BROWN & LINUS SUNSET CHAT",
+        "XLIV  |  HAPPINESS IS A WARM PUPPY  |  PEANUTS FINALE UNDER THE STARS"
+    };
+
+    private static final String[] TOM_AND_JERRY_TITLES = {
+        "I  |  LIVING ROOM DASH  |  TOM & JERRY HIGH-SPEED SWISS CHEESE CHASE",
+        "II  |  SPIKE'S BULLDOG KENNEL  |  DON'T WAKE THE GUARD DOG BONE AMBUSH",
+        "III  |  THE CAT CONCERTO  |  TOM IN TUXEDO AT THE GRAND PIANO",
+        "IV  |  ACME DYNAMITE TRAP  |  ARCHED MOUSEHOLE & SPARKING RED TNT",
+        "V  |  MIDNIGHT KITCHEN RAID  |  JERRY & TUFFY SKATING ON BUTTER",
+        "VI  |  BACKYARD FENCE JAM  |  IS YOU IS OR IS YOU AIN'T MY BABY",
+        "VII  |  CUE BALL CAT  |  BILLIARD TABLE EIGHT-BALL BANK SHOT",
+        "VIII  |  SOLID SERENADE  |  UPRIGHT BASS WOOING UNDER THE WINDOW",
+        "IX  |  YANKEE DOODLE MOUSE  |  FIRECRACKER ROCKET & TEACUP TANK",
+        "X  |  THE TWO MOUSEKETEERS  |  TOUCHE PUSSY CAT RAPIER FENCING",
+        "XI  |  MOUSE IN MANHATTAN  |  SKYSCRAPER LEDGE & BROADWAY LIGHTS",
+        "XII  |  DR. JEKYLL & MR. MOUSE  |  SUPER-STRENGTH MILK POTION",
+        "XIII  |  THE FLYING CAT  |  CORSET WINGS vs. CANARY BIRDHOUSE",
+        "XIV  |  SATURDAY EVENING PUSS  |  JAZZ RECORD PLAYER LIVING ROOM PARTY",
+        "XV  |  TEE FOR TWO  |  GOLF COURSE GOPHER & EXPLODING TEE",
+        "XVI  |  TEXAS TOM  |  COWBOY HAT LASSO & BULL-RIDING SLAPSTICK",
+        "XVII  |  MICE FOLLIES  |  FROZEN KITCHEN FLOOR FIGURE SKATING",
+        "XVIII  |  LITTLE QUACKER  |  RUNAWAY DUCKLING SWIMMING LESSON",
+        "XIX  |  BOWLING ALLEY CAT  |  TEN-PIN STRIKE & THUMB-STUCK BALL",
+        "XX  |  MILLION DOLLAR CAT  |  PARK AVENUE PENTHOUSE LIMOUSINE",
+        "XXI  |  INVISIBLE MOUSE  |  VANISHING INK BOTTLE & FLOATING IRON",
+        "XXII  |  DESIGNS ON JERRY  |  LIVING WHITE STICK-FIGURE BLUEPRINT",
+        "XXIII  |  SALT WATER TABBY  |  BEACH UMBRELLA & PICNIC BASKET CRAB",
+        "XXIV  |  THE NIGHT BEFORE CHRISTMAS  |  TOY TRAIN & MISTLETOE TRUCE",
+        "XXV  |  PROFESSOR TOM  |  CHALKBOARD LESSON FOR TOPSY KITTEN",
+        "XXVI  |  SAFETY SECOND  |  FOURTH OF JULY SKYROCKET CHASE",
+        "XXVII  |  THE TRUCE HURTS  |  TOM, JERRY & SPIKE STEAK PACT",
+        "XXVIII  |  HOLLYWOOD BOWL  |  SYMPHONY CONDUCTOR BATON DUEL",
+        "XXIX  |  CAT FISHIN'  |  GIANT PIKE LURE AT THE LAKE DOCK",
+        "XXX  |  JERRY'S COUSIN  |  MUSCLES MOUSE IN THE STRIPED SWEATER",
+        "XXXI  |  SLEEPY-TIME TOM  |  MATCHSTICK EYELIDS & ALLEY CAT TRIO",
+        "XXXII  |  CRUISE CAT  |  OCEAN LINER SHUFFLEBOARD & SEAGULL",
+        "XXXIII  |  JOHANN MOUSE  |  VIENNA WALTZ PIANO & BALLROOM DANCE",
+        "XXXIV  |  MOUSE FOR SALE  |  WHITE PAINT DISGUISE & COIN JAR",
+        "XXXV  |  NEAPOLITAN MOUSE  |  VENICE GONDOLA & ITALIAN CHEESE",
+        "XXXVI  |  FLYING SORCERESS  |  MAGIC BROOMSTICK OVER THE ROOFTOPS",
+        "XXXVII  |  MUSCLE BEACH TOM  |  BARBELL WEIGHTLIFTING & BALLOONS",
+        "XXXVIII  |  ROBIN HOODWINKED  |  LONGBOW ARROWS IN NOTTINGHAM CASTLE",
+        "XXXIX  |  TOT WATCHERS  |  RUNAWAY BABY CRAWLING ON GIRDER BEAMS",
+        "XL  |  SPACE CATS  |  ORBITAL ROCKET SHIP ZERO-GRAVITY CHASE",
+        "XLI  |  THE BOWLING BALL ANVIL  |  GRAND STAIRCASE CARPET ROLL",
+        "XLII  |  CHEESE VAULT HEIST  |  LASER STRINGS & MOUSEHOLE ESCAPE",
+        "XLIII  |  MGM LION CURTAIN CALL  |  CONCENTRIC GOLDEN RINGS SPOTLIGHT",
+        "XLIV  |  THAT'S ALL FOLKS SLAPSTICK  |  SUNSET CHASE INTO THE HORIZON"
+    };
+
+    private static final String[] FINDING_NEMO_TITLES = {
+        "I  |  CORAL REEF SANCTUARY  |  NEMO, MARLIN & DORY OVER ANEMONE COVE",
+        "II  |  EAST AUSTRALIAN CURRENT  |  CRUSH & SQUIRT SEA TURTLE JET STREAM",
+        "III  |  BRUCE THE GREAT WHITE  |  FISH ARE FRIENDS & NAVAL MINEFIELD",
+        "IV  |  JELLYFISH FOREST  |  BOUNCING ACROSS GLOWING PINK MEDUSAS",
+        "V  |  ABYSSAL TRENCH  |  DEEP-SEA ANGLERFISH BIOLUMINESCENT LURE",
+        "VI  |  SYDNEY HARBOUR  |  42 WALLABY WAY, NIGEL PELICAN & OPERA HOUSE",
+        "VII  |  THE DROP-OFF  |  TOUCHING THE BUTT AT THE EDGE OF THE REEF",
+        "VIII  |  MR. RAY'S OCEAN SCHOOL  |  SPOTTED EAGLE RAY CORAL FIELD TRIP",
+        "IX  |  JUST KEEP SWIMMING  |  DORY'S BLUE TANG SONG IN THE DEEP",
+        "X  |  SHARK BAIT HOO HA HA  |  MOUNT WANNAHOCKALOOGIE VOLCANO RING",
+        "XI  |  GILL & THE TANK GANG  |  DENTIST OFFICE WINDOW ESCAPE PLAN",
+        "XII  |  PEACH THE STARFISH  |  MORNING REPORT ON THE AQUARIUM GLASS",
+        "XIII  |  JACQUES THE CLEANER SHRIMP  |  BUBBLE TREASURE CHEST DECONTAMINATION",
+        "XIV  |  SPEAKING WHALE  |  HUMPBACK WHALE CALL & WATER SPOUT BLOWHOLE",
+        "XV  |  SYDNEY SEAGULLS  |  MINE! MINE! MINE! ON THE HARBOUR JETTY",
+        "XVI  |  SUBMARINE WRECKAGE  |  ANCHOR & CHUM SHARK PLEDGE MEETING",
+        "XVII  |  DIVER'S GOGGLES  |  GLOWING INSCRIPTION IN THE DARK ABYSS",
+        "XVIII  |  MOONFISH SCHOOL  |  SILVER FISH MORPHING ARROWS & SYDNEY OPERA",
+        "XIX  |  KELP FOREST LABYRINTH  |  SWAYING GOLDEN SEAWEED & SUNBEAMS",
+        "XX  |  SQUIRT'S EXIT BUDDY  |  BABY TURTLE BARREL ROLL IN THE VORTEX",
+        "XXI  |  DARLA'S PLASTIC BAG  |  ROLLING ACROSS THE DENTIST TRAY",
+        "XXII  |  NIGEL'S FLIGHT  |  PELICAN BEAK RESCUE OVER SYDNEY HARBOUR",
+        "XXIII  |  FISHING NET STAMPEDE  |  SWIM DOWN TOGETHER! OCEAN RESCUE",
+        "XXIV  |  BIOLUMINESCENT CORAL  |  MIDNIGHT GLOWING REEF GARDEN",
+        "XXV  |  HANK THE SEPTAPUS  |  CAMOUFLAGE OCTOPUS AT MARINE LIFE INSTITUTE",
+        "XXVI  |  DESTINY & BAILEY  |  WHALE SHARK LEAP & BELUGA ECHOLOCATION",
+        "XXVII  |  BECKY & THE BUCKET  |  LOON FLIGHT OVER MORRO BAY",
+        "XXVIII  |  SEA OTTER CUDDLE PARTY  |  HIGHWAY BRIDGE KELP RAFT",
+        "XXIX  |  BABY DORY'S SHELL TRAIL  |  PURPLE SEASHELLS LEADING HOME",
+        "XXX  |  MANTA RAY MIGRATION  |  UNDERWATER UNDERTOW SWIRL",
+        "XXXI  |  GIANT SQUID PURSUIT  |  GLOWING SIPHON IN THE SHIPWRECK",
+        "XXXII  |  TOUCH POOL ADVENTURE  |  STARFISH & HERMIT CRAB SANCTUARY",
+        "XXXIII  |  BUBBLES! BUBBLES!  |  YELLOW TANG CHASING RISING BUBBLE STREAMS",
+        "XXXIV  |  BLOAT THE PUFFERFISH  |  EMERGENCY SPINY INFLATION",
+        "XXXV  |  GURGLE & DEB  |  ROYAL GRAMMA & REFLECTION SISTER FLO",
+        "XXXVI  |  GERALD'S ROCK  |  FLUKE & RUDDER SEA LION SUNBATHING",
+        "XXXVII  |  STINGRAY CHORUS  |  GLIDING OVER THE SANDY LAGOON",
+        "XXXVIII  |  TROPICAL SUNSET REEF  |  GOLDEN CAUSTIC RAYS THROUGH CRYSTAL WATER",
+        "XXXIX  |  CLOWNFISH LUCKY FIN  |  FATHER & SON RACING THROUGH CORAL ARCHES",
+        "XL  |  GREAT BARRIER REEF DAWN  |  ANEMONE TENTACLES WAKING IN THE TIDE",
+        "XLI  |  DOLPHIN ESCORT  |  LEAPING OVER THE PACIFIC SWELL",
+        "XLII  |  TURTLE MIGRATION  |  HUNDREDS OF SEA TURTLES IN THE EAC",
+        "XLIII  |  OCEAN CATHEDRAL  |  BLUE WHALE SHADOW IN THE SUNLIT DEEP",
+        "XLIV  |  BEYOND THE SEA FINALE  |  ALL REEF FRIENDS AT ANEMONE COVE"
+    };
+
+    private static final String[] JETIX_TITLES = {
+        "I  |  JETIX ACTION ARENA  |  WINGED CHROME MASCOT & HIGH-VOLTAGE LASERS",
+        "II  |  YIN YANG YO!  |  WOO FOO DOJO SWORD & MYSTIC ENERGY BLAST",
+        "III  |  HYPERFORCE GO!  |  CHIRO & SUPER ROBOT MONKEY TEAM ACTIVATION",
+        "IV  |  PUCCA & GARU  |  GOH-RONG ROOFTOP NINJA CHASE & HEARTS",
+        "V  |  POWER RANGERS SPD  |  DELTA SQUAD MEGAZORD LIGHTNING MORPH",
+        "VI  |  OBAN STAR-RACERS  |  WHIZZING ARROWHEAD II POD-RACE OVERDRIVE",
+        "VII  |  W.I.T.C.H. GUARDIANS  |  HEART OF KANDRAKAR PORTAL & ELEMENTAL WINGS",
+        "VIII  |  BEYBLADE BIT-BEASTS  |  DRAGOON & DRANZER STADIUM VORTEX CLASH",
+        "IX  |  MYSTIC FORCE RANGERS  |  SOLAR STREAK TRAIN & TITAN DRAGON",
+        "X  |  SHUGAZOOM CITADEL  |  SUPER ROBOT LASER EYES & FIST ROCKET",
+        "XI  |  MASTER YO'S DOJO  |  TWO BAD HABITS & NIGHT MASTER ECLIPSE",
+        "XII  |  AMERICAN DRAGON  |  JAKE LONG FLAME BREATH OVER MANHATTAN",
+        "XIII  |  GET ED DELIVERY  |  PROGRESS CITY HOVERBOARD COURIER DASH",
+        "XIV  |  A.T.O.M. ALPHA TEENS  |  LANDMARK CITY EXOSUIT & TURBO CAR",
+        "XV  |  DRAGON BOOSTER  |  ARTHA PENN & BEAU GOLD STAR-CLASS RUN",
+        "XVI  |  DIGIMON DATA SQUAD  |  AGUMON DIGIVOLUTION DNA CHARGE",
+        "XVII  |  SONIC X CHAOS CONTROL  |  SEVEN CHAOS EMERALDS SUPER SONIC GOLD",
+        "XVIII  |  GALACTIK FOOTBALL  |  SNOW KIDS FLUX KICK IN GENESIS STADIUM",
+        "XIX  |  SHAMAN KING OVER-SOUL  |  YOH ASAKURA & AMIDAMARU SPIRIT BLADE",
+        "XX  |  MONSTER BUSTER CLUB  |  SINGLETON TOWN ALIEN LASER SHIELD",
+        "XXI  |  CAPTAIN FLAMINGO  |  MILO POWELL TERRYCLOTH CAPE RESCUE",
+        "XXII  |  SUPER MONKEY ANTAURI  |  SILVER GHOST MONKEY CLAW SLASH",
+        "XXIII  |  SPARX & GIBSON  |  MAGNA-TINGLER & CYBER-DRILL COMBO",
+        "XXIV  |  OTTO & NOVA  |  ENERGY SAW & GOLDEN KNUCKLE SMASH",
+        "XXV  |  SKELETON KING FORTRESS  |  CITADEL OF BONE ORBITAL BEAM",
+        "XXVI  |  YANG'S BAMBOO SWORD  |  WOO FOO TORNADO SPIN ATTACK",
+        "XXVII  |  YIN'S TRANSMOGRIFY  |  MAGENTAAURA SHIELD & FOOFENHEIMER",
+        "XXVIII  |  PUCCA NOODLE DRAGON  |  SOOGA VILLAGE LIGHTNING KUNG FU",
+        "XXIX  |  TOBE'S NINJA SQUAD  |  SHURIKEN STAR VOLLEY & ROOFTOP LEAP",
+        "XXX  |  OPERATION OVERDRIVE  |  CORONA AURORA CROWN & MACK RED RANGER",
+        "XXXI  |  JUNGLE FURY SPIRIT  |  PAI ZHUQ TIGER, JAGUAR & CHEETAH ROAR",
+        "XXXII  |  DINO THUNDER RANGERS  |  WHITE DRAGOZORD & THUNDERMAX SABER",
+        "XXXIII  |  MOLLY & JORDAN OBAN  |  GREAT RACE OF OBAN CANYON DRIFT",
+        "XXXIV  |  AVATAR OF OBAN  |  GOLDEN TEMPLE PYRAMID ASCENSION",
+        "XXXV  |  MEDABOTS ROBATTLE  |  METABEE DUAL SEEKER MISSILE BARRAGE",
+        "XXXVI  |  BATTLE B-DAMAN  |  COBALT BLADE DIRECT HIT FIREBALL",
+        "XXXVII  |  GARGOYLES MANHATTAN  |  GOLIATH STONE WINGS ABOVE THE CLOCK TOWER",
+        "XXXVIII  |  SPIDER-MAN UNLIMITED  |  NANO-TECH CAPE & COUNTER-EARTH SKYLINE",
+        "XXXIX  |  X-MEN TAS DANGER ROOM  |  CYCLOPS OPTIC BLAST & WOLVERINE CLAWS",
+        "XL  |  IRON MAN ARMORED TAS  |  PROTON CANNON MAXIMUM CHARGE",
+        "XLI  |  FANTASTIC FOUR BAXTER  |  HUMAN TORCH SUPERNOVA RING",
+        "XLII  |  JETIX CAGE MATCH  |  CHROME MASCOT TRANSFORMING MECH",
+        "XLIII  |  SATURDAY MORNING RUSH  |  ELECTRIC LIME & CRIMSON LASER GRID",
+        "XLIV  |  JETIX FOREVER FINALE  |  ONE-EYED CHROME EMBLEM IN THE STARS"
+    };
+
     // Cached Ambilight Edge LinearGradients (rebuilt ONLY when RGB or screen dimensions change)
     private LinearGradient topEdgeShader, botEdgeShader, leftEdgeShader, rightEdgeShader;
     private int cachedShaderRgb = -1, cachedShaderW = -1, cachedShaderH = -1;
@@ -605,7 +793,7 @@ final class SkyView extends View {
     private float screensaverZoom = 0f;
     private int screensaverOverrideScene = -1;
     private int lastScreensaverSlot = -1;
-    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 8; // 432 total story scenes across 9 themes
+    private static final int TOTAL_POOL_SCENES = SCENE_COUNT + UNIVERSE_SCENE_COUNT * 12; // 608 total story scenes across 13 themes
     private final int[] shuffledPool = new int[TOTAL_POOL_SCENES];
     private int poolCursor = TOTAL_POOL_SCENES;
     private final java.util.Random poolRng = new java.util.Random();
@@ -644,7 +832,11 @@ final class SkyView extends View {
             DCU_TITLES.length,
             F1_TITLES.length,
             CYBERPUNK_TITLES.length,
-            SPIRITED_SKIES_TITLES.length
+            SPIRITED_SKIES_TITLES.length,
+            SNOOPY_TITLES.length,
+            TOM_AND_JERRY_TITLES.length,
+            FINDING_NEMO_TITLES.length,
+            JETIX_TITLES.length
         };
         for (int th = 0; th < counts.length; th++) {
             for (int sc = 0; sc < counts[th]; sc++) {
@@ -692,7 +884,10 @@ final class SkyView extends View {
                 baseSky = null;
             }
         }
-        int[] themeColors = {0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801, 0xFF00F0FF, 0xFF4CE0B3};
+        int[] themeColors = {
+            0xFFFFD54F, 0xFFFF5722, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28,
+            0xFFFF1801, 0xFF00F0FF, 0xFF4CE0B3, 0xFFFFC107, 0xFFFFCA28, 0xFFFF6D00, 0xFFFF1744
+        };
         int col = themeColors[Math.max(0, Math.min(themeColors.length - 1, nextTheme))];
         setReactiveColor(col, false);
         if (screensaverThemeListener != null) {
@@ -750,7 +945,10 @@ final class SkyView extends View {
 
     void onUserTouch(float x, float y, boolean isDown) {
         float now = nowSec();
-        int[] themeCols = {0xFFFFD54F, 0xFFFF6D00, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28, 0xFFFF1801, 0xFF00F0FF};
+        int[] themeCols = {
+            0xFFFFD54F, 0xFFFF6D00, 0xFF00E5FF, 0xFF40C4FF, 0xFFB388FF, 0xFFFFCA28,
+            0xFFFF1801, 0xFF00F0FF, 0xFF4CE0B3, 0xFFFFC107, 0xFFFFCA28, 0xFFFF6D00, 0xFFFF1744
+        };
         int rgb = themeCols[Math.max(0, Math.min(themeCols.length - 1, universeTheme))];
         snitchTargetX = x;
         snitchTargetY = Math.max(px(36f), y - px(18f));
@@ -859,6 +1057,10 @@ final class SkyView extends View {
         if (theme == 6) return F1_TITLES;
         if (theme == 7) return CYBERPUNK_TITLES;
         if (theme == 8) return SPIRITED_SKIES_TITLES;
+        if (theme == 9) return SNOOPY_TITLES;
+        if (theme == 10) return TOM_AND_JERRY_TITLES;
+        if (theme == 11) return FINDING_NEMO_TITLES;
+        if (theme == 12) return JETIX_TITLES;
         return CHAPTER_TITLES;
     }
 
@@ -1319,6 +1521,22 @@ final class SkyView extends View {
                 // Theme 9: SPIRITED SKIES — Enchanted Twilight Teal, Warm Bathhouse Lantern Gold & Vermilion Bridge Sky
                 topCol = 0xFF05101E; midCol = 0xFF0B2230; botCol = 0xFF081820;
                 glow1 = 0x444CE0B3; glow2 = 0x3EFFB74D; glow3 = 0x38FF5252;
+            } else if (universeTheme == 9) {
+                // Theme 10: SNOOPY — Peanuts Starry Indigo Sky, Warm Harvest Moon Gold & Crimson Doghouse Glow
+                topCol = 0xFF060B1E; midCol = 0xFF101D3A; botCol = 0xFF0A1024;
+                glow1 = 0x46FFD54F; glow2 = 0x40E53935; glow3 = 0x38FFCA28;
+            } else if (universeTheme == 10) {
+                // Theme 11: TOM & JERRY — Classic MGM Golden-Red Stage Curtain & Vintage Technicolor Twilight Sky
+                topCol = 0xFF14060A; midCol = 0xFF280D14; botCol = 0xFF120810;
+                glow1 = 0x48FFD54F; glow2 = 0x42FF5252; glow3 = 0x3CFFAB00;
+            } else if (universeTheme == 11) {
+                // Theme 12: FINDING NEMO — Great Barrier Reef Bioluminescent Pacific Ocean & Coral Sunset Glow
+                topCol = 0xFF021328; midCol = 0xFF052E4C; botCol = 0xFF031A30;
+                glow1 = 0x4800E5FF; glow2 = 0x44FF6D00; glow3 = 0x3EFF4081;
+            } else if (universeTheme == 12) {
+                // Theme 13: JETIX — High-Voltage 2000s Action Arena Crimson, Chrome & Electric Cyber-Green Sky
+                topCol = 0xFF080412; midCol = 0xFF1A0826; botCol = 0xFF0A0514;
+                glow1 = 0x48FF1744; glow2 = 0x4200E676; glow3 = 0x3C00E5FF;
             } else if (paletteIndex == 1) {
                 topCol = 0xFF16080A; midCol = 0xFF220E12; botCol = 0xFF0E070A;
                 glow1 = 0x44FFB840; glow2 = 0x38B82830;
@@ -1823,6 +2041,145 @@ final class SkyView extends View {
                 p.setStyle(Paint.Style.STROKE);
                 p.setStrokeWidth(px(1.8f));
                 p.setColor(0x784CE0B3);
+                c.drawLine(0, groundY, w, groundY, p);
+            } else if (universeTheme == 9) {
+                // Theme 10 (SNOOPY) Base Horizon: Giant Golden Peanuts Harvest Moon, Snoopy's Red Doghouse & Brick Wall
+                float mx = w * 0.85f, my = h * 0.16f, mr = px(40);
+                p.setShader(new RadialGradient(mx, my, mr * 4.2f,
+                        new int[] {0x52FFD54F, 0x24FF8F00, 0x00000000}, new float[] {0f, 0.48f, 1f}, Shader.TileMode.CLAMP));
+                c.drawCircle(mx, my, mr * 4.2f, p);
+                p.setShader(null);
+                p.setColor(0xEEFFE082);
+                c.drawCircle(mx, my, mr, p);
+                // Snoopy sleeping on top of his doghouse silhouette inside the moon glow
+                float groundY = h * 0.900f;
+                p.setStyle(Paint.Style.FILL);
+                // Iconic Crimson Doghouse on right horizon (0.76..0.90)
+                float dhX = w * 0.83f;
+                p.setColor(0xFFD32F2F);
+                c.drawRect(dhX - px(38f), groundY - px(52f), dhX + px(38f), groundY, p);
+                Path roof = new Path();
+                roof.moveTo(dhX - px(48f), groundY - px(50f));
+                roof.lineTo(dhX, groundY - px(78f));
+                roof.lineTo(dhX + px(48f), groundY - px(50f));
+                roof.close();
+                c.drawPath(roof, p);
+                // Holiday lights strung along the doghouse eaves
+                int[] bulbCols = {0xFFFF1744, 0xFF00E676, 0xFFFFEA00, 0xFF2979FF};
+                for (int b = 0; b < 7; b++) {
+                    p.setColor(bulbCols[b % 4]);
+                    c.drawCircle(dhX - px(36f) + b * px(12f), groundY - px(50f), px(3.2f), p);
+                }
+                // Charlie Brown's iconic Zig-Zag stripe along the horizon baseline
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.2f));
+                p.setColor(0x99FFD54F);
+                c.drawLine(0, groundY, w, groundY, p);
+            } else if (universeTheme == 10) {
+                // Theme 11 (TOM & JERRY) Base Horizon: Classic MGM Concentric Bullseye Rings & Living Room Baseboard Mousehole
+                float mx = w * 0.85f, my = h * 0.16f, mr = px(42);
+                int[] ringCols = {0xFFD50000, 0xFFFF8F00, 0xFFFFD54F, 0xFFFFF8E1};
+                for (int rg = 0; rg < 4; rg++) {
+                    p.setStyle(Paint.Style.FILL);
+                    p.setColor((0x44 << 24) | (ringCols[rg] & 0xFFFFFF));
+                    c.drawCircle(mx, my, mr * (1.45f - rg * 0.28f), p);
+                    p.setStyle(Paint.Style.STROKE);
+                    p.setStrokeWidth(px(2.2f));
+                    p.setColor((0xAA << 24) | (ringCols[rg] & 0xFFFFFF));
+                    c.drawCircle(mx, my, mr * (1.45f - rg * 0.28f), p);
+                }
+                float groundY = h * 0.900f;
+                p.setStyle(Paint.Style.FILL);
+                // Classic Living-Room Wooden Baseboard & Jerry's Arched Mousehole on right (0.72..0.96)
+                p.setColor(0xAA261410);
+                c.drawRect(w * 0.68f, groundY - px(28f), w, groundY, p);
+                float mhX = w * 0.82f;
+                p.setColor(0xFF080406);
+                c.drawRoundRect(mhX - px(14f), groundY - px(22f), mhX + px(14f), groundY, px(14f), px(14f), p);
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.0f));
+                p.setColor(0xAAFFD54F);
+                c.drawLine(0, groundY, w, groundY, p);
+            } else if (universeTheme == 11) {
+                // Theme 12 (FINDING NEMO) Base Horizon: Underwater Caustic Sunbeams & Great Barrier Reef Coral Sanctuary
+                float mx = w * 0.84f, my = h * 0.12f;
+                p.setStyle(Paint.Style.FILL);
+                for (int ray = 0; ray < 5; ray++) {
+                    p.setColor(0x1480F8FF);
+                    Path beam = new Path();
+                    float rx = mx - px(120f) + ray * px(55f);
+                    beam.moveTo(rx - px(16f), 0);
+                    beam.lineTo(rx + px(16f), 0);
+                    beam.lineTo(rx - px(90f), h * 0.85f);
+                    beam.lineTo(rx - px(145f), h * 0.85f);
+                    beam.close();
+                    c.drawPath(beam, p);
+                }
+                float groundY = h * 0.900f;
+                // Bioluminescent Coral Reef & Sea Anemone Sanctuary on right (0.68..0.98)
+                int[] coralCols = {0xAAFF4081, 0xAA00E5FF, 0xAAFF6D00, 0xAA7C4DFF};
+                for (int cr = 0; cr < 7; cr++) {
+                    p.setColor(coralCols[cr % coralCols.length]);
+                    float cxPos = w * (0.70f + cr * 0.04f);
+                    float ch = px(28f + (cr % 3) * 16f);
+                    c.drawRoundRect(cxPos - px(10f), groundY - ch, cxPos + px(10f), groundY, px(10f), px(10f), p);
+                }
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.0f));
+                p.setColor(0x9900E5FF);
+                c.drawLine(0, groundY, w, groundY, p);
+            } else if (universeTheme == 12) {
+                // Theme 13 (JETIX) Base Horizon: Winged Chrome One-Eyed Mascot Sky Emblem, Broadcast Lasers & Shugazoom Citadel
+                float mx = w * 0.85f, my = h * 0.16f, mr = px(38);
+                p.setShader(new RadialGradient(mx, my, mr * 4.2f,
+                        new int[] {0x52FF1744, 0x2400E676, 0x00000000}, new float[] {0f, 0.48f, 1f}, Shader.TileMode.CLAMP));
+                c.drawCircle(mx, my, mr * 4.2f, p);
+                p.setShader(null);
+                // Swept Winged Chrome Mascot Silhouette in Upper Right Sky
+                p.setStyle(Paint.Style.FILL);
+                p.setColor(0xFFD8E4F0);
+                Path wing = new Path();
+                wing.moveTo(mx - mr * 1.45f, my - mr * 0.45f);
+                wing.lineTo(mx - mr * 0.55f, my - mr * 0.15f);
+                wing.lineTo(mx - mr * 0.55f, my + mr * 0.30f);
+                wing.lineTo(mx - mr * 1.30f, my + mr * 0.10f);
+                wing.close();
+                c.drawPath(wing, p);
+                Path wingR = new Path();
+                wingR.moveTo(mx + mr * 1.45f, my - mr * 0.45f);
+                wingR.lineTo(mx + mr * 0.55f, my - mr * 0.15f);
+                wingR.lineTo(mx + mr * 0.55f, my + mr * 0.30f);
+                wingR.lineTo(mx + mr * 1.30f, my + mr * 0.10f);
+                wingR.close();
+                c.drawPath(wingR, p);
+                c.drawOval(rectF(mx - mr * 0.78f, my - mr * 0.65f, mx + mr * 0.78f, my + mr * 0.65f), p);
+                p.setColor(0xFF141824);
+                c.drawOval(rectF(mx - mr * 0.55f, my - mr * 0.32f, mx + mr * 0.55f, my + mr * 0.32f), p);
+                p.setColor(0xFFFF1744);
+                c.drawCircle(mx, my, mr * 0.24f, p);
+                p.setColor(0xFFFFFFFF);
+                c.drawCircle(mx + mr * 0.08f, my - mr * 0.08f, mr * 0.08f, p);
+
+                float groundY = h * 0.900f;
+                p.setColor(0x94080412);
+                Path stage = new Path();
+                stage.moveTo(0, h);
+                stage.lineTo(0, groundY);
+                stage.lineTo(w * 0.68f, groundY);
+                stage.lineTo(w * 0.72f, skyY(w, h, 0.72f));
+                stage.lineTo(w * 0.78f, skyY(w, h, 0.72f));
+                stage.lineTo(w * 0.82f, skyY(w, h, 0.64f)); // Shugazoom Super Robot Tower
+                stage.lineTo(w * 0.88f, skyY(w, h, 0.64f));
+                stage.lineTo(w * 0.92f, skyY(w, h, 0.74f));
+                stage.lineTo(w * 0.96f, groundY);
+                stage.lineTo(w, groundY);
+                stage.lineTo(w, h);
+                stage.close();
+                c.drawPath(stage, p);
+
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeWidth(px(2.2f));
+                p.setColor(0xCCFF1744);
                 c.drawLine(0, groundY, w, groundY, p);
             } else {
             // Full Moon in upper right sky
@@ -2637,6 +2994,77 @@ final class SkyView extends View {
                     canvas.drawCircle(cx, cy2 + cw * 0.28f, cw * 0.16f, paint);
                 }
                 continue;
+            } else if (universeTheme == 9) {
+                // SNOOPY Top Sky: Fluttering Golden Woodstock Birds, Holiday Doghouse Bulbs & Musical Notes
+                float cy2 = cy + ch * 0.25f;
+                paint.setStyle(Paint.Style.FILL);
+                if (i % 2 == 0) {
+                    paint.setColor(0xFFFFEA00);
+                    canvas.drawCircle(cx, cy2, cw * 0.95f, paint);
+                    canvas.drawLine(cx - cw, cy2 - cw * 0.8f, cx, cy2 - cw * 1.3f, paint);
+                    paint.setColor(0xFF1A1A1A);
+                    canvas.drawCircle(cx + cw * 0.3f, cy2 - cw * 0.1f, cw * 0.18f, paint);
+                } else {
+                    int[] cols = {0xFFFF1744, 0xFF00E676, 0xFFFFD54F, 0xFF2979FF};
+                    int bCol = cols[i % 4];
+                    paint.setColor((0x38 << 24) | (bCol & 0xFFFFFF));
+                    canvas.drawCircle(cx, cy2, cw * 2.4f * flicker, paint);
+                    paint.setColor(bCol);
+                    canvas.drawOval(rectF(cx - cw * 0.65f, cy2 - cw * 0.95f, cx + cw * 0.65f, cy2 + cw * 0.95f), paint);
+                }
+                continue;
+            } else if (universeTheme == 10) {
+                // TOM & JERRY Top Sky: Floating Wedges of Golden Swiss Cheese & Cartoon Slapstick Stars
+                float cy2 = cy + ch * 0.25f;
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0xFFFFCA28);
+                actorPath.reset();
+                actorPath.moveTo(cx - cw * 1.2f, cy2 + cw * 0.7f);
+                actorPath.lineTo(cx + cw * 1.2f, cy2 + cw * 0.7f);
+                actorPath.lineTo(cx + cw * 0.4f, cy2 - cw * 0.9f);
+                actorPath.close();
+                canvas.drawPath(actorPath, paint);
+                paint.setColor(0xFFE65100);
+                canvas.drawCircle(cx - cw * 0.2f, cy2 + cw * 0.2f, cw * 0.26f, paint);
+                canvas.drawCircle(cx + cw * 0.4f, cy2 + cw * 0.35f, cw * 0.20f, paint);
+                continue;
+            } else if (universeTheme == 11) {
+                // FINDING NEMO Top Sky: Translucent Rising Ocean Bubbles & Glowing Pink Bioluminescent Jellyfish
+                float cy2 = cy + ch * 0.25f;
+                if (i % 3 == 0) {
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0x44FF4081);
+                    canvas.drawCircle(cx, cy2, cw * 2.5f * flicker, paint);
+                    paint.setColor(0xEEFF80AB);
+                    canvas.drawArc(rectF(cx - cw * 1.2f, cy2 - cw * 1.0f, cx + cw * 1.2f, cy2 + cw * 0.8f), 180, 180, true, paint);
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.2f));
+                    canvas.drawLine(cx - cw * 0.5f, cy2, cx - cw * 0.6f, cy2 + cw * 1.6f, paint);
+                    canvas.drawLine(cx + cw * 0.5f, cy2, cx + cw * 0.6f, cy2 + cw * 1.6f, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                } else {
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(px(1.5f));
+                    paint.setColor(0xCC80F8FF);
+                    canvas.drawCircle(cx, cy2, cw * 1.05f, paint);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(0xEEFFFFFF);
+                    canvas.drawCircle(cx - cw * 0.35f, cy2 - cw * 0.35f, cw * 0.25f, paint);
+                }
+                continue;
+            } else if (universeTheme == 12) {
+                // JETIX Top Sky: Mini One-Eyed Winged Chrome Mascots & Spinning Yin-Yang Woo Foo Orbs
+                float cy2 = cy + ch * 0.25f;
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor((0x38 << 24) | (i % 2 == 0 ? 0x00FF1744 : 0x0000E676));
+                canvas.drawCircle(cx, cy2, cw * 2.6f * flicker, paint);
+                paint.setColor(0xFFE0E8F0);
+                canvas.drawOval(rectF(cx - cw * 1.15f, cy2 - cw * 0.85f, cx + cw * 1.15f, cy2 + cw * 0.85f), paint);
+                paint.setColor(0xFFFF1744);
+                canvas.drawCircle(cx, cy2, cw * 0.46f, paint);
+                paint.setColor(0xFFFFFFFF);
+                canvas.drawCircle(cx + cw * 0.14f, cy2 - cw * 0.14f, cw * 0.16f, paint);
+                continue;
             }
             // THEME 0 (HARRY POTTER): Sculpted Great Hall Floating Wax Taper Candle with Brass Holder & 3-Layer Flame
             paint.setColor((0x24 << 24) | rgbOnly);
@@ -2861,6 +3289,48 @@ final class SkyView extends View {
             c.drawCircle(sx - px(4f), sy, px(2.4f), paint);
             paint.setColor(0xFFFF0055);
             c.drawCircle(sx + px(4f), sy, px(2.4f), paint);
+            return;
+        } else if (universeTheme == 9) {
+            // SNOOPY Companion: Fluttering Golden Woodstock Bird with Crown Tuft Feathers
+            paint.setColor(0x48FFD54F);
+            c.drawCircle(sx, sy, px(12f), paint);
+            paint.setColor(0xFFFFEA00);
+            c.drawCircle(sx, sy, px(5.5f), paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(1.8f));
+            c.drawLine(sx - px(3f), sy - px(5f), sx - px(6f), sy - px(10f), paint);
+            c.drawLine(sx, sy - px(5f), sx, sy - px(11f), paint);
+            paint.setStyle(Paint.Style.FILL);
+            return;
+        } else if (universeTheme == 10) {
+            // TOM & JERRY Companion: Golden Swiss Cheese Wedge & Jerry Whiskers
+            paint.setColor(0x48FFCA28);
+            c.drawCircle(sx, sy, px(12f), paint);
+            paint.setColor(0xFFFFD54F);
+            c.drawRoundRect(sx - px(8f), sy - px(5f), sx + px(8f), sy + px(5f), px(2f), px(2f), paint);
+            paint.setColor(0xFFE65100);
+            c.drawCircle(sx - px(3f), sy, px(2.0f), paint);
+            c.drawCircle(sx + px(3f), sy + px(1.5f), px(1.6f), paint);
+            return;
+        } else if (universeTheme == 11) {
+            // FINDING NEMO Companion: Nemo the Clownfish (Orange & White Stripes + Wiggling Lucky Fin)
+            paint.setColor(0x4800E5FF);
+            c.drawCircle(sx, sy, px(13f), paint);
+            paint.setColor(0xFFFF6D00);
+            c.drawOval(rectF(sx - px(9f), sy - px(5.5f), sx + px(9f), sy + px(5.5f)), paint);
+            paint.setColor(0xFFFFFFFF);
+            c.drawRect(sx - px(2f), sy - px(5f), sx + px(1.5f), sy + px(5f), paint);
+            return;
+        } else if (universeTheme == 12) {
+            // JETIX Companion: Hovering Winged Chrome Mascot with Glowing Red Cyclops Eye
+            paint.setColor(0x48FF1744);
+            c.drawCircle(sx, sy, px(13f), paint);
+            paint.setColor(0xFFE0E8F0);
+            c.drawOval(rectF(sx - px(10f), sy - px(6.5f), sx + px(10f), sy + px(6.5f)), paint);
+            paint.setColor(0xFFFF1744);
+            c.drawCircle(sx, sy, px(3.8f), paint);
+            paint.setColor(0xFFFFFFFF);
+            c.drawCircle(sx + px(1.2f), sy - px(1.2f), px(1.3f), paint);
             return;
         }
         paint.setColor(0x44FFE066);
@@ -3212,6 +3682,61 @@ final class SkyView extends View {
                 paint.setStyle(Paint.Style.FILL);
                 drawBird(c, gx - dir * px(34f * sc), gy - px(8f * sc), t * 12f + g, px(11f * sc), 0xEEFFF8E8);
                 continue;
+            } else if (universeTheme == 9) {
+                // SNOOPY Top Sky: WWI Flying Ace Snoopy on his Flying Red Doghouse with Streaming Red Scarf
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0xFFD32F2F);
+                c.drawRoundRect(gx - px(12f * sc), gy - px(4f * sc), gx + px(12f * sc), gy + px(8f * sc), px(2f * sc), px(2f * sc), paint);
+                // Snoopy head + black floppy ear + red scarf streaming behind
+                paint.setColor(0xFFFFFFFF);
+                c.drawCircle(gx + dir * px(3f * sc), gy - px(8f * sc), px(5.5f * sc), paint);
+                paint.setColor(0xFF1A1A1A);
+                c.drawOval(rectF(gx - dir * px(3f * sc), gy - px(8f * sc), gx + dir * px(1f * sc), gy - px(1f * sc)), paint);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.4f * sc));
+                paint.setColor(0xFFFF1744);
+                c.drawLine(gx, gy - px(5f * sc), gx - dir * px(22f * sc), gy - px(3f * sc) + (float) Math.sin(t * 14f + g) * px(3f * sc), paint);
+                paint.setStyle(Paint.Style.FILL);
+                continue;
+            } else if (universeTheme == 10) {
+                // TOM & JERRY Top Sky: Flying Tom & Parachuting Jerry with Slapstick Dust Puffs
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(g % 2 == 0 ? 0xFF78909C : 0xFFA1887F);
+                c.drawCircle(gx, gy, px(7.5f * sc), paint);
+                paint.setColor(0xFFFFCA28);
+                c.drawCircle(gx + dir * px(10f * sc), gy - px(3f * sc), px(4.0f * sc), paint);
+                continue;
+            } else if (universeTheme == 11) {
+                // FINDING NEMO Top Sky: Crush & Squirt the Sea Turtles + Clownfish & Blue Tang School
+                paint.setStyle(Paint.Style.FILL);
+                if (g % 2 == 0) {
+                    // Sea Turtle Crush gliding through the current
+                    paint.setColor(0xFF43A047);
+                    c.drawOval(rectF(gx - px(14f * sc), gy - px(7f * sc), gx + px(14f * sc), gy + px(7f * sc)), paint);
+                    paint.setColor(0xFF81C784);
+                    c.drawCircle(gx + dir * px(17f * sc), gy - px(1f * sc), px(4.2f * sc), paint);
+                } else {
+                    // Clownfish Nemo & Blue Tang Dory pair
+                    paint.setColor(0xFFFF6D00);
+                    c.drawOval(rectF(gx - px(10f * sc), gy - px(5f * sc), gx + px(10f * sc), gy + px(5f * sc)), paint);
+                    paint.setColor(0xFFFFFFFF);
+                    c.drawRect(gx - px(2f * sc), gy - px(4.5f * sc), gx + px(2f * sc), gy + px(4.5f * sc), paint);
+                    paint.setColor(0xFF2962FF);
+                    c.drawOval(rectF(gx - dir * px(26f * sc), gy + px(3f * sc), gx - dir * px(12f * sc), gy + px(11f * sc)), paint);
+                }
+                continue;
+            } else if (universeTheme == 12) {
+                // JETIX Top Sky: Oban Whizzing Arrowhead Star-Racer & Super Robot Fist Rocket
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(px(2.4f * sc));
+                paint.setColor(g % 2 == 0 ? 0xCCFF1744 : 0xCC00E676);
+                c.drawLine(gx - dir * px(12f * sc), gy, gx - dir * px(40f * sc), gy, paint);
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(0xFFF4F8FF);
+                c.drawRoundRect(gx - px(14f * sc), gy - px(5f * sc), gx + px(14f * sc), gy + px(5f * sc), px(3f * sc), px(3f * sc), paint);
+                paint.setColor(0xFFFF1744);
+                c.drawCircle(gx + dir * px(5f * sc), gy, px(3.2f * sc), paint);
+                continue;
             }
             float shimmer = 0.72f + 0.28f * (float) Math.sin(t * 3.1f + g * 1.3f);
             int auraAlpha = Math.round(18f * shimmer);
@@ -3315,6 +3840,18 @@ final class SkyView extends View {
             return;
         } else if (universeTheme == 8) {
             drawSpiritedSkiesStoryLoop(c, w, h, t);
+            return;
+        } else if (universeTheme == 9) {
+            drawSnoopyStoryLoop(c, w, h, t);
+            return;
+        } else if (universeTheme == 10) {
+            drawTomAndJerryStoryLoop(c, w, h, t);
+            return;
+        } else if (universeTheme == 11) {
+            drawFindingNemoStoryLoop(c, w, h, t);
+            return;
+        } else if (universeTheme == 12) {
+            drawJetixStoryLoop(c, w, h, t);
             return;
         }
         float totalCycle = CHAPTER_SEC * SCENE_COUNT;
@@ -9223,6 +9760,496 @@ final class SkyView extends View {
         c.restore();
     }
 
+    private void drawStageHorizonLine(Canvas c, int w, float groundY, int aBase, int lineRgb, int glowRgb) {
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(px(3.5f));
+        paint.setColor((aBase / 4 << 24) | (glowRgb & 0xFFFFFF));
+        c.drawLine(w * 0.22f, groundY, w * 0.68f, groundY, paint);
+        paint.setStrokeWidth(px(1.6f));
+        paint.setColor((aBase * 2 / 3 << 24) | (lineRgb & 0xFFFFFF));
+        c.drawLine(w * 0.22f, groundY, w * 0.68f, groundY, paint);
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    /**
+     * SNOOPY & PEANUTS STORY ENGINE (universeTheme == 9):
+     * 6-Mode Peanuts Choreography across 44 classic Charles M. Schulz scenes.
+     */
+    private void drawSnoopyStoryLoop(Canvas c, int w, int h, float t) {
+        float totalCycle = CHAPTER_SEC * UNIVERSE_SCENE_COUNT;
+        float cycleTime = t % totalCycle;
+        int scene = resolveActiveScene(cycleTime, UNIVERSE_SCENE_COUNT);
+        float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
+        float fade = resolveStoryFade(p);
+        int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
+
+        float groundY = h * 0.900f;
+        drawStoryCaptionAndDots(c, w, h, SNOOPY_TITLES[scene], scene, UNIVERSE_SCENE_COUNT, aBase,
+                0x00FFC107, 0xEEFFE082, 0x42FFC107, px(7.8f));
+
+        c.save();
+        c.translate(-w * 0.25f, 0f);
+        drawStageHorizonLine(c, w, groundY, aBase, 0x0066BB6A, 0x00FFC107);
+
+        int mode = scene % 6;
+        paint.setStyle(Paint.Style.FILL);
+        if (mode == 0) {
+            // Mode 0: Snoopy on His Iconic Red Doghouse + Woodstock Perched on His Nose
+            float dhX = w * 0.42f;
+            paint.setColor((aBase << 24) | 0x00E53935);
+            c.drawRect(dhX - px(34f), groundY - px(46f), dhX + px(34f), groundY, paint);
+            actorPath.reset();
+            actorPath.moveTo(dhX - px(42f), groundY - px(44f));
+            actorPath.lineTo(dhX, groundY - px(68f));
+            actorPath.lineTo(dhX + px(42f), groundY - px(44f));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            // Snoopy lying on the roof
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawOval(rectF(dhX - px(24f), groundY - px(78f), dhX + px(14f), groundY - px(62f)), paint);
+            c.drawCircle(dhX + px(16f), groundY - px(74f), px(10f), paint);
+            paint.setColor((aBase << 24) | 0x001A1A1A);
+            c.drawOval(rectF(dhX + px(6f), groundY - px(74f), dhX + px(14f), groundY - px(62f)), paint); // Black ear
+            c.drawCircle(dhX + px(25f), groundY - px(78f), px(3f), paint); // Nose
+            // Woodstock hopping on Snoopy's nose
+            float wsBob = (float) Math.abs(Math.sin(t * 7f)) * px(6f);
+            paint.setColor((aBase << 24) | 0x00FFD600);
+            c.drawCircle(dhX + px(25f), groundY - px(85f) - wsBob, px(4.8f), paint);
+        } else if (mode == 1) {
+            // Mode 1: WWI Flying Ace Doghouse Biplane with Flapping Red Scarf & Smoke Trail
+            float aceX = w * (0.28f + p * 0.32f);
+            float aceY = groundY - px(52f) + (float) Math.sin(t * 4.5f) * px(8f);
+            paint.setColor((aBase << 24) | 0x00D32F2F);
+            c.drawRoundRect(aceX - px(28f), aceY - px(14f), aceX + px(28f), aceY + px(16f), px(4f), px(4f), paint);
+            // Snoopy in brown aviator helmet + flapping red scarf
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawCircle(aceX + px(6f), aceY - px(22f), px(9.5f), paint);
+            paint.setColor((aBase << 24) | 0x005D4037);
+            c.drawArc(rectF(aceX - px(3f), aceY - px(31f), aceX + px(15f), aceY - px(15f)), 180f, 180f, true, paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(3.5f));
+            paint.setColor((aBase << 24) | 0x00FF1744);
+            c.drawLine(aceX - px(2f), aceY - px(16f), aceX - px(34f), aceY - px(18f) + (float) Math.sin(t * 12f) * px(5f), paint);
+            paint.setStyle(Paint.Style.FILL);
+        } else if (mode == 2) {
+            // Mode 2: Charlie Brown in Yellow Zig-Zag Shirt Running Toward Lucy's Football
+            float cbX = w * (0.26f + p * 0.22f);
+            float stride = (float) Math.abs(Math.sin(t * 8f)) * px(6f);
+            // Yellow shirt with black zig-zag
+            paint.setColor((aBase << 24) | 0x00FFC107);
+            c.drawRoundRect(cbX - px(10f), groundY - px(36f) - stride, cbX + px(10f), groundY - px(14f) - stride, px(4f), px(4f), paint);
+            paint.setColor((aBase << 24) | 0x001A1A1A);
+            c.drawRect(cbX - px(10f), groundY - px(26f) - stride, cbX + px(10f), groundY - px(21f) - stride, paint);
+            paint.setColor((aBase << 24) | 0x00FFE0B2);
+            c.drawCircle(cbX, groundY - px(46f) - stride, px(10.5f), paint);
+            // Football on the turf (pulled up at p > 0.65!)
+            float fbX = w * 0.56f;
+            float fbLift = p > 0.65f ? (p - 0.65f) * px(85f) : 0f;
+            paint.setColor((aBase << 24) | 0x00795548);
+            c.drawOval(rectF(fbX - px(7f), groundY - px(16f) - fbLift, fbX + px(7f), groundY - fbLift), paint);
+        } else if (mode == 3) {
+            // Mode 3: Schroeder at His Toy Piano with Floating Beethoven Quarter Notes
+            float pnX = w * 0.44f;
+            paint.setColor((aBase << 24) | 0x00E53935);
+            c.drawRoundRect(pnX - px(16f), groundY - px(34f), pnX + px(28f), groundY, px(4f), px(4f), paint);
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawRect(pnX - px(18f), groundY - px(20f), pnX - px(6f), groundY - px(14f), paint);
+            // Floating musical notes
+            paint.setColor((aBase << 24) | 0x00FFD54F);
+            for (int n = 0; n < 4; n++) {
+                float ny = groundY - px(44f) - ((t * 22f + n * 14f) % 42f);
+                float nx = pnX + (n - 1.5f) * px(16f) + (float) Math.sin(t * 4f + n) * px(5f);
+                c.drawCircle(nx, ny, px(4.2f), paint);
+                c.drawRect(nx + px(2.5f), ny - px(11f), nx + px(4.5f), ny, paint);
+            }
+        } else if (mode == 4) {
+            // Mode 4: Linus in the Great Pumpkin Patch Under Starlight
+            for (int pk = 0; pk < 3; pk++) {
+                float pxPos = w * (0.32f + pk * 0.12f);
+                paint.setColor((aBase << 24) | 0x00FF6D00);
+                c.drawOval(rectF(pxPos - px(18f), groundY - px(26f), pxPos + px(18f), groundY), paint);
+                paint.setColor((aBase << 24) | 0x002E7D32);
+                c.drawRect(pxPos - px(2.5f), groundY - px(32f), pxPos + px(2.5f), groundY - px(24f), paint);
+            }
+            // Linus with blue security blanket
+            float lnX = w * 0.44f;
+            paint.setColor((aBase << 24) | 0x0042A5F5);
+            c.drawOval(rectF(lnX + px(8f), groundY - px(32f), lnX + px(28f), groundY - px(6f)), paint);
+            paint.setColor((aBase << 24) | 0x00FFE0B2);
+            c.drawCircle(lnX, groundY - px(42f), px(9.5f), paint);
+        } else {
+            // Mode 5: Snoopy the Beagle Scout Leading Woodstock & Yellow Bird Troop
+            float scX = w * (0.28f + p * 0.28f);
+            float hop = (float) Math.abs(Math.sin(t * 7f)) * px(6f);
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawOval(rectF(scX - px(10f), groundY - px(36f) - hop, scX + px(10f), groundY - px(6f) - hop), paint);
+            c.drawCircle(scX + px(4f), groundY - px(44f) - hop, px(9f), paint);
+            // Green scout campaign hat
+            paint.setColor((aBase << 24) | 0x00558B2F);
+            c.drawOval(rectF(scX - px(8f), groundY - px(55f) - hop, scX + px(16f), groundY - px(49f) - hop), paint);
+            // Following yellow bird scouts
+            paint.setColor((aBase << 24) | 0x00FFD600);
+            for (int b = 0; b < 4; b++) {
+                float bx = scX - px(24f + b * 15f);
+                float bHop = (float) Math.abs(Math.sin(t * 9f + b)) * px(5f);
+                c.drawCircle(bx, groundY - px(10f) - bHop, px(4.5f), paint);
+            }
+        }
+        c.restore();
+    }
+
+    /**
+     * TOM & JERRY STORY ENGINE (universeTheme == 10):
+     * 6-Mode Classic MGM Slapstick Choreography across 44 iconic episodes.
+     */
+    private void drawTomAndJerryStoryLoop(Canvas c, int w, int h, float t) {
+        float totalCycle = CHAPTER_SEC * UNIVERSE_SCENE_COUNT;
+        float cycleTime = t % totalCycle;
+        int scene = resolveActiveScene(cycleTime, UNIVERSE_SCENE_COUNT);
+        float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
+        float fade = resolveStoryFade(p);
+        int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
+
+        float groundY = h * 0.900f;
+        drawStoryCaptionAndDots(c, w, h, TOM_AND_JERRY_TITLES[scene], scene, UNIVERSE_SCENE_COUNT, aBase,
+                0x00FFCA28, 0xEEFFF59D, 0x42FFCA28, px(7.8f));
+
+        c.save();
+        c.translate(-w * 0.25f, 0f);
+        drawStageHorizonLine(c, w, groundY, aBase, 0x00D32F2F, 0x00FFCA28);
+
+        int mode = scene % 6;
+        paint.setStyle(Paint.Style.FILL);
+        if (mode == 0) {
+            // Mode 0: High-Speed Living Room Chase — Jerry Carrying Giant Swiss Cheese Wedge Ahead of Tom
+            float jrX = w * (0.34f + p * 0.30f);
+            float tmX = jrX - px(68f);
+            float dashBob = (float) Math.abs(Math.sin(t * 12f)) * px(6f);
+            // Tom lunging forward (blue-grey cat silhouette + white paws)
+            paint.setColor((aBase << 24) | 0x00546E7A);
+            c.drawOval(rectF(tmX - px(24f), groundY - px(38f) - dashBob, tmX + px(22f), groundY - px(10f) - dashBob), paint);
+            c.drawCircle(tmX + px(22f), groundY - px(36f) - dashBob, px(12f), paint);
+            // Jerry sprinting with golden Swiss cheese wedge
+            paint.setColor((aBase << 24) | 0x008D6E63);
+            c.drawCircle(jrX, groundY - px(14f) - dashBob * 0.7f, px(6.5f), paint);
+            paint.setColor((aBase << 24) | 0x00FFD54F);
+            actorPath.reset();
+            actorPath.moveTo(jrX - px(8f), groundY - px(28f) - dashBob);
+            actorPath.lineTo(jrX + px(14f), groundY - px(22f) - dashBob);
+            actorPath.lineTo(jrX - px(4f), groundY - px(16f) - dashBob);
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+        } else if (mode == 1) {
+            // Mode 1: The Cat Concerto — Tom in Black Tuxedo at the Concert Grand Piano while Jerry Jumps on Keys
+            float pnX = w * 0.44f;
+            paint.setColor((aBase << 24) | 0x001A1A1A);
+            c.drawRoundRect(pnX - px(28f), groundY - px(44f), pnX + px(38f), groundY - px(14f), px(6f), px(6f), paint);
+            c.drawRect(pnX - px(22f), groundY - px(14f), pnX - px(16f), groundY, paint);
+            c.drawRect(pnX + px(26f), groundY - px(14f), pnX + px(32f), groundY, paint);
+            // White piano keys + Jerry bouncing along keybed
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawRect(pnX - px(34f), groundY - px(28f), pnX - px(18f), groundY - px(22f), paint);
+            float jrBounce = (float) Math.abs(Math.sin(t * 10f)) * px(10f);
+            paint.setColor((aBase << 24) | 0x00A1887F);
+            c.drawCircle(pnX - px(26f), groundY - px(34f) - jrBounce, px(5.5f), paint);
+        } else if (mode == 2) {
+            // Mode 2: Spike the Bulldog's Red Doghouse, Spiked Collar & Jumbo Bone
+            float spX = w * 0.42f;
+            paint.setColor((aBase << 24) | 0x00B71C1C);
+            c.drawRoundRect(spX - px(32f), groundY - px(52f), spX + px(32f), groundY, px(6f), px(6f), paint);
+            // Spike bulldog head + red spiked collar
+            paint.setColor((aBase << 24) | 0x009E9E9E);
+            c.drawCircle(spX + px(42f), groundY - px(28f), px(16f), paint);
+            paint.setColor((aBase << 24) | 0x00D50000);
+            c.drawRect(spX + px(30f), groundY - px(18f), spX + px(54f), groundY - px(12f), paint);
+            // White jumbo bone on lawn
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawRoundRect(spX + px(68f), groundY - px(10f), spX + px(92f), groundY - px(4f), px(3f), px(3f), paint);
+        } else if (mode == 3) {
+            // Mode 3: Baseboard Mousehole & Fizzing Red Dynamite / Anvil Slapstick Trap
+            float mhX = w * 0.46f;
+            paint.setColor((aBase << 24) | 0x00261812);
+            c.drawArc(rectF(mhX - px(16f), groundY - px(36f), mhX + px(16f), groundY + px(20f)), 180f, 180f, true, paint);
+            // Red TNT stick outside with sparking golden fuse
+            paint.setColor((aBase << 24) | 0x00FF1744);
+            c.drawRoundRect(mhX - px(44f), groundY - px(28f), mhX - px(32f), groundY, px(2f), px(2f), paint);
+            paint.setColor((aBase << 24) | 0x00FFD600);
+            float spk = px(5f + 4f * (float) Math.abs(Math.sin(t * 18f)));
+            c.drawCircle(mhX - px(38f), groundY - px(34f), spk, paint);
+        } else if (mode == 4) {
+            // Mode 4: Midnight Kitchen Fridge Raid with Jerry & Little Nibbles (Tuffy) in Diaper
+            float frX = w * 0.42f;
+            paint.setColor((aBase << 24) | 0x00ECEFF1);
+            c.drawRoundRect(frX - px(26f), groundY - px(68f), frX + px(26f), groundY, px(8f), px(8f), paint);
+            // Golden warm interior fridge glow spilling onto floor
+            paint.setColor((aBase / 2 << 24) | 0x00FFE082);
+            c.drawRect(frX + px(18f), groundY - px(58f), frX + px(64f), groundY, paint);
+            // Jerry & Nibbles silhouettes in the light beam
+            paint.setColor((aBase << 24) | 0x008D6E63);
+            c.drawCircle(frX + px(38f), groundY - px(12f), px(6.5f), paint);
+            paint.setColor((aBase << 24) | 0x0090A4AE);
+            c.drawCircle(frX + px(54f), groundY - px(9f), px(5.0f), paint);
+        } else {
+            // Mode 5: Tom's Upright Bass Serenade on the Backyard Wooden Fence ("Is You Is Or Is You Ain't My Baby")
+            paint.setColor((aBase << 24) | 0x006D4C41);
+            for (int f = 0; f < 7; f++) {
+                float fx = w * (0.28f + f * 0.055f);
+                c.drawRect(fx, groundY - px(38f), fx + px(10f), groundY, paint);
+            }
+            float tmX = w * 0.44f;
+            paint.setColor((aBase << 24) | 0x00546E7A);
+            c.drawOval(rectF(tmX - px(14f), groundY - px(74f), tmX + px(14f), groundY - px(38f)), paint);
+            // Floating red hearts & musical notes
+            paint.setColor((aBase << 24) | 0x00FF1744);
+            for (int hrt = 0; hrt < 3; hrt++) {
+                float hy = groundY - px(64f) - ((t * 20f + hrt * 15f) % 40f);
+                c.drawCircle(tmX + px(22f + hrt * 12f), hy, px(4.5f), paint);
+            }
+        }
+        c.restore();
+    }
+
+    /**
+     * FINDING NEMO STORY ENGINE (universeTheme == 11):
+     * 6-Mode Great Barrier Reef & Ocean Odyssey across 44 Pixar underwater scenes.
+     */
+    private void drawFindingNemoStoryLoop(Canvas c, int w, int h, float t) {
+        float totalCycle = CHAPTER_SEC * UNIVERSE_SCENE_COUNT;
+        float cycleTime = t % totalCycle;
+        int scene = resolveActiveScene(cycleTime, UNIVERSE_SCENE_COUNT);
+        float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
+        float fade = resolveStoryFade(p);
+        int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
+
+        float groundY = h * 0.900f;
+        drawStoryCaptionAndDots(c, w, h, FINDING_NEMO_TITLES[scene], scene, UNIVERSE_SCENE_COUNT, aBase,
+                0x00FF6D00, 0xEE80DEEA, 0x4200E5FF, px(7.8f));
+
+        c.save();
+        c.translate(-w * 0.25f, 0f);
+        drawStageHorizonLine(c, w, groundY, aBase, 0x0000ACC1, 0x00FF6D00);
+
+        int mode = scene % 6;
+        paint.setStyle(Paint.Style.FILL);
+        if (mode == 0) {
+            // Mode 0: Nemo & Marlin Emerging from Their Glowing Sea Anemone Home + Dory Swimming Alongside
+            float anX = w * 0.36f;
+            paint.setColor((aBase << 24) | 0x00FF4081);
+            for (int tn = 0; tn < 7; tn++) {
+                float sway = (float) Math.sin(t * 3.5f + tn) * px(5f);
+                c.drawRoundRect(anX - px(24f) + tn * px(8f) + sway, groundY - px(38f),
+                        anX - px(18f) + tn * px(8f) + sway, groundY, px(4f), px(4f), paint);
+            }
+            // Marlin & Nemo (orange & white stripes) + Dory (regal blue & yellow tail)
+            float swimX = w * (0.44f + p * 0.18f);
+            float swimY = groundY - px(36f) + (float) Math.sin(t * 4.5f) * px(7f);
+            paint.setColor((aBase << 24) | 0x00FF6D00);
+            c.drawOval(rectF(swimX - px(14f), swimY - px(8f), swimX + px(14f), swimY + px(8f)), paint);
+            c.drawOval(rectF(swimX + px(22f), swimY - px(5f), swimX + px(36f), swimY + px(5f)), paint);
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawRect(swimX - px(2f), swimY - px(8f), swimX + px(2f), swimY + px(8f), paint);
+            paint.setColor((aBase << 24) | 0x0000B0FF);
+            c.drawOval(rectF(swimX - px(42f), swimY - px(18f), swimX - px(16f), swimY - px(2f)), paint);
+        } else if (mode == 1) {
+            // Mode 1: Riding the East Australian Current (EAC) with Crush & Squirt Sea Turtles
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(3.0f));
+            paint.setColor((aBase / 2 << 24) | 0x0000E5FF);
+            for (int st = 0; st < 3; st++) {
+                float sy = groundY - px(24f + st * 18f);
+                c.drawLine(w * 0.24f, sy, w * 0.66f, sy - px(10f), paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+            float crX = w * (0.30f + p * 0.28f);
+            float crY = groundY - px(46f) + (float) Math.sin(t * 3.8f) * px(8f);
+            paint.setColor((aBase << 24) | 0x00558B2F);
+            c.drawOval(rectF(crX - px(28f), crY - px(14f), crX + px(28f), crY + px(14f)), paint);
+            paint.setColor((aBase << 24) | 0x008BC34A);
+            c.drawCircle(crX + px(34f), crY - px(4f), px(8f), paint);
+            // Little Squirt looping above Crush
+            c.drawOval(rectF(crX - px(12f), crY - px(32f), crX + px(6f), crY - px(20f)), paint);
+        } else if (mode == 2) {
+            // Mode 2: Bruce the Great White Shark & tethered WWII Naval Mines ("Fish Are Friends, Not Food")
+            for (int mn = 0; mn < 3; mn++) {
+                float mx = w * (0.30f + mn * 0.14f);
+                float my = groundY - px(48f + (mn % 2) * 18f) + (float) Math.sin(t * 2.2f + mn) * px(5f);
+                paint.setColor((aBase * 2 / 3 << 24) | 0x0037474F);
+                c.drawLine(mx, my, mx, groundY, paint);
+                c.drawCircle(mx, my, px(13f), paint);
+            }
+            // Bruce dorsal & tail silhouette
+            float brX = w * 0.46f + (float) Math.sin(t * 2.8f) * px(24f);
+            paint.setColor((aBase << 24) | 0x00455A64);
+            c.drawOval(rectF(brX - px(38f), groundY - px(44f), brX + px(38f), groundY - px(16f)), paint);
+        } else if (mode == 3) {
+            // Mode 3: Bioluminescent Pink Jellyfish Forest Bounce
+            for (int jf = 0; jf < 5; jf++) {
+                float jx = w * (0.28f + jf * 0.08f);
+                float jy = groundY - px(32f) - (float) Math.abs(Math.sin(t * 4.2f + jf)) * px(28f);
+                paint.setColor((aBase << 24) | 0x00FF4081);
+                c.drawArc(rectF(jx - px(14f), jy - px(14f), jx + px(14f), jy + px(10f)), 180f, 180f, true, paint);
+                paint.setColor((aBase * 2 / 3 << 24) | 0x00FF80AB);
+                c.drawLine(jx - px(6f), jy, jx - px(8f), jy + px(18f), paint);
+                c.drawLine(jx + px(6f), jy, jx + px(8f), jy + px(18f), paint);
+            }
+        } else if (mode == 4) {
+            // Mode 4: Abyssal Trench & The Glowing Deep-Sea Anglerfish Lure + Mask of P. Sherman 42 Wallaby Way
+            float agX = w * 0.42f;
+            float agY = groundY - px(38f);
+            paint.setColor((aBase << 24) | 0x001A237E);
+            c.drawOval(rectF(agX - px(32f), agY - px(20f), agX + px(24f), agY + px(18f)), paint);
+            // Glowing cyan-yellow bioluminescent esca bulb
+            float bulbX = agX + px(42f) + (float) Math.sin(t * 6f) * px(5f);
+            float bulbY = agY - px(18f) + (float) Math.cos(t * 6f) * px(5f);
+            paint.setColor((aBase / 3 << 24) | 0x0000E5FF);
+            c.drawCircle(bulbX, bulbY, px(18f), paint);
+            paint.setColor((aBase << 24) | 0x00FFF59D);
+            c.drawCircle(bulbX, bulbY, px(6.5f), paint);
+        } else {
+            // Mode 5: Sydney Harbour Opera House Sails & Nigel the Pelican Soaring Overhead
+            float opX = w * 0.45f;
+            paint.setColor((aBase << 24) | 0x00ECEFF1);
+            for (int sl = 0; sl < 3; sl++) {
+                float sx = opX - px(32f) + sl * px(22f);
+                actorPath.reset();
+                actorPath.moveTo(sx, groundY);
+                actorPath.lineTo(sx + px(10f), groundY - px(46f + sl * 6f));
+                actorPath.lineTo(sx + px(24f), groundY);
+                actorPath.close();
+                c.drawPath(actorPath, paint);
+            }
+            // Nigel the Pelican with orange pouch bill
+            float ngX = w * (0.28f + p * 0.30f);
+            float ngY = groundY - px(66f) + (float) Math.sin(t * 4f) * px(7f);
+            paint.setColor((aBase << 24) | 0x00FFFFFF);
+            c.drawOval(rectF(ngX - px(16f), ngY - px(8f), ngX + px(12f), ngY + px(8f)), paint);
+            paint.setColor((aBase << 24) | 0x00FFA000);
+            c.drawOval(rectF(ngX + px(10f), ngY - px(4f), ngX + px(28f), ngY + px(8f)), paint);
+        }
+        c.restore();
+    }
+
+    /**
+     * JETIX ACTION-TOON STORY ENGINE (universeTheme == 12):
+     * 6-Mode High-Voltage 2000s Jetix Broadcast & Action Shows across 44 iconic scenes.
+     */
+    private void drawJetixStoryLoop(Canvas c, int w, int h, float t) {
+        float totalCycle = CHAPTER_SEC * UNIVERSE_SCENE_COUNT;
+        float cycleTime = t % totalCycle;
+        int scene = resolveActiveScene(cycleTime, UNIVERSE_SCENE_COUNT);
+        float p = (cycleTime % CHAPTER_SEC) / CHAPTER_SEC;
+        float fade = resolveStoryFade(p);
+        int aBase = Math.min(255, Math.max(0, Math.round(fade * 255f)));
+
+        float groundY = h * 0.900f;
+        drawStoryCaptionAndDots(c, w, h, JETIX_TITLES[scene], scene, UNIVERSE_SCENE_COUNT, aBase,
+                0x00FF1744, 0xEEFF8A80, 0x42FF1744, px(7.8f));
+
+        c.save();
+        c.translate(-w * 0.25f, 0f);
+        drawStageHorizonLine(c, w, groundY, aBase, 0x00FF1744, 0x0000E5FF);
+
+        int mode = scene % 6;
+        paint.setStyle(Paint.Style.FILL);
+        if (mode == 0) {
+            // Mode 0: The Iconic Jetix One-Eyed Winged Chrome Mascot Firing Broadcast Shockwaves
+            float jx = w * 0.45f;
+            float jy = groundY - px(42f) + (float) Math.sin(t * 5f) * px(7f);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(2.6f));
+            paint.setColor((aBase / 2 << 24) | 0x00FF1744);
+            float pulseR = px(20f + ((t * 36f) % 44f));
+            c.drawCircle(jx, jy, pulseR, paint);
+            paint.setStyle(Paint.Style.FILL);
+            // Swept red/chrome Jetix wings + central eyeball core
+            paint.setColor((aBase << 24) | 0x00FF1744);
+            actorPath.reset();
+            actorPath.moveTo(jx - px(44f), jy - px(14f));
+            actorPath.lineTo(jx + px(44f), jy - px(14f));
+            actorPath.lineTo(jx + px(26f), jy + px(10f));
+            actorPath.lineTo(jx - px(26f), jy + px(10f));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+            paint.setColor((aBase << 24) | 0x00ECEFF1);
+            c.drawCircle(jx, jy, px(15f), paint);
+            paint.setColor((aBase << 24) | 0x001A1A1A);
+            c.drawCircle(jx, jy, px(6.5f), paint);
+        } else if (mode == 1) {
+            // Mode 1: Yin Yang Yo! — Twin Rabbit Warriors Yin (Pink Magic) & Yang (Blue Bamboo Sword)
+            float yinX = w * 0.37f, yangX = w * 0.53f;
+            float hop = (float) Math.abs(Math.sin(t * 7f)) * px(8f);
+            // Yin (pink rabbit + long ears + magenta aura)
+            paint.setColor((aBase / 3 << 24) | 0x00FF4081);
+            c.drawCircle(yinX, groundY - px(24f) - hop, px(22f), paint);
+            paint.setColor((aBase << 24) | 0x00F48FB1);
+            c.drawCircle(yinX, groundY - px(22f) - hop, px(11f), paint);
+            c.drawOval(rectF(yinX - px(7f), groundY - px(46f) - hop, yinX - px(1f), groundY - px(26f) - hop), paint);
+            c.drawOval(rectF(yinX + px(1f), groundY - px(46f) - hop, yinX + px(7f), groundY - px(26f) - hop), paint);
+            // Yang (cyan rabbit + long ears + glowing sword slash)
+            paint.setColor((aBase / 3 << 24) | 0x0000E5FF);
+            c.drawCircle(yangX, groundY - px(24f) - hop, px(22f), paint);
+            paint.setColor((aBase << 24) | 0x004FC3F7);
+            c.drawCircle(yangX, groundY - px(22f) - hop, px(11f), paint);
+            c.drawOval(rectF(yangX - px(7f), groundY - px(46f) - hop, yangX - px(1f), groundY - px(26f) - hop), paint);
+            c.drawOval(rectF(yangX + px(1f), groundY - px(46f) - hop, yangX + px(7f), groundY - px(26f) - hop), paint);
+        } else if (mode == 2) {
+            // Mode 2: Super Robot Monkey Team Hyperforce Go! — The Giant Chiro Super Robot Fist Power-Up
+            float rbX = w * 0.45f;
+            paint.setColor((aBase << 24) | 0x00ECEFF1);
+            c.drawRoundRect(rbX - px(32f), groundY - px(64f), rbX + px(32f), groundY, px(8f), px(8f), paint);
+            // Glowing green Primate Power core & red visor
+            paint.setColor((aBase << 24) | 0x0000E676);
+            c.drawCircle(rbX, groundY - px(34f), px(12f + 3f * (float) Math.sin(t * 8f)), paint);
+            paint.setColor((aBase << 24) | 0x00FF1744);
+            c.drawRect(rbX - px(20f), groundY - px(56f), rbX + px(20f), groundY - px(50f), paint);
+        } else if (mode == 3) {
+            // Mode 3: Pucca Chasing Garu the Ninja Under Goh-Rong Noodle Lanterns & Floating Hearts
+            float grX = w * (0.36f + p * 0.26f);
+            float pcX = grX - px(46f);
+            float runBob = (float) Math.abs(Math.sin(t * 11f)) * px(6f);
+            // Garu (black ninja outfit + white heart badge)
+            paint.setColor((aBase << 24) | 0x001A1A1A);
+            c.drawCircle(grX, groundY - px(20f) - runBob, px(11f), paint);
+            // Pucca (red dress + iconic twin black space-buns + floating hearts)
+            paint.setColor((aBase << 24) | 0x00FF1744);
+            c.drawOval(rectF(pcX - px(10f), groundY - px(24f) - runBob, pcX + px(10f), groundY - px(4f) - runBob), paint);
+            paint.setColor((aBase << 24) | 0x001A1A1A);
+            c.drawCircle(pcX - px(10f), groundY - px(32f) - runBob, px(5.5f), paint);
+            c.drawCircle(pcX + px(10f), groundY - px(32f) - runBob, px(5.5f), paint);
+            paint.setColor((aBase << 24) | 0x00FF4081);
+            c.drawCircle(pcX + px(18f), groundY - px(38f) - runBob, px(4.5f), paint);
+        } else if (mode == 4) {
+            // Mode 4: Power Rangers S.P.D. / Mystic Force — Five Colored Ranger Beams Converging into Megazord Crest
+            float mzX = w * 0.45f;
+            int[] rCols = {0x00FF1744, 0x002979FF, 0x0000E676, 0x00FFD600, 0x00FF4081};
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(px(3.5f));
+            for (int r = 0; r < 5; r++) {
+                paint.setColor((aBase << 24) | rCols[r]);
+                float rx = mzX + (r - 2) * px(26f);
+                c.drawLine(rx, groundY, mzX, groundY - px(58f), paint);
+            }
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor((aBase << 24) | 0x00FFD600);
+            c.drawCircle(mzX, groundY - px(58f), px(14f + 4f * (float) Math.sin(t * 9f)), paint);
+        } else {
+            // Mode 5: Oban Star-Racers Whizzing Arrow & Beyblade Bit-Beast Stadium Clash
+            float arX = w * (0.28f + p * 0.34f);
+            float arY = groundY - px(42f) + (float) Math.sin(t * 5f) * px(8f);
+            // Cyan-orange plasma turbine trail
+            paint.setColor((aBase * 2 / 3 << 24) | 0x0000E5FF);
+            c.drawOval(rectF(arX - px(48f), arY - px(5f), arX - px(10f), arY + px(5f)), paint);
+            paint.setColor((aBase << 24) | 0x00FF6D00);
+            actorPath.reset();
+            actorPath.moveTo(arX + px(28f), arY);
+            actorPath.lineTo(arX - px(16f), arY - px(12f));
+            actorPath.lineTo(arX - px(16f), arY + px(12f));
+            actorPath.close();
+            c.drawPath(actorPath, paint);
+        }
+        c.restore();
+    }
+
     private void drawCyberQuadraCar(Canvas c, float x, float y, float t, int alpha,
                                      int bodyRgb, int neonRgb, int tailRgb, boolean facingLeft, float s) {
         float dir = facingLeft ? -1f : 1f;
@@ -11167,6 +12194,78 @@ final class SkyView extends View {
                 topBg = 0xFF0E2414; botBg = 0xFF051008; glowCol = 0x6069F0AE;
                 houseSub = "CAMPHOR TREE  |  KODAMA"; emblemType = 805;
             }
+        } else if (theme == 9) {
+            // Theme 10: SNOOPY & PEANUTS App Banners
+            if (styleSlot == 0) {
+                topBg = 0xFF2A0909; botBg = 0xFF120303; glowCol = 0x62FF1744;
+                houseSub = "RED DOGHOUSE  |  FLYING ACE"; emblemType = 901;
+            } else if (styleSlot == 1) {
+                topBg = 0xFF281C04; botBg = 0xFF120C02; glowCol = 0x62FFD600;
+                houseSub = "WOODSTOCK  |  BEAGLE SCOUTS"; emblemType = 902;
+            } else if (styleSlot == 2) {
+                topBg = 0xFF281806; botBg = 0xFF120A02; glowCol = 0x62FFC107;
+                houseSub = "CHARLIE BROWN  |  GOOD GRIEF"; emblemType = 903;
+            } else if (styleSlot == 3) {
+                topBg = 0xFF081C30; botBg = 0xFF040B14; glowCol = 0x6042A5F5;
+                houseSub = "LINUS  |  GREAT PUMPKIN"; emblemType = 904;
+            } else {
+                topBg = 0xFF1A0E2A; botBg = 0xFF0B0514; glowCol = 0x60FF80AB;
+                houseSub = "SCHROEDER  |  JOE COOL"; emblemType = 905;
+            }
+        } else if (theme == 10) {
+            // Theme 11: TOM & JERRY App Banners
+            if (styleSlot == 0) {
+                topBg = 0xFF2C0808; botBg = 0xFF140303; glowCol = 0x64FFCA28;
+                houseSub = "MGM STUDIO  |  CLASSIC CHASE"; emblemType = 1001;
+            } else if (styleSlot == 1) {
+                topBg = 0xFF2A1C04; botBg = 0xFF120C02; glowCol = 0x64FFD54F;
+                houseSub = "JERRY MOUSE  |  SWISS CHEESE"; emblemType = 1002;
+            } else if (styleSlot == 2) {
+                topBg = 0xFF0C1C28; botBg = 0xFF050B10; glowCol = 0x6090A4AE;
+                houseSub = "TOM CAT  |  CAT CONCERTO"; emblemType = 1003;
+            } else if (styleSlot == 3) {
+                topBg = 0xFF280C06; botBg = 0xFF120402; glowCol = 0x62FF5252;
+                houseSub = "SPIKE BULLDOG  |  SLAPSTICK"; emblemType = 1004;
+            } else {
+                topBg = 0xFF1C1208; botBg = 0xFF0C0703; glowCol = 0x60FFE082;
+                houseSub = "TUFFY NIBBLES  |  MOUSEHOLE"; emblemType = 1005;
+            }
+        } else if (theme == 11) {
+            // Theme 12: FINDING NEMO App Banners
+            if (styleSlot == 0) {
+                topBg = 0xFF2A1004; botBg = 0xFF120602; glowCol = 0x64FF6D00;
+                houseSub = "NEMO & MARLIN  |  CORAL REEF"; emblemType = 1101;
+            } else if (styleSlot == 1) {
+                topBg = 0xFF041C32; botBg = 0xFF020B16; glowCol = 0x6400E5FF;
+                houseSub = "REGAL BLUE DORY  |  KEEP SWIMMING"; emblemType = 1102;
+            } else if (styleSlot == 2) {
+                topBg = 0xFF06261E; botBg = 0xFF02100C; glowCol = 0x6000E676;
+                houseSub = "CRUSH & SQUIRT  |  E.A.C. CURRENT"; emblemType = 1103;
+            } else if (styleSlot == 3) {
+                topBg = 0xFF28081C; botBg = 0xFF10030C; glowCol = 0x60FF4081;
+                houseSub = "JELLYFISH FOREST  |  ANEMONE"; emblemType = 1104;
+            } else {
+                topBg = 0xFF08182C; botBg = 0xFF030A14; glowCol = 0x6080DEEA;
+                houseSub = "42 WALLABY WAY  |  SYDNEY"; emblemType = 1105;
+            }
+        } else if (theme == 12) {
+            // Theme 13: JETIX App Banners
+            if (styleSlot == 0) {
+                topBg = 0xFF2E050C; botBg = 0xFF140205; glowCol = 0x66FF1744;
+                houseSub = "JETIX NETWORK  |  HIGH VOLTAGE"; emblemType = 1201;
+            } else if (styleSlot == 1) {
+                topBg = 0xFF240828; botBg = 0xFF0E0310; glowCol = 0x62FF4081;
+                houseSub = "YIN YANG YO!  |  WOO FOO DOJO"; emblemType = 1202;
+            } else if (styleSlot == 2) {
+                topBg = 0xFF062618; botBg = 0xFF02100A; glowCol = 0x6200E676;
+                houseSub = "HYPERFORCE GO!  |  SUPER ROBOT"; emblemType = 1203;
+            } else if (styleSlot == 3) {
+                topBg = 0xFF2A0808; botBg = 0xFF120303; glowCol = 0x62FF5252;
+                houseSub = "PUCCA & GARU  |  GOH-RONG"; emblemType = 1204;
+            } else {
+                topBg = 0xFF061A30; botBg = 0xFF020B16; glowCol = 0x6200E5FF;
+                houseSub = "POWER RANGERS  |  OBAN RACERS"; emblemType = 1205;
+            }
         } else if (styleSlot == 0) {
             topBg = 0xFF28090E; botBg = 0xFF110407; glowCol = 0x58E83038;
             houseSub = "GRYFFINDOR  |  PENSIEVE";
@@ -11485,6 +12584,56 @@ final class SkyView extends View {
                 c.drawLine(cx - er * 0.52f, cy, cx + er * 0.52f, cy, p);
                 c.drawLine(cx, cy - er * 0.52f, cx, cy + er * 0.52f, p);
             }
+        } else if (emblemType >= 801 && emblemType <= 805) {
+            // SPIRITED SKIES Custom Emblems: Torii Gate, Haku Dragon Spiral, Laputa Crystal, Calcifer Flame, Totoro Leaf
+            c.drawCircle(cx, cy, er * 0.88f, p);
+            c.drawLine(cx - er * 0.65f, cy - er * 0.25f, cx + er * 0.65f, cy - er * 0.25f, p);
+            c.drawLine(cx - er * 0.38f, cy - er * 0.25f, cx - er * 0.38f, cy + er * 0.62f, p);
+            c.drawLine(cx + er * 0.38f, cy - er * 0.25f, cx + er * 0.38f, cy + er * 0.62f, p);
+        } else if (emblemType >= 901 && emblemType <= 905) {
+            // SNOOPY & PEANUTS Custom Emblems: Doghouse Roof, Woodstock Bird, Zig-Zag Stripe, Great Pumpkin, Music Note
+            if (emblemType == 901) { // Snoopy Red Doghouse Roof & Arch
+                c.drawLine(cx - er * 0.85f, cy - er * 0.15f, cx, cy - er * 0.85f, p);
+                c.drawLine(cx, cy - er * 0.85f, cx + er * 0.85f, cy - er * 0.15f, p);
+                c.drawRect(cx - er * 0.65f, cy - er * 0.15f, cx + er * 0.65f, cy + er * 0.78f, p);
+            } else if (emblemType == 903) { // Charlie Brown Zig-Zag
+                Path zz = new Path();
+                zz.moveTo(cx - er * 0.88f, cy + er * 0.25f);
+                zz.lineTo(cx - er * 0.44f, cy - er * 0.35f);
+                zz.lineTo(cx, cy + er * 0.25f);
+                zz.lineTo(cx + er * 0.44f, cy - er * 0.35f);
+                zz.lineTo(cx + er * 0.88f, cy + er * 0.25f);
+                c.drawPath(zz, p);
+            } else {
+                c.drawCircle(cx, cy, er * 0.78f, p);
+                c.drawCircle(cx + er * 0.25f, cy - er * 0.18f, er * 0.22f, p);
+            }
+        } else if (emblemType >= 1001 && emblemType <= 1005) {
+            // TOM & JERRY Custom Emblems: MGM Concentric Rings, Swiss Cheese Wedge, Piano Keys, Bulldog Collar, Mousehole Arch
+            if (emblemType == 1002) { // Swiss Cheese Wedge with Holes
+                Path ch = new Path();
+                ch.moveTo(cx - er * 0.82f, cy + er * 0.55f);
+                ch.lineTo(cx + er * 0.85f, cy + er * 0.25f);
+                ch.lineTo(cx - er * 0.25f, cy - er * 0.72f);
+                ch.close();
+                c.drawPath(ch, p);
+                c.drawCircle(cx - er * 0.20f, cy + er * 0.15f, er * 0.18f, p);
+            } else {
+                c.drawCircle(cx, cy, er * 0.92f, p);
+                c.drawCircle(cx, cy, er * 0.62f, p);
+                c.drawCircle(cx, cy, er * 0.32f, p);
+            }
+        } else if (emblemType >= 1101 && emblemType <= 1105) {
+            // FINDING NEMO Custom Emblems: Clownfish Stripes, Ocean Wave, Sea Turtle Shell, Jellyfish Bell, Sydney Sails
+            c.drawOval(new RectF(cx - er * 0.88f, cy - er * 0.52f, cx + er * 0.72f, cy + er * 0.52f), p);
+            c.drawLine(cx - er * 0.15f, cy - er * 0.50f, cx - er * 0.15f, cy + er * 0.50f, p);
+            c.drawLine(cx + er * 0.25f, cy - er * 0.45f, cx + er * 0.25f, cy + er * 0.45f, p);
+        } else if (emblemType >= 1201 && emblemType <= 1205) {
+            // JETIX Custom Emblems: Winged One-Eyed Mascot Crest, Yin-Yang Circle, Hyperforce Visor, Pucca Heart, Ranger Lightning
+            c.drawCircle(cx, cy, er * 0.58f, p);
+            c.drawCircle(cx, cy, er * 0.22f, p);
+            c.drawLine(cx - er * 1.05f, cy - er * 0.25f, cx - er * 0.52f, cy, p);
+            c.drawLine(cx + er * 1.05f, cy - er * 0.25f, cx + er * 0.52f, cy, p);
         } else if (emblemType == 1) {
             Path tri = new Path();
             tri.moveTo(cx, cy - er);
